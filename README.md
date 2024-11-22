@@ -4,6 +4,9 @@ This project uses Quarkus, the Supersonic Subatomic Java Framework.
 
 If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
 
+RAM JVM ON DOCKER: 99Mb
+RAM NATIVE ON DOCKER: 12Mb
+
 ## Compile and deploy on local docker witha a jvm
 
 
