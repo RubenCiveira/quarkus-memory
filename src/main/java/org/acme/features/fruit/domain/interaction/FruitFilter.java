@@ -1,4 +1,4 @@
-package org.acme.features.fruit.domain.query;
+package org.acme.features.fruit.domain.interaction;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import lombok.Builder;

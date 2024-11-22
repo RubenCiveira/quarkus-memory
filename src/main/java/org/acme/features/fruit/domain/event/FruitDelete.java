@@ -1,4 +1,4 @@
-package org.acme.features.fruit.application.usecase.list;
+package org.acme.features.fruit.domain.event;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -9,6 +9,6 @@ import jakarta.inject.Qualifier;
 @Qualifier
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
-public @interface FruitsListAllow {
+public @interface FruitDelete {
 
 }

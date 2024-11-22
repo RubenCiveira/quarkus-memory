@@ -1,5 +1,6 @@
-package org.acme.features.fruit.domain.model;
+package org.acme.features.fruit.application.dto;
 
+import org.acme.features.fruit.domain.model.Fruit;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import lombok.Builder;
 import lombok.Data;
