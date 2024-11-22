@@ -33,7 +33,7 @@ public class FruitResource {
     if (queryParams.containsKey("search")) {
       filter = filter.like(queryParams.getFirst("search"));
     }
-    cursor = cursor.limit(20);
+    cursor = cursor.limit(40);
     Actor actor = null;
     Connection connection = null;
     return fruits.fruits(FruitList.builder().actor(actor).connection(connection)

@@ -74,7 +74,7 @@ public class ListFruitsUsecase {
       int readed = next.size();
       listEventBus.fire(next);
       result.append(next, limit-result.size());
-      boolean complete = (next.isEmpty() || result.size() >= limit);
+      boolean complete = readed == 0 || result.size() >= limit;
       return complete ? Uni.createFrom().item(result)
           : fetchMorePages(nextResult, result, limit, windowSize(next, readed, limit) );
     });

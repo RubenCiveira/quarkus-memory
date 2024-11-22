@@ -25,13 +25,17 @@ public class FruitRepository implements FruitsRepositoryGateway {
 
   public Uni<FruitSlice> fruits(FruitFilter filter, FruitCursor cursor) {
     Stream<Fruit> tfruits = fruits.stream();
+    System.err.println("Call to repository");
     if (null != cursor.getSinceUid()) {
-      tfruits = tfruits.filter(fruit -> fruit.getUid().compareTo(cursor.getSinceUid()) >= 0 );
+      System.err.println("\tSince " + cursor.getSinceUid() );
+      tfruits = tfruits.filter(fruit -> fruit.getUid().compareTo(cursor.getSinceUid()) > 0 );
     }
     if (null != cursor.getLimit()) {
+      System.err.println("\tLimite: " + cursor.getLimit() );
       tfruits = tfruits.limit(cursor.getLimit());
     }
     List<Fruit> list = tfruits.toList();
+    System.err.println("\tReaded: " + list.size() );
     return Uni.createFrom().item(new FruitRepositorySlice(list, filter, cursor, this));
   }
 }
