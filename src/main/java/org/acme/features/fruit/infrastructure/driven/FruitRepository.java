@@ -26,10 +26,12 @@ public class FruitRepository implements FruitsRepositoryGateway {
   public Uni<FruitSlice> fruits(FruitFilter filter, FruitCursor cursor) {
     Stream<Fruit> tfruits = fruits.stream();
     if (null != cursor.getSinceUid()) {
+      tfruits = tfruits.filter(fruit -> fruit.getUid().compareTo(cursor.getSinceUid()) >= 0 );
     }
     if (null != cursor.getLimit()) {
       tfruits = tfruits.limit(cursor.getLimit());
     }
-    return Uni.createFrom().item(new FruitRepositorySlice(tfruits.toList(), this));
+    List<Fruit> list = tfruits.toList();
+    return Uni.createFrom().item(new FruitRepositorySlice(list, filter, cursor, this));
   }
 }

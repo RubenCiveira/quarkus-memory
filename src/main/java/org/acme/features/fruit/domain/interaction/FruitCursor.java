@@ -5,8 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 
 @Data
-@Builder
 @RegisterForReflection
+@Builder(toBuilder = true)
 public class FruitCursor {
   private final Integer limit;
   private final String sinceUid;

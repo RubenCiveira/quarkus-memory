@@ -20,12 +20,16 @@ public class FruitListResultDto extends Interaction {
 
   private final List<FruitDto> fruits;
   
+  public boolean isEmpty() {
+    return fruits.isEmpty();
+  }
+  
   public int size() {
     return fruits.size();
   }
 
-  public void append(FruitListResultDto next) {
-    this.fruits.addAll( next.getFruits() );
+  public void append(FruitListResultDto next, int limit) {
+    this.fruits.addAll( next.size() > limit ? next.getFruits().subList(0, limit) : next.getFruits() );
   }
   
 }
