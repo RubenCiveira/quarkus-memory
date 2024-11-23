@@ -3,10 +3,10 @@ package org.acme.features.fruit.infrastructure.driven;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+import org.acme.common.action.Slide;
 import org.acme.features.fruit.domain.gateway.FruitsRepositoryGateway;
 import org.acme.features.fruit.domain.interaction.FruitCursor;
 import org.acme.features.fruit.domain.interaction.FruitFilter;
-import org.acme.features.fruit.domain.interaction.FruitSlice;
 import org.acme.features.fruit.domain.model.Fruit;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.RequestScoped;
@@ -23,7 +23,7 @@ public class FruitRepository implements FruitsRepositoryGateway {
     }
   }
 
-  public Uni<FruitSlice> fruits(FruitFilter filter, FruitCursor cursor) {
+  public Uni<Slide<Fruit>> list(FruitFilter filter, FruitCursor cursor) {
     Stream<Fruit> tfruits = fruits.stream();
     System.err.println("Call to repository");
     if (null != cursor.getSinceUid()) {

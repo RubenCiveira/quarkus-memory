@@ -13,6 +13,8 @@ public class VisibleFields {
   }
 
   public void decorateList(@Observes FruitListResultDto list) {
+    System.out.println("\t\tBefore" + list.size() );
     list.getFruits().removeIf(fruit -> !fruit.getName().endsWith("azul"));
+    System.out.println("\t\tAfter" + list.size() );    
   }
 }

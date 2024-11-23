@@ -1,7 +1,9 @@
 package org.acme.features.fruit.domain.interaction.result;
 
 import org.acme.common.action.Interaction;
+import org.acme.common.action.Slide;
 import org.acme.features.fruit.domain.interaction.FruitSlice;
+import org.acme.features.fruit.domain.model.Fruit;
 import io.smallrye.mutiny.Uni;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -18,7 +20,7 @@ public class FruitListResult extends Interaction {
 
   private final FruitSlice fruits;
   
-  public Uni<FruitSlice> next(int limit) {
+  public Uni<Slide<Fruit>> next(int limit) {
     return fruits.next(limit);
   }
 }
