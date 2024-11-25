@@ -6,6 +6,8 @@ import org.acme.features.fruit.application.usecase.ListFruitsUsecase;
 import org.acme.features.fruit.domain.interaction.FruitCursor;
 import org.acme.features.fruit.domain.interaction.FruitFilter;
 import org.acme.features.fruit.domain.interaction.query.FruitList;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.GET;
@@ -23,10 +25,14 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class FruitResource {
   private final ListFruitsUsecase fruits;
+  private final     MeterRegistry registry;
+
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   public Uni<Response> get(@Context UriInfo uriInfo) {
+    registry.counter("greeting_counter", Tags.of("name", "Intro")).increment();
+
     MultivaluedMap<String, String> queryParams = uriInfo.getQueryParameters();
     FruitFilter.FruitFilterBuilder filter = FruitFilter.builder();
     FruitCursor.FruitCursorBuilder cursor = FruitCursor.builder();

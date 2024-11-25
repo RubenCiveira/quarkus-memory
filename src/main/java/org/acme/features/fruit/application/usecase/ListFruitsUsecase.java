@@ -4,7 +4,7 @@ import org.acme.common.action.Interaction;
 import org.acme.common.action.Slide;
 import org.acme.features.fruit.application.dto.FruitListResultDto;
 import org.acme.features.fruit.application.dto.FruitReadResultDto;
-import org.acme.features.fruit.domain.gateway.FruitsRepositoryGateway;
+import org.acme.features.fruit.domain.Fruits;
 import org.acme.features.fruit.domain.interaction.query.FruitList;
 import org.acme.features.fruit.domain.model.Fruit;
 import io.smallrye.mutiny.Uni;
@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 @RequestScoped
 @RequiredArgsConstructor
 public class ListFruitsUsecase {
-  private final FruitsRepositoryGateway gateway;
+  private final Fruits service;
   private final Event<ListAllow> allowEventBus;
   private final Event<FruitListResultDto> listEventBus;
   private final Event<FruitReadResultDto> readEventBus;
@@ -28,7 +28,7 @@ public class ListFruitsUsecase {
 
   public Uni<FruitListResultDto> fruits(FruitList query) {
     return allow(query).flatMap(allowed -> allowed.isAllowed()
-        ? gateway.list(query.getFilter(), query.getCursor())
+        ? service.list(query.getFilter(), query.getCursor())
             .flatMap(slide -> this.map(slide, query))
         : Uni.createFrom().failure(() -> new RuntimeException("Unauthorized")));
   }
