@@ -30,4 +30,4 @@ jobs:
           TAG=${{ inputs.version }}
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           IMAGE=ghcr.io/$OWNER/hello-quarkus
-          docker buildx build --platform linux/amd64,linux/arm64 -f Dockerfile.base -t $IMAGE:$TAG -t $IMAGE:latest --push .
+          docker buildx build --platform linux/amd64,linux/arm64 -f src/main/docker/Dockerfile.native-micro.multistage -t $IMAGE:$TAG -t $IMAGE:latest --push .
