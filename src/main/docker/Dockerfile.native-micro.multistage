@@ -8,7 +8,7 @@ WORKDIR /code
 COPY --chown=quarkus:quarkus --chmod=0755  mvnw mvnw
 COPY --chown=quarkus:quarkus --chmod=0755 .mvn .mvn
 COPY --chown=quarkus:quarkus pom.xml pom.xml
-COPY --chown=quarkus:quarkus src /src
+COPY --chown=quarkus:quarkus src src
 
 RUN ls -la /code
 

@@ -1,0 +1,7 @@
+version: '3'
+services:
+  hello-quarkus:
+    image: ghcr.io/rubenciveira/hello-quarkus:0.0.1
+    container_name: hello-quarkus-api
+    ports:
+      - "8080:8080"
