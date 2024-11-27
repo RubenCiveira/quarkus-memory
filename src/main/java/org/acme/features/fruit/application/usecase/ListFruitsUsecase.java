@@ -7,6 +7,9 @@ import org.acme.features.fruit.application.dto.FruitReadResultDto;
 import org.acme.features.fruit.domain.Fruits;
 import org.acme.features.fruit.domain.interaction.query.FruitList;
 import org.acme.features.fruit.domain.model.Fruit;
+import io.opentelemetry.api.metrics.Meter;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.event.Event;
@@ -19,6 +22,8 @@ public class ListFruitsUsecase {
   private final Event<ListAllow> allowEventBus;
   private final Event<FruitListResultDto> listEventBus;
   private final Event<FruitReadResultDto> readEventBus;
+  private final Meter meter;
+  private final Tracer tracer;
 
   public Uni<ListAllow> allow(Interaction request) {
     ListAllow initial = ListAllow.from(request);
@@ -27,10 +32,15 @@ public class ListFruitsUsecase {
   }
 
   public Uni<FruitListResultDto> fruits(FruitList query) {
-    return allow(query).flatMap(allowed -> allowed.isAllowed()
-        ? service.list(query.getFilter(), query.getCursor())
-            .flatMap(slide -> this.map(slide, query))
-        : Uni.createFrom().failure(() -> new RuntimeException("Unauthorized")));
+    Span startSpan = tracer.spanBuilder("Dentro del servicio").startSpan();
+    try {
+      return allow(query).flatMap(allowed -> allowed.isAllowed()
+          ? service.list(query.getFilter(), query.getCursor())
+              .flatMap(slide -> this.map(slide, query))
+          : Uni.createFrom().failure(() -> new RuntimeException("Unauthorized")));
+    } finally {
+      startSpan.end();
+    }
   }
 
   private Uni<FruitListResultDto> map(Slide<Fruit> slide, FruitList query) {

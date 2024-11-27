@@ -5,10 +5,47 @@ This project uses Quarkus, the Supersonic Subatomic Java Framework.
 If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
 
 
+Codigo base 1 endpoint
+
 |  Distribution  |     RAM    |
 | -------------- | ------------- |
 | JVM ON DOCKER  |    99Mb    |
 | NATIVE ON DOCKER  | 12Mb  |
+
+
+Codigo base 1 endpoint con prometheus
+
+|  Distribution  |     RAM    |
+| -------------- | ------------- |
+| JVM ON DOCKER  |    168Mb    |
+| NATIVE ON DOCKER  | 21Mb  |
+
+Quitamos prometheus, y añadimos:
+ - open telemetry
+ - security sobre jwt
+ - bucket4j para limites
+ - using of yaml config, and split configuring 
+ 
+|  Distribution  |     RAM    |
+| -------------- | ------------- |
+| JVM ON DOCKER  |    126Mb    |
+| NATIVE ON DOCKER  | 22Mb  |
+
+Añadimos:
+ - datasource postgresql y lectura de registros de la tabla
+Mantenemos:
+ - open telemetry
+ - security sobre jwt
+ - bucket4j para limites
+ - using of yaml config, and split configuring 
+ 
+|  Distribution  |     RAM    |
+| -------------- | ------------- |
+| JVM ON DOCKER  |    126Mb    |
+| NATIVE ON DOCKER INICIO  | 20Mb  |
+| NATIVE ON DOCKER TRAS QUERIES  | 60Mb  |
+
+
 
 ## Compile and deploy on local docker witha a jvm
 

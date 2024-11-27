@@ -9,11 +9,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.sql.DataSource;
 
-public class SqlTemplate {
+public class SqlTemplate implements AutoCloseable {
 
   private final Connection connection;
 
@@ -25,48 +25,80 @@ public class SqlTemplate {
     this.connection = connection;
   }
 
+  // Constructor que recibe la conexión
+  public SqlTemplate(DataSource source) {
+    if (source == null) {
+      throw new IllegalArgumentException("Connection cannot be null");
+    }
+    try {
+      this.connection = source.getConnection();
+    } catch (SQLException ex) {
+      throw new UncheckedSqlException(ex);
+    }
+  }
+
+
   /**
    * Inicia una transacción configurando auto-commit en false.
    */
-  public void begin() throws SQLException {
-    if (connection.getAutoCommit()) {
-      connection.setAutoCommit(false);
+  public void begin() {
+    try {
+      if (connection.getAutoCommit()) {
+        connection.setAutoCommit(false);
+      }
+    } catch (SQLException ex) {
+      throw new UncheckedSqlException(ex);
     }
   }
 
   /**
    * Realiza un commit de la transacción actual.
    */
-  public void commit() throws SQLException {
-    if (!connection.getAutoCommit()) {
-      connection.commit();
-      connection.setAutoCommit(true); // Vuelve a habilitar auto-commit
+  public void commit() {
+    try {
+      if (!connection.getAutoCommit()) {
+        connection.commit();
+        connection.setAutoCommit(true); // Vuelve a habilitar auto-commit
+      }
+    } catch (SQLException ex) {
+      throw new UncheckedSqlException(ex);
     }
   }
 
   /**
    * Realiza un rollback de la transacción actual.
    */
-  public void rollback() throws SQLException {
-    if (!connection.getAutoCommit()) {
-      connection.rollback();
-      connection.setAutoCommit(true); // Vuelve a habilitar auto-commit
+  public void rollback() {
+    try {
+      if (!connection.getAutoCommit()) {
+        connection.rollback();
+        connection.setAutoCommit(true); // Vuelve a habilitar auto-commit
+      }
+    } catch (SQLException ex) {
+      throw new UncheckedSqlException(ex);
     }
   }
 
   /**
    * Cierra la conexión.
    */
-  public void close() throws SQLException {
-    if (!connection.isClosed()) {
-      connection.close();
+  public void close() {
+    try {
+      if (!connection.isClosed()) {
+        connection.close();
+      }
+    } catch (SQLException ex) {
+      throw new UncheckedSqlException(ex);
     }
   }
 
-  public <T> List<T> query(String sql, Function<ResultSet, T> converter, SqlParam[] params)
-      throws SQLException {
+  public <T> List<T> query(String sql, SqlConverter<T> converter, SqlParam... params) {
     Map<String, Integer> parameterIndexMap = new HashMap<>();
-    sql = parseSql(escapeIdentifiers(sql), parameterIndexMap);
+    try {
+      sql = parseSql(escapeIdentifiers(sql), parameterIndexMap);
+    } catch(SQLException ex) {
+      throw new UncheckedSqlException(ex);
+    }
     // aquellos que sean listas: toca expandirlos.
     List<Integer> listSizes = new ArrayList<>();
     for (SqlParam param : params) {
@@ -89,16 +121,17 @@ public class SqlTemplate {
       for (SqlParam param : params) {
         Integer position = parameterIndexMap.get(param.name());
         param.bind(position, prepareStatement);
+      }
+      try (ResultSet executeQuery = prepareStatement.executeQuery()) {
         List<T> data = new ArrayList<>();
-        try (ResultSet executeQuery = prepareStatement.executeQuery()) {
-          while (executeQuery.next()) {
-            data.add(converter.apply(executeQuery));
-          }
+        while (executeQuery.next()) {
+          data.add(converter.convert(executeQuery));
         }
         return data;
       }
+    } catch(SQLException ex) {
+      throw new UncheckedSqlException(ex);
     }
-    return null;
   }
 
   // select * from tabla where id in ( :id ) or name in ( :name )

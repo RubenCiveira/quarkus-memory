@@ -1,29 +1,31 @@
 package org.acme.features.fruit.infrastructure.driven;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
+import javax.sql.DataSource;
 import org.acme.common.action.Slide;
+import org.acme.common.data.sql.SqlTemplate;
 import org.acme.features.fruit.domain.gateway.FruitsRepositoryGateway;
 import org.acme.features.fruit.domain.interaction.FruitCursor;
 import org.acme.features.fruit.domain.interaction.FruitFilter;
 import org.acme.features.fruit.domain.model.Fruit;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.RequestScoped;
+import lombok.RequiredArgsConstructor;
 
 @RequestScoped
+@RequiredArgsConstructor
 public class FruitRepository implements FruitsRepositoryGateway {
-  private List<Fruit> fruits = new ArrayList<>();
+  private final DataSource datasource;
 
-  public FruitRepository() {
-    List<String> names = List.of("rojo", "verde", "azul", "amarillo");
-    for (int i = 0; i < 100; i++) {
-      fruits.add(
-          Fruit.builder().uid(String.format("%04d", i)).name(names.get(i % names.size())).build());
-    }
-  }
 
   public Uni<Slide<Fruit>> list(FruitFilter filter, FruitCursor cursor) {
+    try ( var template = new SqlTemplate( datasource ) ) {
+      List<Fruit> list = template.query("select uid, name from fruits", row -> {
+        return Fruit.builder().uid(row.getString(1)).name(row.getString(2)).build();
+      });
+      return Uni.createFrom().item(new FruitRepositorySlice(list, filter, cursor, this));
+    }
+    /*
     Stream<Fruit> tfruits = fruits.stream();
     System.err.println("Call to repository");
     if (null != cursor.getSinceUid()) {
@@ -37,5 +39,6 @@ public class FruitRepository implements FruitsRepositoryGateway {
     List<Fruit> list = tfruits.toList();
     System.err.println("\tReaded: " + list.size() );
     return Uni.createFrom().item(new FruitRepositorySlice(list, filter, cursor, this));
+    */
   }
 }

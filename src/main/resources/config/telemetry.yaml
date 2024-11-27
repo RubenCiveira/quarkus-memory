@@ -1,0 +1,16 @@
+# Observability
+quarkus:
+  otel:
+    metrics:
+      enabled: true
+      exporter: logging
+    traces:
+      enabled: true
+      exporter: logging
+    logs:
+      enabled: true
+      exporter: logging
+    metric:
+      export:
+        interval: 10000ms 
+

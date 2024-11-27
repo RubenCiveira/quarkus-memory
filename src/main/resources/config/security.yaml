@@ -1,0 +1,7 @@
+# Security
+mp:
+  jwt:
+    verify:
+      publickey:
+        location: http://localhost:8080/realms/Test/protocol/openid-connect/certs
+        # location: http://host.docker.internal:8080/realms/Test/protocol/openid-connect/certs
