@@ -6,6 +6,7 @@ import org.acme.features.fruit.domain.interaction.FruitCursor;
 import org.acme.features.fruit.domain.interaction.FruitFilter;
 import org.acme.features.fruit.domain.model.Fruit;
 import org.acme.features.fruit.domain.model.FruitRef;
+
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.RequestScoped;
 import lombok.RequiredArgsConstructor;
@@ -18,15 +19,16 @@ public class Fruits {
   public Uni<Slide<Fruit>> list(FruitFilter filter, FruitCursor cursor) {
     return gateway.list(filter, cursor);
   }
+
   public Uni<Fruit> enrich(FruitRef ref) {
     return null;
   }
-  
+
   public void validate(Fruit fruit) {
-    
+
   }
-  
+
   public void calculate(Fruit fruit) {
-    
+
   }
 }

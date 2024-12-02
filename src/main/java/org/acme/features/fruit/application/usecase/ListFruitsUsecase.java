@@ -7,6 +7,7 @@ import org.acme.features.fruit.application.dto.FruitReadResultDto;
 import org.acme.features.fruit.domain.Fruits;
 import org.acme.features.fruit.domain.interaction.query.FruitList;
 import org.acme.features.fruit.domain.model.Fruit;
+
 import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;

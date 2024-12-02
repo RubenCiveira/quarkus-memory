@@ -1,11 +1,11 @@
 quarkus:
   datasource:
     db-kind: postgresql
-    username: test_read
+    username: test_write # test_read luego, por ahora test_write
     password: test
     jdbc:
-      url: jdbc:postgresql://localhost:${datasource.port:5432}/test?currentSchema=${datasource.schema:public}
-      # url: jdbc:postgresql://host.docker.internal:${datasource.port:5432}/test?currentSchema=${datasource.schema:public}
+      # url: jdbc:postgresql://localhost:${datasource.port:5432}/test?currentSchema=${datasource.schema:public}
+      url: jdbc:postgresql://host.docker.internal:${datasource.port:5432}/test?currentSchema=${datasource.schema:public}
       max-size: 12
       min-size: 2
     write-channel:
@@ -16,4 +16,15 @@ quarkus:
         url: jdbc:postgresql://localhost:${datasource.port:5432}/test?currentSchema=${datasource.schema:public}
         max-size: 8
         min-size: 2
-        
+
+app:
+  migration:
+    db-kind: postgresql
+    username: test_write # test_read luego, por ahora test_write
+    password: test
+    group: pgsql
+    location: db/migration/pgsql/changelog.txt
+    jdbc:
+      # url: jdbc:postgresql://localhost:${datasource.port:5432}/test?currentSchema=${datasource.schema:public}
+      url: jdbc:postgresql://host.docker.internal:${datasource.port:5432}/test?currentSchema=${datasource.schema:public}
+  

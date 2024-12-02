@@ -6,7 +6,7 @@ import lombok.experimental.SuperBuilder;
 
 @Data
 @SuperBuilder
-@EqualsAndHashCode(callSuper =  true)
+@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 public class Fruit extends FruitRef {
   private String name;
 }

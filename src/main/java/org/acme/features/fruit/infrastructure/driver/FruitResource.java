@@ -7,6 +7,7 @@ import org.acme.features.fruit.domain.interaction.FruitCursor;
 import org.acme.features.fruit.domain.interaction.FruitFilter;
 import org.acme.features.fruit.domain.interaction.query.FruitList;
 import org.jboss.logging.Logger;
+
 import io.opentelemetry.api.metrics.LongCounter;
 import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.trace.Tracer;
@@ -22,7 +23,6 @@ import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 
-
 @Path("/fruit")
 @RequestScoped
 public class FruitResource {
@@ -32,15 +32,14 @@ public class FruitResource {
   private final SecurityIdentity security;
   private final LongCounter counter;
   private final Tracer tracer;
-  
-  public FruitResource(ListFruitsUsecase fruits, Tracer tracer, Meter meter, SecurityIdentity securityIdentity) {
+
+  public FruitResource(ListFruitsUsecase fruits, Tracer tracer, Meter meter,
+      SecurityIdentity securityIdentity) {
     this.fruits = fruits;
     this.tracer = tracer;
     this.security = securityIdentity;
-    this.counter = meter.counterBuilder("hello-metrics") 
-        .setDescription("hello-metrics")
-        .setUnit("invocations")
-        .build();
+    this.counter = meter.counterBuilder("hello-metrics").setDescription("hello-metrics")
+        .setUnit("invocations").build();
   }
 
   @GET
@@ -49,11 +48,11 @@ public class FruitResource {
     LOG.error("hello");
     var spanBuilder = this.tracer.spanBuilder("Colores").startSpan();
     try {
-      counter.add(1); 
-      if( null == this.security.getPrincipal() ) {
+      counter.add(1);
+      if (null == this.security.getPrincipal()) {
         System.out.println("No autenticado");
       } else {
-        System.out.println( "Principla" + this.security.getPrincipal().getName() );
+        System.out.println("Principla" + this.security.getPrincipal().getName());
       }
       MultivaluedMap<String, String> queryParams = uriInfo.getQueryParameters();
       FruitFilter.FruitFilterBuilder filter = FruitFilter.builder();

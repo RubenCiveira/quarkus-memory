@@ -11,7 +11,7 @@ public class Allow {
   private boolean allowed;
   private String name;
   private String description;
-  
+
   private final Actor actor;
   private final Connection connection;
 }

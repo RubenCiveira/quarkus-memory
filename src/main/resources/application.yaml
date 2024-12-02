@@ -10,10 +10,7 @@ quarkus:
       - config/telemetry.yaml
       - config/security.yaml
       - config/database.yaml
-  ssl:
-    native: true
+      - META-INF/build/native.yaml
   http:
     port: 8090
-#  native:
-#    additional-build-args: "--initialize-at-run-time=io.opentelemetry.api.GlobalOpenTelemetry"
-    
+

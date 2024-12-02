@@ -1,4 +1,4 @@
-package org.acme.common.data.sql;
+package org.acme.common.sql;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -22,3 +22,5 @@ public record SqlParam(String name, Object value, SqlType type) {
     stat.setString(position, null == value ? null : String.valueOf( value ) );
   }
 }
+
+

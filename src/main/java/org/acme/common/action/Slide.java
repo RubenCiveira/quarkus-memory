@@ -3,6 +3,7 @@ package org.acme.common.action;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
+
 import io.smallrye.mutiny.Uni;
 
 public abstract class Slide<T> {
@@ -33,8 +34,8 @@ public abstract class Slide<T> {
     return Math.max(limit, (int) (neededResults * (1 + aceptationRange)));
   }
 
-  private <R> Uni<List<R>> fetchMorePages(Slide<T> current, List<R> result, Function<List<T>, List<R>> consumer,
-      Integer limit, Integer window) {
+  private <R> Uni<List<R>> fetchMorePages(Slide<T> current, List<R> result,
+      Function<List<T>, List<R>> consumer, Integer limit, Integer window) {
     return current.next(window).flatMap(slice -> {
       List<T> next = slice.get();
       // FruitListResultDto next = FruitListResultDto.from(nextResult);

@@ -1,4 +1,4 @@
-package org.acme.common.data.sql;
+package org.acme.common.sql;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import javax.sql.DataSource;
 
 public class SqlTemplate implements AutoCloseable {
@@ -96,7 +97,7 @@ public class SqlTemplate implements AutoCloseable {
     Map<String, Integer> parameterIndexMap = new HashMap<>();
     try {
       sql = parseSql(escapeIdentifiers(sql), parameterIndexMap);
-    } catch(SQLException ex) {
+    } catch (SQLException ex) {
       throw new UncheckedSqlException(ex);
     }
     // aquellos que sean listas: toca expandirlos.
@@ -129,7 +130,7 @@ public class SqlTemplate implements AutoCloseable {
         }
         return data;
       }
-    } catch(SQLException ex) {
+    } catch (SQLException ex) {
       throw new UncheckedSqlException(ex);
     }
   }

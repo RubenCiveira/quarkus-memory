@@ -1,4 +1,4 @@
-package org.acme.common.data.sql;
+package org.acme.common.sql;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

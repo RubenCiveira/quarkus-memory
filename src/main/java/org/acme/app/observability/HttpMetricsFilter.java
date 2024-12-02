@@ -1,6 +1,7 @@
 package org.acme.app.observability;
 
 import java.io.IOException;
+
 import io.opentelemetry.api.metrics.DoubleHistogram;
 import io.opentelemetry.api.metrics.LongCounter;
 import io.opentelemetry.api.metrics.Meter;
@@ -14,7 +15,7 @@ import jakarta.ws.rs.ext.Provider;
 @Provider
 @ApplicationScoped
 public class HttpMetricsFilter implements ContainerResponseFilter, ContainerRequestFilter {
-  private static final String STRATING_TIME_PROPERTY = "starting-time"; 
+  private static final String STRATING_TIME_PROPERTY = "starting-time";
   private final LongCounter requestCount;
 
   private final DoubleHistogram requestLatence;
@@ -25,10 +26,10 @@ public class HttpMetricsFilter implements ContainerResponseFilter, ContainerRequ
     requestLatence = meter.histogramBuilder("http_request_duration_seconds")
         .setDescription("HTTP request latency").setUnit("s").build();
   }
-  
+
   @Override
   public void filter(ContainerRequestContext requestContext) throws IOException {
-    requestContext.setProperty(STRATING_TIME_PROPERTY, System.currentTimeMillis() );
+    requestContext.setProperty(STRATING_TIME_PROPERTY, System.currentTimeMillis());
   }
 
   @Override
@@ -38,10 +39,11 @@ public class HttpMetricsFilter implements ContainerResponseFilter, ContainerRequ
     requestCount.add(1);
     // Example: measure latency (replace with actual timing logic)
     Object property = requestContext.getProperty(STRATING_TIME_PROPERTY);
-    if( property instanceof Long st) {
-      double latencyInSeconds = (System.currentTimeMillis() - st) / 1_000d; // Replace with real latency
-      System.err.println( "TIME OF " + latencyInSeconds );
-      requestLatence.record(latencyInSeconds);      
+    if (property instanceof Long st) {
+      double latencyInSeconds = (System.currentTimeMillis() - st) / 1_000d; // Replace with real
+                                                                            // latency
+      System.err.println("TIME OF " + latencyInSeconds);
+      requestLatence.record(latencyInSeconds);
     } else {
       double latencyInSeconds = Math.random(); // Replace with real latency
       requestLatence.record(latencyInSeconds);
