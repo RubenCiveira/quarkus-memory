@@ -6,6 +6,7 @@ quarkus:
     path: banner.txt
   config:
     locations:
+      # - config/dev-properties.yaml
       - config/server.yaml
       - config/telemetry.yaml
       - config/security.yaml

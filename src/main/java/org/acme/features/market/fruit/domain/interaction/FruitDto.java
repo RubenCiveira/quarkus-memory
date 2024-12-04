@@ -24,9 +24,9 @@ public class FruitDto {
    */
   @Builder.Default
   private static final Map<String, BiConsumer<FruitDto, Fruit>> toFix =
-      Map.of("uid", (target, source) -> target.uid = source.getUid().value(), "name",
-          (target, source) -> target.name = source.getName().value(), "version",
-          (target, source) -> target.version = source.getVersion().value());
+      Map.of("uid", (target, source) -> target.uid = source.getUid().getValue(), "name",
+          (target, source) -> target.name = source.getName().getValue(), "version",
+          (target, source) -> target.version = source.getVersion().getValue().orElse(null));
 
   /**
    * The callbacks to hide
@@ -45,8 +45,8 @@ public class FruitDto {
    * @return A dto with the entity data
    */
   public static FruitDto from(final Fruit fruit) {
-    return FruitDto.builder().uid(fruit.getUid().value()).name(fruit.getName().value())
-        .version(fruit.getVersion().value()).build();
+    return FruitDto.builder().uid(fruit.getUid().getValue()).name(fruit.getName().getValue())
+        .version(fruit.getVersion().getValue().orElse(null)).build();
   }
 
   /**

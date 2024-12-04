@@ -5,7 +5,7 @@ import org.acme.common.security.Connection;
 import org.acme.features.market.fruit.domain.Fruits;
 import org.acme.features.market.fruit.domain.interaction.FruitCursor;
 import org.acme.features.market.fruit.domain.interaction.FruitFilter;
-import org.acme.features.market.fruit.domain.interaction.query.ListQuery;
+import org.acme.features.market.fruit.domain.interaction.query.FruitListQuery;
 import org.acme.openapi.api.FruitApi;
 import org.acme.openapi.model.Fruit;
 import org.jboss.logging.Logger;
@@ -41,7 +41,7 @@ public class ApiFirstFruitController implements FruitApi {
     Actor actor = null;
     Connection connection = null;
     return fruits
-        .list(ListQuery.builder().actor(actor).connection(connection).filter(filter.build())
+        .list(FruitListQuery.builder().actor(actor).connection(connection).filter(filter.build())
             .cursor(cursor.build()).build())
         .map(items -> Response.ok(items.getFruits()).build()).await().indefinitely();
   }

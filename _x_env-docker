@@ -1,0 +1,10 @@
+# Database
+DATASOURCE_HOST=host.docker.internal
+DATASOURCE_PORT=5432
+DATASOURCE_USER=test_write
+DATASOURCE_PASS=test
+DATASOURCE_PATH=test
+DATASOURCE_SCHEMA=public
+
+# Security
+SECURITY_JWT_PUBLIC_KEY=http://host.docker.internal:8080/realms/Test/protocol/openid-connect/certs

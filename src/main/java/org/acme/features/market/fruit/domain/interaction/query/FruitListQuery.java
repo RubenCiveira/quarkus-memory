@@ -11,7 +11,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder(toBuilder = true)
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 @RegisterForReflection
-public class ListQuery extends RetrieveQuery {
+public class FruitListQuery extends FruitRetrieveQuery {
 
   /**
    * The cursor to retrieve a sub set of results

@@ -12,7 +12,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder(toBuilder = true)
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 @RegisterForReflection
-public class RetrieveQuery extends Interaction {
+public class FruitRetrieveQuery extends Interaction {
 
   /**
    * The filter to select the results to retrieve

@@ -14,9 +14,9 @@ public class ConstraintFail {
     wrongValues = List.of(WrongValue.builder().field(field).wrongValue(wrongValue).build());
   }
 
-  public ConstraintFail(String code, String field, Object wrongValue, Object expectedValue) {
+  public ConstraintFail(String code, String field, Object wrongValue, String errorMessage) {
     this.code = code;
     wrongValues = List.of(WrongValue.builder().field(field).wrongValue(wrongValue)
-        .exceptedValue(expectedValue).build());
+        .errorMessage(errorMessage).build());
   }
 }

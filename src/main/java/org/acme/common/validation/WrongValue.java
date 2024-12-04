@@ -8,5 +8,5 @@ import lombok.Data;
 public class WrongValue {
   private final String field;
   private final Object wrongValue;
-  private final Object exceptedValue;
+  private final String errorMessage;
 }

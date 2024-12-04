@@ -3,10 +3,8 @@ package org.acme.features.fruit.application.accesscontrol;
 import org.acme.features.fruit.application.dto.FruitListResultDto;
 import org.acme.features.fruit.application.dto.FruitReadResultDto;
 
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 
-@ApplicationScoped
 public class VisibleFields {
 
   public void decorateOutput(@Observes FruitReadResultDto result) {
@@ -14,7 +12,7 @@ public class VisibleFields {
   }
 
   public void decorateList(@Observes FruitListResultDto list) {
-    System.out.println("\t\tBefore" + list.size());
+    System.out.println("\t\tBefore a filter a" + list.size());
     list.getFruits().removeIf(fruit -> fruit.getName().endsWith("azul"));
     System.out.println("\t\tAfter" + list.size());
   }

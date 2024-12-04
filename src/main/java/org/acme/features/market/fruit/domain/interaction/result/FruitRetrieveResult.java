@@ -15,7 +15,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder(toBuilder = true)
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 @RegisterForReflection
-public class RetrieveResult extends Interaction {
+public class FruitRetrieveResult extends Interaction {
 
   /**
    * A new dto with a result list
@@ -25,8 +25,8 @@ public class RetrieveResult extends Interaction {
    * @param fruit The list with values
    * @return A new dto with a result list
    */
-  public static RetrieveResult from(final Interaction prev, final Optional<Fruit> fruit) {
-    return RetrieveResult.builder().fruit(fruit.map(FruitDto::from)).build(prev);
+  public static FruitRetrieveResult from(final Interaction prev, final Optional<Fruit> fruit) {
+    return FruitRetrieveResult.builder().fruit(fruit.map(FruitDto::from)).build(prev);
   }
 
   /**
@@ -37,8 +37,9 @@ public class RetrieveResult extends Interaction {
    * @param fruit The list with values
    * @return A new dto with a result list
    */
-  public static RetrieveResult fromDto(final Interaction prev, final Optional<FruitDto> fruit) {
-    return RetrieveResult.builder().fruit(fruit).build(prev);
+  public static FruitRetrieveResult fromDto(final Interaction prev,
+      final Optional<FruitDto> fruit) {
+    return FruitRetrieveResult.builder().fruit(fruit).build(prev);
   }
 
   /**

@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UncheckedIOException;
 import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -82,7 +81,7 @@ public class Migrations implements AutoCloseable {
         System.out.println("Vamos a intentar vre lo ");
         Map<String, Map<String, String>> previousMigrations = listExecuted(this.group);
         System.out.println("Tengo previos ");
-        System.out.println( previousMigrations );
+        System.out.println(previousMigrations);
         List<String> files = retrieveResources(this.migrationsIndex);
         System.out.println("Tengo files " + files);
         List<String> toExecute = new ArrayList<>();
@@ -119,7 +118,7 @@ public class Migrations implements AutoCloseable {
       } catch (Exception e) {
         System.err.println("====");
         System.err.println("====");
-        System.err.println( e.getMessage() );
+        System.err.println(e.getMessage());
         System.err.println("====");
         System.err.println("====");
         e.printStackTrace();
@@ -141,7 +140,7 @@ public class Migrations implements AutoCloseable {
       System.out.println("SQL: en " + file + " tengo a " + lines);
       List<String> filtered =
           lines.stream().filter(line -> !line.startsWith("--")).collect(Collectors.toList());
-      System.out.println("Las filtradas son " + filtered );
+      System.out.println("Las filtradas son " + filtered);
       String sql = String.join("\n", filtered);
       String[] statements = sql.split(";");
       for (String statement : statements) {
@@ -153,7 +152,7 @@ public class Migrations implements AutoCloseable {
       }
       markOk(name, file, exists, md5);
     } catch (Exception e) {
-      System.err.println(">> FALLO POR " + e.getMessage() );
+      System.err.println(">> FALLO POR " + e.getMessage());
       markFail(name, file, exists, md5, e);
       addError(result, e.getMessage());
     }
@@ -249,7 +248,7 @@ public class Migrations implements AutoCloseable {
   private String calculateMd5(String file) throws Exception {
     InputStream resourceAsStream =
         Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
-System.out.println("MD5: PARA [" + file + "] tengo a " + resourceAsStream);
+    System.out.println("MD5: PARA [" + file + "] tengo a " + resourceAsStream);
     MessageDigest md = MessageDigest.getInstance("MD5");
     try (BufferedReader br = new BufferedReader(new InputStreamReader(resourceAsStream))) {
       String line;
@@ -268,7 +267,7 @@ System.out.println("MD5: PARA [" + file + "] tengo a " + resourceAsStream);
   private List<String> readFile(String file) throws Exception {
     InputStream resourceAsStream =
         Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
-    System.out.println("CODE: Para " + file + " tengo a  " + resourceAsStream );
+    System.out.println("CODE: Para " + file + " tengo a  " + resourceAsStream);
     try (BufferedReader br = new BufferedReader(new InputStreamReader(resourceAsStream))) {
       return br.lines().toList();
     }

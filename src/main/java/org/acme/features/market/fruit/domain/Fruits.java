@@ -7,9 +7,9 @@ import org.acme.common.action.Interaction;
 import org.acme.common.action.Slide;
 import org.acme.features.market.fruit.domain.gateway.FruitRepositoryGateway;
 import org.acme.features.market.fruit.domain.interaction.FruitDto;
-import org.acme.features.market.fruit.domain.interaction.query.ListQuery;
-import org.acme.features.market.fruit.domain.interaction.result.ListResult;
-import org.acme.features.market.fruit.domain.interaction.result.RetrieveResult;
+import org.acme.features.market.fruit.domain.interaction.query.FruitListQuery;
+import org.acme.features.market.fruit.domain.interaction.result.FruitListResult;
+import org.acme.features.market.fruit.domain.interaction.result.FruitRetrieveResult;
 import org.acme.features.market.fruit.domain.model.Fruit;
 
 import io.smallrye.mutiny.Uni;
@@ -48,7 +48,7 @@ public class Fruits {
    * @param query a filter to retrieve only matching values
    * @return The slide with some values
    */
-  public Uni<ListResult> list(final ListQuery query) {
+  public Uni<FruitListResult> list(final FruitListQuery query) {
     return gateway.list(visibility.visibleFilter(query, query.getFilter()), query.getCursor())
         .flatMap(slide -> this.filterAndFill(slide, query));
   }
@@ -61,10 +61,10 @@ public class Fruits {
    * @param query a filter to retrieve only matching values
    * @return The slide with some values
    */
-  private Uni<ListResult> filterAndFill(final Slide<Fruit> slide, final ListQuery query) {
+  private Uni<FruitListResult> filterAndFill(final Slide<Fruit> slide, final FruitListQuery query) {
     return slide
         .filterAndFill(query.getCursor().getLimit(), fruits -> retainSlideValues(query, fruits))
-        .map(list -> ListResult.fromDto(query, list))
+        .map(list -> FruitListResult.fromDto(query, list))
         .invoke(result -> prepareOutputValue(query, result));
   }
 
@@ -76,7 +76,8 @@ public class Fruits {
    * @param fruits The dto with all the values, to be prepared for user of the interaction
    * @return The preserved values after the event (dtos)
    */
-  private ListResult prepareOutputValue(final Interaction query, final ListResult fruits) {
+  private FruitListResult prepareOutputValue(final Interaction query,
+      final FruitListResult fruits) {
     fruits.getFruits().forEach(fruit -> prepareOutputValue(query, Optional.of(fruit)));
     return fruits;
   }
@@ -92,7 +93,7 @@ public class Fruits {
   private Optional<FruitDto> prepareOutputValue(final Interaction query,
       final Optional<FruitDto> Fruit) {
     Optional<FruitDto> hidded = Fruit.map(original -> visibility.hide(query, original));
-    return events.fireFruitRetrieveResult(RetrieveResult.fromDto(query, hidded)).getFruit();
+    return events.fireFruitRetrieveResult(FruitRetrieveResult.fromDto(query, hidded)).getFruit();
   }
 
   /**
@@ -104,6 +105,6 @@ public class Fruits {
    * @return The preserved values after the event (dtos)
    */
   private List<FruitDto> retainSlideValues(final Interaction query, final List<Fruit> fruits) {
-    return events.fireFruitListResult(ListResult.from(query, fruits)).getFruits();
+    return events.fireFruitListResult(FruitListResult.from(query, fruits)).getFruits();
   }
 }

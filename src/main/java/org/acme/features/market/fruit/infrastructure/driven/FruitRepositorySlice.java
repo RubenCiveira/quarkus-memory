@@ -32,7 +32,8 @@ public class FruitRepositorySlice extends Slide<Fruit> {
       return Uni.createFrom().item(this);
     } else {
       Fruit last = fruits.get(fruits.size() - 1);
-      FruitCursor cr = this.cursor.toBuilder().sinceUid(last.getUid().value()).limit(limit).build();
+      FruitCursor cr =
+          this.cursor.toBuilder().sinceUid(last.getUid().getValue()).limit(limit).build();
       return gateway.list(this.filter, cr);
     }
   }

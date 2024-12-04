@@ -16,7 +16,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder(toBuilder = true)
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 @RegisterForReflection
-public class ListResult extends Interaction {
+public class FruitListResult extends Interaction {
 
   /**
    * A new dto with a result list
@@ -26,8 +26,8 @@ public class ListResult extends Interaction {
    * @param fruits The list with values
    * @return A new dto with a result list
    */
-  public static ListResult from(final Interaction prev, final List<Fruit> fruits) {
-    return ListResult.builder()
+  public static FruitListResult from(final Interaction prev, final List<Fruit> fruits) {
+    return FruitListResult.builder()
         .fruits(new ArrayList<>(fruits.stream().map(FruitDto::from).toList())).build(prev);
   }
 
@@ -39,8 +39,8 @@ public class ListResult extends Interaction {
    * @param fruits The list with values
    * @return A new dto with a result list
    */
-  public static ListResult fromDto(final Interaction prev, final List<FruitDto> fruits) {
-    return ListResult.builder().fruits(new ArrayList<>(fruits)).build(prev);
+  public static FruitListResult fromDto(final Interaction prev, final List<FruitDto> fruits) {
+    return FruitListResult.builder().fruits(new ArrayList<>(fruits)).build(prev);
   }
 
   /**
@@ -57,7 +57,7 @@ public class ListResult extends Interaction {
    * @param next The list used to get aditional elements
    * @param limit The max number of the next list to be taken
    */
-  public void append(final ListResult next, final int limit) {
+  public void append(final FruitListResult next, final int limit) {
     this.fruits.addAll(next.size() > limit ? next.getFruits().subList(0, limit) : next.getFruits());
   }
 
