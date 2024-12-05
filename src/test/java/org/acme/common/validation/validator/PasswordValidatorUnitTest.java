@@ -1,6 +1,7 @@
 package org.acme.common.validation.validator;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
@@ -22,5 +23,8 @@ class PasswordValidatorUnitTest {
 
     assertFalse(validator.validate(null).isValid());
     assertFalse(validator.validate("").isValid());
+    
+    assertThrows(IllegalArgumentException.class, () ->  new PasswordValidator(-1, 16, true, true, true, true, "Contraseña inválida"));
+    assertThrows(IllegalArgumentException.class, () ->  new PasswordValidator(22, 16, true, true, true, true, "Contraseña inválida"));
   }
 }

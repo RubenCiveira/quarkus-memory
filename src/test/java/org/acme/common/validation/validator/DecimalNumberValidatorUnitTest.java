@@ -1,17 +1,20 @@
 package org.acme.common.validation.validator;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.math.BigDecimal;
+
 import org.junit.jupiter.api.Test;
 
 class DecimalNumberValidatorUnitTest {
-  private final DecimalNumberValidator validator = new DecimalNumberValidator(2, // Máximo de 2
-                                                                                 // decimales
-      5, // Precisión total de 5 dígitos
-      new BigDecimal("0.00"), // Valor mínimo
-      new BigDecimal("999.99"), // Valor máximo
-      "Número decimal inválido");
+  // Máximo de 2 decimales
+  // Precisión total de 5 dígitos
+  // Mínimo 0.00
+  // Máximo de 999.99
+  private final DecimalNumberValidator validator = new DecimalNumberValidator(2, 5,
+      new BigDecimal("0.00"), new BigDecimal("999.99"), "Número decimal inválido");
 
   @Test
   void testValidNumbers() {
@@ -26,5 +29,11 @@ class DecimalNumberValidatorUnitTest {
 
     assertFalse(validator.validate(null).isValid());
     assertFalse(validator.validate("").isValid());
+    
+    assertThrows(IllegalArgumentException.class, () ->  new DecimalNumberValidator(-1, 5,
+        new BigDecimal("0.00"), new BigDecimal("999.99"), "Contraseña inválida"));
+    assertThrows(IllegalArgumentException.class, () ->  new DecimalNumberValidator(12, 5,
+        new BigDecimal("0.00"), new BigDecimal("999.99"), "Contraseña inválida"));
+
   }
 }

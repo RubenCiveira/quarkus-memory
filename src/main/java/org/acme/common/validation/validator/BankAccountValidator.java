@@ -73,7 +73,7 @@ public class BankAccountValidator implements Validator<String> {
 
   private int mod97(String numericIBAN) {
     String remainder = numericIBAN;
-    while (remainder.length() > 2) {
+    while (remainder.length() > 9) {
       String block = remainder.substring(0, 9);
       remainder = Integer.parseInt(block) % 97 + remainder.substring(block.length());
     }

@@ -12,6 +12,7 @@ class FruitVersionVOUnitTest {
   @Test
   @DisplayName("Test value object contruction for property version of fruit ")
   void test_fruit_version_v_o_builder() {
-    Assertions.assertNull(FruitVersionVO.empty().getValue(), "A empty vo should have a null value");
+    Assertions.assertFalse(FruitVersionVO.empty().getValue().isPresent(),
+        "A empty vo should have a null value");
   }
 }

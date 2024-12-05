@@ -1,7 +1,6 @@
 package org.acme.common.validation.validator;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 import org.acme.common.validation.ValidationResult;
 import org.acme.common.validation.Validator;
@@ -33,8 +32,10 @@ public class DecimalNumberValidator implements Validator<String> {
     }
     try {
       BigDecimal number = new BigDecimal(numberStr);
-      number = number.setScale(maxDecimals, RoundingMode.HALF_UP);
-
+      // number = number.setScale(maxDecimals, RoundingMode.HALF_UP);
+      if (number.scale() > maxDecimals) {
+        return new ValidationResult(errorMessage);
+      }
       // Verificar precisión total
       if (number.precision() > precision) {
         return new ValidationResult(errorMessage);

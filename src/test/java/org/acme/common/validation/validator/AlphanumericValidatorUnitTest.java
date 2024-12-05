@@ -1,7 +1,9 @@
 package org.acme.common.validation.validator;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.Test;
 
 class AlphanumericValidatorUnitTest {
@@ -19,5 +21,9 @@ class AlphanumericValidatorUnitTest {
 
     assertFalse(validator.validate(null).isValid());
     assertFalse(validator.validate("").isValid());
+    
+    assertThrows(IllegalArgumentException.class, () ->  new AlphanumericValidator(-1, 16, true, true, true, true, "Contraseña inválida"));
+    assertThrows(IllegalArgumentException.class, () ->  new AlphanumericValidator(22, 16, true, true, true, true, "Contraseña inválida"));
+
   }
 }
