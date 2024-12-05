@@ -12,8 +12,8 @@ public class IPAddressValidator implements Validator<String> {
   }
 
   private final IPVersion ipVersion;
-  private final String networkAddress;
-  private final String subnetMask;
+  private final byte[] networkAddress;
+  private final byte[] subnetMask;
   private final String errorMessage;
 
   public IPAddressValidator(IPVersion ipVersion, String errorMessage) {
@@ -23,9 +23,16 @@ public class IPAddressValidator implements Validator<String> {
   public IPAddressValidator(IPVersion ipVersion, String networkAddress, String subnetMask,
       String errorMessage) {
     this.ipVersion = ipVersion;
-    this.networkAddress = networkAddress;
-    this.subnetMask = subnetMask;
     this.errorMessage = errorMessage;
+    if (networkAddress != null && subnetMask != null) {
+      this.networkAddress = toBytes(networkAddress);
+      this.subnetMask = toBytes(subnetMask);
+    } else if (networkAddress != null || subnetMask != null) {
+      throw new IllegalArgumentException("If a network is indicated, a subnet is required.");
+    } else {
+      this.networkAddress = null;
+      this.subnetMask = null;
+    }
   }
 
   @Override
@@ -53,29 +60,21 @@ public class IPAddressValidator implements Validator<String> {
       return new ValidationResult(errorMessage);
     }
 
-    if (networkAddress != null && subnetMask != null) {
-      if (!isInSubnet(ipAddress, networkAddress, subnetMask)) {
-        return new ValidationResult(errorMessage);
-      }
+    if (networkAddress != null && !isInSubnet(ipAddress)) {
+      return new ValidationResult(errorMessage);
     }
     return new ValidationResult();
   }
 
-  private boolean isInSubnet(String ipAddress, String networkAddress, String subnetMask) {
-    try {
-      byte[] ip = toBytes(ipAddress);
-      byte[] net = toBytes(networkAddress);
-      byte[] mask = toBytes(subnetMask);
+  private boolean isInSubnet(String ipAddress) {
+    byte[] ip = toBytes(ipAddress);
 
-      for (int i = 0; i < ip.length; i++) {
-        if ((ip[i] & mask[i]) != (net[i] & mask[i])) {
-          return false;
-        }
+    for (int i = 0; i < ip.length; i++) {
+      if ((ip[i] & subnetMask[i]) != (networkAddress[i] & subnetMask[i])) {
+        return false;
       }
-      return true;
-    } catch (IllegalArgumentException e) {
-      return false;
     }
+    return true;
   }
 
   private byte[] toBytes(String ipAddress) {

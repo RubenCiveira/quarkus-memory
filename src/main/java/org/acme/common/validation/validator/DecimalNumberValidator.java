@@ -40,10 +40,10 @@ public class DecimalNumberValidator implements Validator<String> {
       if (number.precision() > precision) {
         return new ValidationResult(errorMessage);
       }
-
+      boolean isLower = minValue != null && number.compareTo(minValue) < 0;
+      boolean isUpper = maxValue != null && number.compareTo(maxValue) > 0;
       // Verificar rango
-      if ((minValue != null && number.compareTo(minValue) < 0)
-          || (maxValue != null && number.compareTo(maxValue) > 0)) {
+      if (isLower || isUpper) {
         return new ValidationResult(errorMessage);
       }
 

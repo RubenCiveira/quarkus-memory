@@ -1,6 +1,7 @@
 package org.acme.common.validation.validator;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -19,10 +20,13 @@ class IPAddressValidatorUnitTest {
       new IPAddressValidator(IPAddressValidator.IPVersion.IPV4, "192.168.1.0", "255.255.255.0",
           "Dirección IP fuera de la subred");
 
+
   @Test
   void testValidIPv4Addresses() {
     assertTrue(ipv4Validator.validate("192.168.1.1").isValid());
     assertTrue(ipv4Validator.validate("10.0.0.1").isValid());
+    assertFalse(ipv4Validator.validate(null).isValid());
+    assertFalse(ipv4Validator.validate("").isValid());
 
     assertFalse(ipv4Validator.validate("256.256.256.256").isValid());
     assertFalse(ipv4Validator.validate("192.168.1").isValid());
@@ -37,6 +41,28 @@ class IPAddressValidatorUnitTest {
     assertFalse(bothValidator.validate("invalid_ip").isValid());
 
     assertTrue(subnetValidator.validate("192.168.1.100").isValid());
+    assertFalse(subnetValidator.validate("127.168.1.100").isValid());
+    assertFalse(subnetValidator.validate("192.168.1").isValid());
+    assertFalse(subnetValidator.validate("192.168.1.1.1").isValid());
+
+    assertThrows(IllegalArgumentException.class,
+        () -> new IPAddressValidator(IPAddressValidator.IPVersion.IPV4, "192.168.1.0", null,
+            "Dirección IP fuera de la subred"));
+    assertThrows(IllegalArgumentException.class,
+        () -> new IPAddressValidator(IPAddressValidator.IPVersion.IPV4, null, "255.255.255.10",
+            "Dirección IP fuera de la subred"));
+    assertThrows(IllegalArgumentException.class,
+        () -> new IPAddressValidator(IPAddressValidator.IPVersion.IPV4, "192.168.1.0",
+            "275.255.255.10", "Dirección IP fuera de la subred"));
+    assertThrows(IllegalArgumentException.class,
+        () -> new IPAddressValidator(IPAddressValidator.IPVersion.IPV4, "192.168.1.0",
+            "-1.255.255.10", "Dirección IP fuera de la subred"));
+    assertThrows(IllegalArgumentException.class,
+        () -> new IPAddressValidator(IPAddressValidator.IPVersion.IPV4, "192.168.1",
+            "255.255.255.0", "Dirección IP fuera de la subred"));
+    assertThrows(IllegalArgumentException.class,
+        () -> new IPAddressValidator(IPAddressValidator.IPVersion.IPV4, "192.168.1.1.0",
+            "255.255.255.0", "Dirección IP fuera de la subred"));
   }
 
 }

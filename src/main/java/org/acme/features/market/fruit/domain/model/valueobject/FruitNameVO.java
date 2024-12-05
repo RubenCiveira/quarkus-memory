@@ -52,11 +52,13 @@ public class FruitNameVO {
    */
   public static FruitNameVO tryFrom(final Object name, final ConstraintFailList fails) {
     if (null == name) {
-      return new FruitNameVO(null);
+      fails.add(new ConstraintFail("not-null", "name", null, "Cant be null"));
+      return null;
     } else if (name instanceof String) {
       return new FruitNameVO((String) name);
     } else {
-      fails.add(new ConstraintFail("wrong-type", "name", name.getClass(), "" + String.class));
+      fails.add(new ConstraintFail("wrong-type", "name", name.getClass(),
+          "A String type is expected for name"));
       return null;
     }
   }

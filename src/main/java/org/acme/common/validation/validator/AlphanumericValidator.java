@@ -46,8 +46,11 @@ public class AlphanumericValidator implements Validator<String> {
     if (allowSpecialChars) {
       regex.append("\\p{Punct}");
     }
-
+    if (regex.length() == 2) {
+      throw new IllegalArgumentException("Empty selector for alphanumeric");
+    }
     regex.append("]{").append(minLength).append(",").append(maxLength).append("}$");
+    System.out.println(regex);
     return regex.toString();
   }
 

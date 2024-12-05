@@ -52,7 +52,8 @@ public class FruitUidVO {
    */
   public static FruitUidVO tryFrom(final Object uid, final ConstraintFailList fails) {
     if (null == uid) {
-      return new FruitUidVO(null);
+      fails.add(new ConstraintFail("not-null", "uid", null, "Cant be null"));
+      return null;
     } else if (uid instanceof String) {
       return new FruitUidVO((String) uid);
     } else {

@@ -22,6 +22,15 @@ class BankAccountValidatorUnitTest {
                                                                                                  // inválido
     assertFalse(validatorWithSwift.validate("ES9121000418450200051332 DEUTDEFF").isValid()); // SWIFT
                                                                                              // no
+
+    assertFalse(validatorWithoutSwift.validate("U").isValid()); // Dígito de
+    assertFalse(validatorWithoutSwift.validate("ES91210004").isValid()); // Dígito de
+    assertFalse(validatorWithoutSwift.validate("ES9121000#18450200051332").isValid());
+    assertFalse(validatorWithoutSwift.validate("FR91210004").isValid()); // Dígito de
+
+
+    assertFalse(validatorWithSwift.validate("ES9121000418450200051332").isValid()); // SWIFT
+
     assertFalse(validatorWithoutSwift.validate(null).isValid());
     assertFalse(validatorWithoutSwift.validate("").isValid());
   }
