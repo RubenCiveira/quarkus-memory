@@ -47,7 +47,6 @@ public class PasswordValidator implements Validator<String> {
       regex.append("(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?])");
     }
     regex.append(".{").append(minLength).append(",").append(maxLength).append("}$");
-    System.out.println(regex.toString());
     return regex.toString();
   }
 

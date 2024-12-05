@@ -4,6 +4,7 @@ import org.acme.common.security.Actor;
 import org.acme.common.security.Connection;
 
 import lombok.Data;
+import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
 
 @Data
@@ -19,6 +20,8 @@ public class Interaction {
     }
   }
 
+  @NonNull
   private final Actor actor;
+  @NonNull
   private final Connection connection;
 }
