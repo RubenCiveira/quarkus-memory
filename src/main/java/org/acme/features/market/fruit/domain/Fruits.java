@@ -62,9 +62,8 @@ public class Fruits {
    * @return The slide with some values
    */
   private Uni<FruitListResult> filterAndFill(final Slide<Fruit> slide, final FruitListQuery query) {
-    return query.getCursor().getLimit()
-        .map(limit -> slide.filterAndFill(limit, fruits -> retainSlideValues(query, fruits)))
-        .orElseGet(() -> slide.get().map(list -> list.stream().map(FruitDto::from).toList()))
+    return slide
+        .filterAndFill(query.getCursor().getLimit().orElse(null), fruits -> retainSlideValues(query, fruits))
         .map(list -> FruitListResult.fromDto(query, list))
         .invoke(result -> prepareOutputValue(query, result));
   }

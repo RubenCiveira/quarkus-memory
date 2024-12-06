@@ -34,7 +34,7 @@ public class ApiFirstFruitController implements FruitApi {
   public Response fruitApiList(Integer limit) {
     FruitFilter.FruitFilterBuilder filter = FruitFilter.builder();
     FruitCursor.FruitCursorBuilder cursor = FruitCursor.builder();
-    cursor = cursor.limit(null == limit ? 10 : limit);
+    cursor = cursor.limit(limit);// == limit ? 10 : limit);
     Actor actor = new Actor();
     Connection connection = new Connection();
     return fruits
