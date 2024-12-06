@@ -9,13 +9,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.sql.DataSource;
 
 public class SqlTemplate implements AutoCloseable {
-
   private final Connection connection;
 
   // Constructor que recibe la conexión
@@ -93,8 +94,46 @@ public class SqlTemplate implements AutoCloseable {
     }
   }
 
-  public <T> List<T> query(String sql, SqlConverter<T> converter, SqlParam... params) {
+  public <T> SqlResult<T> query(String sql, SqlConverter<T> converter, SqlParam... params) {
     Map<String, Integer> parameterIndexMap = new HashMap<>();
+    String formatSql = formatSql(sql, params, parameterIndexMap);
+    Function<String, List<T>> execute = (query) -> {
+      try (PreparedStatement prepareStatement = connection.prepareStatement(query)) {
+        for (SqlParam param : params) {
+          Integer position = parameterIndexMap.get(param.name());
+          param.bind(position, prepareStatement);
+        }
+        try (ResultSet executeQuery = prepareStatement.executeQuery()) {
+          List<T> data = new ArrayList<>();
+          while (executeQuery.next()) {
+            data.add(converter.convert(executeQuery));
+          }
+          return data;
+        }
+      } catch (SQLException ex) {
+        throw new UncheckedSqlException(ex);
+      }
+    };
+
+    return new SqlResult<T>() {
+      @Override
+      public Optional<T> one() {
+        return execute.apply(limitResults(formatSql, 1)).stream().findFirst();
+      }
+
+      @Override
+      public List<T> limit(int max) {
+        return execute.apply(limitResults(formatSql, max));
+      }
+
+      @Override
+      public List<T> all() {
+        return execute.apply(formatSql);
+      }
+    };
+  }
+
+  private String formatSql(String sql, SqlParam[] params, Map<String, Integer> parameterIndexMap) {
     try {
       sql = parseSql(escapeIdentifiers(sql), parameterIndexMap);
     } catch (SQLException ex) {
@@ -118,21 +157,7 @@ public class SqlTemplate implements AutoCloseable {
     if (!listSizes.isEmpty()) {
       sql = replaceInPlaceholders(sql, listSizes);
     }
-    try (PreparedStatement prepareStatement = connection.prepareStatement(sql)) {
-      for (SqlParam param : params) {
-        Integer position = parameterIndexMap.get(param.name());
-        param.bind(position, prepareStatement);
-      }
-      try (ResultSet executeQuery = prepareStatement.executeQuery()) {
-        List<T> data = new ArrayList<>();
-        while (executeQuery.next()) {
-          data.add(converter.convert(executeQuery));
-        }
-        return data;
-      }
-    } catch (SQLException ex) {
-      throw new UncheckedSqlException(ex);
-    }
+    return sql;
   }
 
   // select * from tabla where id in ( :id ) or name in ( :name )
@@ -209,5 +234,9 @@ public class SqlTemplate implements AutoCloseable {
     // Agregar el resto del texto
     result.append(sql.substring(lastIndex));
     return result.toString();
+  }
+
+  private String limitResults(String query, int size) {
+    return query + " limit " + size;
   }
 }

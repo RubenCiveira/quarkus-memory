@@ -10,7 +10,6 @@ public class TestApplication implements QuarkusApplication {
    * @param args
    */
   public static void main(String... args) {
-    System.setProperty("liquibase.secureParsing", "false");
     Quarkus.run(TestApplication.class, args);
   }
 

@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.acme.features.fruit.infrastructure.driver.FruitResource;
 import org.jboss.logging.Logger;
 import org.jboss.logging.Logger.Level;
 
@@ -29,7 +28,7 @@ public class Migrations implements AutoCloseable {
     public abstract InputStream open() throws IOException;
   }
 
-  private static final Logger LOG = Logger.getLogger(FruitResource.class);
+  private static final Logger LOG = Logger.getLogger(Migrations.class);
 
   private static final String LOG_TABLE = "_migrations";
   private static final String LOCK_TABLE = "_migrations_lock";

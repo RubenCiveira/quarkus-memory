@@ -2,7 +2,6 @@ package org.acme.common.action;
 
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import io.smallrye.mutiny.Uni;
 
@@ -10,21 +9,18 @@ public abstract class Slide<T> {
 
   public abstract Uni<Slide<T>> next(int limit);
 
-  public abstract List<T> get();
-
-  public Stream<T> stream() {
-    return get().stream();
-  }
+  public abstract Uni<List<T>> get();
 
   public <R> Uni<List<R>> filterAndFill(Integer limit, Function<List<T>, List<R>> consumer) {
-    List<T> initial = get();
-    int readed = initial.size();
-    boolean more = limit != null && readed == limit;
-    List<R> filtered = consumer.apply(initial);
-    return Uni.createFrom().item(filtered)
-        .flatMap(result -> (limit != null && more)
-            ? fetchMorePages(this, filtered, consumer, limit, windowSize(initial, readed, limit))
-            : Uni.createFrom().item(result));
+    return get().flatMap(initial -> {
+      int readed = initial.size();
+      boolean more = limit != null && readed == limit;
+      List<R> filtered = consumer.apply(initial);
+      return Uni.createFrom().item(filtered)
+          .flatMap(result -> (limit != null && more)
+              ? fetchMorePages(this, filtered, consumer, limit, windowSize(initial, readed, limit))
+              : Uni.createFrom().item(result));
+    });
   }
 
   private int windowSize(List<T> initialResult, int readed, Integer limit) {
@@ -37,13 +33,13 @@ public abstract class Slide<T> {
   private <R> Uni<List<R>> fetchMorePages(Slide<T> current, List<R> result,
       Function<List<T>, List<R>> consumer, Integer limit, Integer window) {
     return current.next(window).flatMap(slice -> {
-      List<T> next = slice.get();
-      // FruitListResultDto next = FruitListResultDto.from(nextResult);
-      int readed = next.size();
-      List<R> rest = consumer.apply(next);
-      append(result, rest, limit - result.size());
-      return (readed == 0 || result.size() >= limit) ? Uni.createFrom().item(result)
-          : fetchMorePages(slice, result, consumer, limit, windowSize(next, readed, limit));
+      return slice.get().flatMap(next -> {
+        int readed = next.size();
+        List<R> rest = consumer.apply(next);
+        append(result, rest, limit - result.size());
+        return (readed == 0 || result.size() >= limit) ? Uni.createFrom().item(result)
+            : fetchMorePages(slice, result, consumer, limit, windowSize(next, readed, limit));
+      });
     });
   }
 

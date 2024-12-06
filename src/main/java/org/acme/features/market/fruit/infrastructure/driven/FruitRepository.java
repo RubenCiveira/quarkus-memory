@@ -1,10 +1,9 @@
 package org.acme.features.market.fruit.infrastructure.driven;
 
-import java.util.List;
-
 import javax.sql.DataSource;
 
 import org.acme.common.action.Slide;
+import org.acme.common.sql.SqlResult;
 import org.acme.common.sql.SqlTemplate;
 import org.acme.features.market.fruit.domain.gateway.FruitRepositoryGateway;
 import org.acme.features.market.fruit.domain.interaction.FruitCursor;
@@ -24,11 +23,13 @@ public class FruitRepository implements FruitRepositoryGateway {
   @Override
   public Uni<Slide<Fruit>> list(FruitFilter filter, FruitCursor cursor) {
     try (var template = new SqlTemplate(datasource)) {
-      List<Fruit> list = template.query("select uid, name, version from fruits", row -> {
-        return Fruit.builder().uidValue(row.getString(1)).nameValue(row.getString(2))
-            .versionValue(row.getInt(3)).build();
-      });
-      return Uni.createFrom().item(new FruitRepositorySlice(list, filter, cursor, this));
+      SqlResult<Fruit> result = template.query("select uid, name, version from fruits",
+          row -> Fruit.builder().uidValue(row.getString(1)).nameValue(row.getString(2))
+              .versionValue(row.getInt(3)).build());
+      return Uni.createFrom()
+          .item(new FruitRepositorySlice(
+              cursor.getLimit().map(limit -> result.limit(limit)).orElseGet(() -> result.all()),
+              filter, cursor, this));
     }
   }
 }

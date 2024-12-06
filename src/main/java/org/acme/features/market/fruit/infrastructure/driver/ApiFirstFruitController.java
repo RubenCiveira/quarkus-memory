@@ -8,15 +8,12 @@ import org.acme.features.market.fruit.domain.interaction.FruitFilter;
 import org.acme.features.market.fruit.domain.interaction.query.FruitListQuery;
 import org.acme.openapi.api.FruitApi;
 import org.acme.openapi.model.Fruit;
-import org.jboss.logging.Logger;
 
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.core.Response;
 
 @RequestScoped
 public class ApiFirstFruitController implements FruitApi {
-  private static final Logger LOG = Logger.getLogger(ApiFirstFruitController.class);
-
   private final Fruits fruits;
 
   public ApiFirstFruitController(Fruits fruits) {
@@ -37,9 +34,9 @@ public class ApiFirstFruitController implements FruitApi {
   public Response fruitApiList(Integer limit) {
     FruitFilter.FruitFilterBuilder filter = FruitFilter.builder();
     FruitCursor.FruitCursorBuilder cursor = FruitCursor.builder();
-    cursor = cursor.limit(limit);
-    Actor actor = null;
-    Connection connection = null;
+    cursor = cursor.limit(null == limit ? 10 : limit);
+    Actor actor = new Actor();
+    Connection connection = new Connection();
     return fruits
         .list(FruitListQuery.builder().actor(actor).connection(connection).filter(filter.build())
             .cursor(cursor.build()).build())

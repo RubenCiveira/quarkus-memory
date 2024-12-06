@@ -39,7 +39,7 @@ public class FruitRepositorySlice extends Slide<Fruit> {
   }
 
   @Override
-  public List<Fruit> get() {
-    return fruits;
+  public Uni<List<Fruit>> get() {
+    return Uni.createFrom().item(fruits);
   }
 }
