@@ -15,15 +15,12 @@ class FruitDtoUnitTest {
   void test_fruit_dto_builder() {
     Fruit entity = Fruit.builder().uidValue("one").nameValue("one").versionValue(1).build();
     Fruit fixRef = Fruit.builder().uidValue("two").nameValue("two").versionValue(2).build();
-    Fruit other = Fruit.builder().uidValue("two").nameValue("two").versionValue(2).build();
-    Assertions.assertEquals("two", other.getUid().getValue());
-    Assertions.assertEquals("two", other.getName().getValue());
-    Assertions.assertEquals(2, other.getVersion().getValue().orElse(null));
+    Fruit other;
     FruitDto dto = FruitDto.from(entity);
     Assertions.assertEquals("one", dto.getUid());
     Assertions.assertEquals("one", dto.getName());
     Assertions.assertEquals(1, dto.getVersion());
-    dto.fillEntity(other);
+    other = dto.toEntity();
     dto.hide("-");
     dto.fix("-", fixRef);
     Assertions.assertEquals("one", other.getUid().getValue());
@@ -32,7 +29,7 @@ class FruitDtoUnitTest {
     dto.fix("uid", fixRef);
     dto.fix("name", fixRef);
     dto.fix("version", fixRef);
-    dto.fillEntity(other);
+    other = dto.toEntity();
     Assertions.assertEquals("two", other.getUid().getValue());
     Assertions.assertEquals("two", other.getName().getValue());
     Assertions.assertEquals(2, other.getVersion().getValue().orElse(null));

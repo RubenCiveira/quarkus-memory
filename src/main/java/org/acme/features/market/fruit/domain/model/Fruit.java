@@ -4,12 +4,14 @@ import org.acme.features.market.fruit.domain.model.valueobject.FruitNameVO;
 import org.acme.features.market.fruit.domain.model.valueobject.FruitVersionVO;
 
 import lombok.Builder;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-@Data
+@Getter
+@ToString
 @SuperBuilder(toBuilder = true)
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 public class Fruit extends FruitRef {

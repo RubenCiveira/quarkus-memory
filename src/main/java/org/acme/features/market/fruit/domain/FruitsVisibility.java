@@ -49,8 +49,7 @@ public class FruitsVisibility {
    */
   public Fruit copyWithfixed(Interaction prev, Fruit target, FruitDto source) {
     fieldsToFix(prev).getFixed().forEach(field -> source.fix(field, target));
-    source.fillEntity(target);
-    return target;
+    return source.toEntity();
   }
 
   /**
