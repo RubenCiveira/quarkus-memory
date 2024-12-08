@@ -37,4 +37,5 @@ public class Fruits {
     Fruit entity = this.builders.ruleApply(ActionType.MODIFY, value, base).build();
     return rules.ruleApply(ActionType.MODIFY, entity, base);
   }
+
 }
