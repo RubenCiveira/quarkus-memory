@@ -2,12 +2,11 @@ package org.acme.features.market.fruit.infrastructure.driver;
 
 import org.acme.common.security.Actor;
 import org.acme.common.security.Connection;
-import org.acme.features.market.fruit.domain.Fruits;
+import org.acme.features.market.fruit.application.dto.FruitsUsecase;
 import org.acme.features.market.fruit.domain.interaction.FruitCursor;
 import org.acme.features.market.fruit.domain.interaction.FruitFilter;
 import org.acme.features.market.fruit.domain.interaction.query.FruitListQuery;
 import org.jboss.logging.Logger;
-
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.GET;
@@ -24,9 +23,9 @@ import jakarta.ws.rs.core.UriInfo;
 public class FruitResource {
   private static final Logger LOG = Logger.getLogger(FruitResource.class);
 
-  private final Fruits fruits;
+  private final FruitsUsecase fruits;
 
-  public FruitResource(Fruits fruits) {
+  public FruitResource(FruitsUsecase fruits) {
     this.fruits = fruits;
   }
 

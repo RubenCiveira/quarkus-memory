@@ -94,6 +94,24 @@ public class SqlTemplate implements AutoCloseable {
     }
   }
 
+  public String lastInsertedId() {
+    return null;
+  }
+
+  public int execute(String sql, SqlParam... params) {
+    Map<String, Integer> parameterIndexMap = new HashMap<>();
+    String formatSql = formatSql(sql, params, parameterIndexMap);
+    try (PreparedStatement prepareStatement = connection.prepareStatement(formatSql)) {
+      for (SqlParam param : params) {
+        Integer position = parameterIndexMap.get(param.name());
+        param.bind(position, prepareStatement);
+      }
+      return prepareStatement.executeUpdate();
+    } catch (SQLException ex) {
+      throw new UncheckedSqlException(ex);
+    }
+  }
+
   public <T> SqlResult<T> query(String sql, SqlConverter<T> converter, SqlParam... params) {
     Map<String, Integer> parameterIndexMap = new HashMap<>();
     String formatSql = formatSql(sql, params, parameterIndexMap);
@@ -114,7 +132,6 @@ public class SqlTemplate implements AutoCloseable {
         throw new UncheckedSqlException(ex);
       }
     };
-
     return new SqlResult<T>() {
       @Override
       public Optional<T> one() {

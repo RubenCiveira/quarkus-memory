@@ -1,7 +1,7 @@
 package org.acme.features.market.fruit.infrastructure.driven;
 
 import java.util.Optional;
-
+import java.util.function.Function;
 import javax.sql.DataSource;
 
 import org.acme.common.action.Slide;
@@ -46,6 +46,40 @@ public class FruitRepository implements FruitRepositoryGateway {
                   .versionValue(row.getInt(3)).build(),
               new SqlParam("uid", filter.getUid().get(), SqlType.STRING));
       return Uni.createFrom().item(result.one());
+    }
+  }
+
+  @Override
+  public Uni<Optional<Fruit>> update(String uid, Fruit entity) {
+    return null;
+  }
+  
+  @Override
+  public Uni<Optional<Fruit>> create(Fruit entity) {
+    return createAndVerify(entity, null);
+  }
+  
+  @Override
+  public Uni<Optional<Fruit>> createAndVerify(Fruit entity, Function<Fruit, Boolean> verificator) {
+    try (var template = new SqlTemplate(datasource)) {
+      template.execute("insert into fruits(uid, name, version) values (:uid, :name, 0)",
+              new SqlParam("uid", entity.getUid().getValue(), SqlType.STRING),
+              new SqlParam("name", entity.getName().getValue(), SqlType.STRING));
+      template.commit();
+      if( null == verificator || verificator.apply(entity) ) {
+        return Uni.createFrom().item(Optional.of(entity));
+      } else {
+        rollback(entity);
+        return Uni.createFrom().item(Optional.empty());
+      }
+    }
+  }
+
+  private Uni<Void> rollback(Fruit entity) {
+    try (var template = new SqlTemplate(datasource)) {
+      template.execute("delete from fruits where uid = :uid",
+          new SqlParam("uid", entity.getUid(), SqlType.STRING));
+      return Uni.createFrom().voidItem();
     }
   }
 }

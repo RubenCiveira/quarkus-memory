@@ -4,9 +4,11 @@ import java.time.Duration;
 
 import org.acme.common.security.Actor;
 import org.acme.common.security.Connection;
-import org.acme.features.market.fruit.domain.Fruits;
+import org.acme.features.market.fruit.application.dto.FruitsUsecase;
 import org.acme.features.market.fruit.domain.interaction.FruitCursor;
+import org.acme.features.market.fruit.domain.interaction.FruitDto;
 import org.acme.features.market.fruit.domain.interaction.FruitFilter;
+import org.acme.features.market.fruit.domain.interaction.command.FruitCreateCommand;
 import org.acme.features.market.fruit.domain.interaction.query.FruitListQuery;
 import org.acme.features.market.fruit.domain.interaction.query.FruitRetrieveQuery;
 import org.acme.openapi.api.FruitApi;
@@ -17,15 +19,22 @@ import jakarta.ws.rs.core.Response;
 
 @RequestScoped
 public class ApiFirstFruitController implements FruitApi {
-  private final Fruits fruits;
+  private final FruitsUsecase fruits;
 
-  public ApiFirstFruitController(Fruits fruits) {
+  public ApiFirstFruitController(FruitsUsecase fruits) {
     this.fruits = fruits;
   }
 
   @Override
   public Response fruitApiCreate(Fruit fruit) {
-    return null;
+    Actor actor = new Actor();
+    Connection connection = new Connection();
+    FruitDto dto = FruitDto.builder().uid(fruit.getUid()).name(fruit.getName())
+        .version(fruit.getVersion()).build();
+    FruitCreateCommand command =
+        FruitCreateCommand.builder().actor(actor).connection(connection).dto(dto).build();
+    return fruits.create(command).map(item -> item.getFruit().map(res -> Response.ok(res).build())
+        .orElseGet(() -> Response.status(404).build())).await().atMost(Duration.ofSeconds(2));
   }
 
   @Override

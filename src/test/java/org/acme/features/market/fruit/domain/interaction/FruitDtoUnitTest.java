@@ -39,5 +39,15 @@ class FruitDtoUnitTest {
     Assertions.assertNull(dto.getUid());
     Assertions.assertNull(dto.getName());
     Assertions.assertNull(dto.getVersion());
+    dto = FruitDto.from(entity);
+    Assertions.assertEquals("one", dto.getUid());
+    Assertions.assertEquals("one", dto.getName());
+    Assertions.assertEquals(1, dto.getVersion());
+    dto.fix("uid", null);
+    dto.fix("name", null);
+    dto.fix("version", null);
+    Assertions.assertNull(dto.getUid());
+    Assertions.assertNull(dto.getName());
+    Assertions.assertNull(dto.getVersion());
   }
 }
