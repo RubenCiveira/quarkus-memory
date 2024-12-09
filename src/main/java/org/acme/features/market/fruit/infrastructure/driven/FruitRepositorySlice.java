@@ -2,14 +2,14 @@ package org.acme.features.market.fruit.infrastructure.driven;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import org.acme.common.action.Slide;
+import org.acme.features.market.fruit.domain.gateway.FruitCursor;
+import org.acme.features.market.fruit.domain.gateway.FruitFilter;
 import org.acme.features.market.fruit.domain.gateway.FruitRepositoryGateway;
-import org.acme.features.market.fruit.domain.interaction.FruitCursor;
-import org.acme.features.market.fruit.domain.interaction.FruitFilter;
 import org.acme.features.market.fruit.domain.model.Fruit;
-
-import io.smallrye.mutiny.Uni;
 
 public class FruitRepositorySlice extends Slide<Fruit> {
   private final List<Fruit> fruits;
@@ -17,9 +17,9 @@ public class FruitRepositorySlice extends Slide<Fruit> {
   private final FruitCursor cursor;
   private final FruitRepositoryGateway gateway;
 
-  public FruitRepositorySlice(List<Fruit> fruits, FruitFilter filter, FruitCursor cursor,
-      FruitRepositoryGateway gateway) {
-    super();
+  public FruitRepositorySlice(Optional<Integer> limit, List<Fruit> fruits, FruitFilter filter,
+      FruitCursor cursor, FruitRepositoryGateway gateway) {
+    super(limit);
     this.fruits = new ArrayList<>(fruits);
     this.gateway = gateway;
     this.filter = filter;
@@ -27,9 +27,10 @@ public class FruitRepositorySlice extends Slide<Fruit> {
   }
 
   @Override
-  public Uni<Slide<Fruit>> next(int limit) {
+  public Slide<Fruit> next(int limit) {
+    System.out.println("Estamos pidiente con " + limit);
     if (fruits.isEmpty()) {
-      return Uni.createFrom().item(this);
+      return this;
     } else {
       Fruit last = fruits.get(fruits.size() - 1);
       FruitCursor cr =
@@ -39,7 +40,7 @@ public class FruitRepositorySlice extends Slide<Fruit> {
   }
 
   @Override
-  public Uni<List<Fruit>> get() {
-    return Uni.createFrom().item(fruits);
+  public CompletableFuture<List<Fruit>> get() {
+    return CompletableFuture.completedFuture(fruits);
   }
 }

@@ -2,11 +2,13 @@ package org.acme.features.market.fruit.infrastructure.driver;
 
 import org.acme.common.security.Actor;
 import org.acme.common.security.Connection;
-import org.acme.features.market.fruit.application.dto.FruitsUsecase;
-import org.acme.features.market.fruit.domain.interaction.FruitCursor;
-import org.acme.features.market.fruit.domain.interaction.FruitFilter;
-import org.acme.features.market.fruit.domain.interaction.query.FruitListQuery;
+import org.acme.features.market.fruit.application.interaction.query.FruitListQuery;
+import org.acme.features.market.fruit.application.interaction.result.FruitListResult;
+import org.acme.features.market.fruit.application.usecase.ListFruitUsecase;
+import org.acme.features.market.fruit.domain.gateway.FruitCursor;
+import org.acme.features.market.fruit.domain.gateway.FruitFilter;
 import org.jboss.logging.Logger;
+
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.GET;
@@ -23,9 +25,9 @@ import jakarta.ws.rs.core.UriInfo;
 public class FruitResource {
   private static final Logger LOG = Logger.getLogger(FruitResource.class);
 
-  private final FruitsUsecase fruits;
+  private final ListFruitUsecase fruits;
 
-  public FruitResource(FruitsUsecase fruits) {
+  public FruitResource(ListFruitUsecase fruits) {
     this.fruits = fruits;
   }
 
@@ -42,8 +44,9 @@ public class FruitResource {
     cursor = cursor.limit(40);
     Actor actor = null;
     Connection connection = null;
-    return fruits.list(FruitListQuery.builder().actor(actor).connection(connection)
-        .filter(filter.build()).cursor(cursor.build()).build())
-        .map(items -> Response.ok(items.getFruits()).build());
+    FruitListResult list = fruits.list(FruitListQuery.builder().actor(actor).connection(connection)
+        .filter(filter.build()).cursor(cursor.build()).build());
+    return Uni.createFrom()
+        .completionStage(list.getFruits().thenApply(values -> Response.ok(values).build()));
   }
 }

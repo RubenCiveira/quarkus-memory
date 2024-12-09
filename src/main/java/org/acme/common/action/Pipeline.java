@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
-public class Pipeline<T,K> {
+public class Pipeline<T, K> {
   private final Map<K, UnaryOperator<T>> suppliersByActionType;
 
   public Pipeline(K[] values, List<? extends Pipe<T, K>> ruleList) {

@@ -1,17 +1,19 @@
 package org.acme.features.market.fruit.domain.model;
 
 import org.acme.features.market.fruit.domain.model.valueobject.FruitUidVO;
-import lombok.AllArgsConstructor;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 @Getter
 @ToString
-@AllArgsConstructor
+@SuperBuilder(toBuilder = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class FruitRef {
+
   /**
    * A number to identify the db record
    *
@@ -19,5 +21,5 @@ public class FruitRef {
    */
   @EqualsAndHashCode.Include
   @NonNull
-  protected final FruitUidVO uid;
+  private FruitUidVO uid;
 }

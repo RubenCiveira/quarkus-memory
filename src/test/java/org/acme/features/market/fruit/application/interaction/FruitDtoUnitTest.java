@@ -1,6 +1,9 @@
-package org.acme.features.market.fruit.domain.interaction;
+package org.acme.features.market.fruit.application.interaction;
 
 import org.acme.features.market.fruit.domain.model.Fruit;
+import org.acme.features.market.fruit.domain.model.valueobject.FruitNameVO;
+import org.acme.features.market.fruit.domain.model.valueobject.FruitUidVO;
+import org.acme.features.market.fruit.domain.model.valueobject.FruitVersionVO;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,14 +16,16 @@ class FruitDtoUnitTest {
   @Test
   @DisplayName("Test a entity reference contruction")
   void test_fruit_dto_builder() {
-    Fruit entity = Fruit.builder().uidValue("one").nameValue("one").versionValue(1).build();
-    Fruit fixRef = Fruit.builder().uidValue("two").nameValue("two").versionValue(2).build();
+    Fruit entity = Fruit.builder().uid(FruitUidVO.from("one")).name(FruitNameVO.from("one"))
+        .version(FruitVersionVO.from(1)).build();
+    Fruit fixRef = Fruit.builder().uid(FruitUidVO.from("two")).name(FruitNameVO.from("two"))
+        .version(FruitVersionVO.from(2)).build();
     Fruit other;
     FruitDto dto = FruitDto.from(entity);
     Assertions.assertEquals("one", dto.getUid());
     Assertions.assertEquals("one", dto.getName());
     Assertions.assertEquals(1, dto.getVersion());
-    other = dto.toEntity();
+    other = dto.toEntityBuilder().build();
     dto.hide("-");
     dto.fix("-", fixRef);
     Assertions.assertEquals("one", other.getUid().getValue());
@@ -29,7 +34,7 @@ class FruitDtoUnitTest {
     dto.fix("uid", fixRef);
     dto.fix("name", fixRef);
     dto.fix("version", fixRef);
-    other = dto.toEntity();
+    other = dto.toEntityBuilder().build();
     Assertions.assertEquals("two", other.getUid().getValue());
     Assertions.assertEquals("two", other.getName().getValue());
     Assertions.assertEquals(2, other.getVersion().getValue().orElse(null));
