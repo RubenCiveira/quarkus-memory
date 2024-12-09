@@ -4,8 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.sql.DataSource;
 import org.acme.common.action.Slide;
+import org.acme.common.sql.SqlCondition;
+import org.acme.common.sql.SqlCondition.Operator;
 import org.acme.common.sql.SqlParam;
+import org.acme.common.sql.SqlQuery;
 import org.acme.common.sql.SqlResult;
+import org.acme.common.sql.SqlSchematicQuery;
 import org.acme.common.sql.SqlTemplate;
 import org.acme.common.sql.SqlType;
 import org.acme.features.market.fruit.domain.gateway.FruitCursor;
@@ -25,7 +29,36 @@ public class FruitRepository implements FruitRepositoryGateway {
 
   @Override
   public Slide<Fruit> list(FruitFilter filter, FruitCursor cursor) {
+    System.out.println("&&&&&&&&&&");
+    try( SqlQuery<Fruit> sq = new SqlQuery<>(datasource, "select * from fruits where uid > :_uid_22 order by uid asc") ) {
+      List<Fruit> query = sq.with("_uid_22", "45aaf03d-04dd-4618-95e4-8424aa16a0f2").query(row -> Fruit.builder().uid(FruitUidVO.from(row.getString(1)))
+          .name(FruitNameVO.from(row.getString(2))).version(FruitVersionVO.from(row.getInt(3)))
+          .build()).limit(10);
+      System.out.println("TENGO ==");
+      System.err.println( query );
+      System.out.println("<< ==");
+      System.out.println("<< ==");
+      System.out.println("<< ==");
+    }
+    
+    try( SqlSchematicQuery<Fruit> sq = new SqlSchematicQuery<>(datasource, "fruits") ) {
+      sq.select("uid", "name", "version");
+      sq.where("uid", SqlCondition.of(Operator.GT, "45aaf03d-04dd-4618-95e4-8424aa16a0f2"));
+      sq.orderAsc("uid");
+      List<Fruit> limit = sq.query(row -> Fruit.builder().uid(FruitUidVO.from(row.getString(1)))
+          .name(FruitNameVO.from(row.getString(2))).version(FruitVersionVO.from(row.getInt(3)))
+          .build()).limit(10);
+      
+      System.out.println("TAMBIEN TENGO ==");
+      System.err.println( limit );
+      System.out.println("<< ==");
+      System.out.println("<< ==");
+      System.out.println("<< ==");
+    }
+    
     try (var template = new SqlTemplate(datasource)) {
+      template.query("", null);
+      
       List<SqlParam> params = new ArrayList<>();
       StringBuilder where = new StringBuilder();
       cursor.getSinceUid().ifPresent( since -> {

@@ -6,29 +6,33 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.sql.DataSource;
 
-public class SqlTemplate implements AutoCloseable {
+public abstract class SqlParametrized<T extends SqlParametrized<T>> implements AutoCloseable {
+  public static interface PsConsumer {
+    void accept(int index, PreparedStatement ps) throws SQLException;
+  }
+
+  private final Map<String, PsConsumer> parameters = new LinkedHashMap<>();
+  private final Map<String, Object> arrays = new LinkedHashMap<>();
+
   private final Connection connection;
 
-  // Constructor que recibe la conexión
-  public SqlTemplate(Connection connection) {
+  public SqlParametrized(Connection connection) {
     if (connection == null) {
       throw new IllegalArgumentException("Connection cannot be null");
     }
     this.connection = connection;
   }
 
-  // Constructor que recibe la conexión
-  public SqlTemplate(DataSource source) {
+  public SqlParametrized(DataSource source) {
     if (source == null) {
       throw new IllegalArgumentException("Connection cannot be null");
     }
@@ -38,7 +42,6 @@ public class SqlTemplate implements AutoCloseable {
       throw new UncheckedSqlException(ex);
     }
   }
-
 
   /**
    * Inicia una transacción configurando auto-commit en false.
@@ -93,64 +96,76 @@ public class SqlTemplate implements AutoCloseable {
       throw new UncheckedSqlException(ex);
     }
   }
-
-  public String lastInsertedId() {
-    return null;
+  
+  @SuppressWarnings("unchecked")
+  protected T with(String name, PsConsumer consumer) {
+    parameters.put(name, consumer);
+    return (T) this;
   }
 
-  public int execute(String sql, SqlParam... params) {
-    Map<String, Integer> parameterIndexMap = new HashMap<>();
-    String formatSql = formatSql(sql, params, parameterIndexMap);
-    try (PreparedStatement prepareStatement = connection.prepareStatement(formatSql)) {
-      for (SqlParam param : params) {
-        Integer position = parameterIndexMap.get(param.name());
-        param.bind(position, prepareStatement);
+  public T with(String name, String value) {
+    return with(name, (index, ps) -> ps.setString(index, value));
+  }
+
+  @SuppressWarnings("unchecked")
+  public T with(String name, String[] values) {
+    parameters.put(name, (index, ps) -> {
+      for (int i = 0; i < values.length; i++) {
+        ps.setString(index + i, values[i]);
       }
-      return prepareStatement.executeUpdate();
-    } catch (SQLException ex) {
-      throw new UncheckedSqlException(ex);
+    });
+    arrays.put(name, values);
+    return (T) this;
+  }
+
+  protected int executeUpdate(String sql) {
+    try (PreparedStatement run = prepareStatement(sql)) {
+      return run.executeUpdate();
+    } catch (SQLException e) {
+      throw new UncheckedSqlException(e);
     }
   }
 
-  public <T> SqlResult<T> query(String sql, SqlConverter<T> converter, SqlParam... params) {
-    Map<String, Integer> parameterIndexMap = new HashMap<>();
-    String formatSql = formatSql(sql, params, parameterIndexMap);
-    Function<String, List<T>> execute = (query) -> {
-      try (PreparedStatement prepareStatement = connection.prepareStatement(query)) {
-        for (SqlParam param : params) {
-          Integer position = parameterIndexMap.get(param.name());
-          param.bind(position, prepareStatement);
+  protected <R> SqlResult<R> executeQuery(String sql, SqlConverter<R> converter) {
+    Function<String, List<R>> execute = (query) -> {
+      try (PreparedStatement prepareStatement = prepareStatement(query);
+          ResultSet executeQuery = prepareStatement.executeQuery()) {
+        List<R> data = new ArrayList<>();
+        while (executeQuery.next()) {
+          data.add(converter.convert(executeQuery));
         }
-        try (ResultSet executeQuery = prepareStatement.executeQuery()) {
-          List<T> data = new ArrayList<>();
-          while (executeQuery.next()) {
-            data.add(converter.convert(executeQuery));
-          }
-          return data;
-        }
+        return data;
       } catch (SQLException ex) {
         throw new UncheckedSqlException(ex);
       }
     };
-    return new SqlResult<T>() {
+    return new SqlResult<R>() {
       @Override
-      public Optional<T> one() {
-        return execute.apply(limitResults(formatSql, 1)).stream().findFirst();
+      public Optional<R> one() {
+        return execute.apply(limitResults(sql, 1)).stream().findFirst();
       }
 
       @Override
-      public List<T> limit(int max) {
-        return execute.apply(limitResults(formatSql, max));
+      public List<R> limit(int max) {
+        return execute.apply(limitResults(sql, max));
       }
 
       @Override
-      public List<T> all() {
-        return execute.apply(formatSql);
+      public List<R> all() {
+        return execute.apply(sql);
       }
     };
   }
 
-  private String formatSql(String sql, SqlParam[] params, Map<String, Integer> parameterIndexMap) {
+  protected PreparedStatement prepareStatement(String sql) throws SQLException {
+    Map<String, Integer> parameterIndexMap = new LinkedHashMap<>();
+    PreparedStatement prepareStatement =
+        connection.prepareStatement(formatSql(sql, parameterIndexMap));
+    applyParameters(parameterIndexMap, prepareStatement);
+    return prepareStatement;
+  }
+
+  private String formatSql(String sql, Map<String, Integer> parameterIndexMap) {
     try {
       sql = parseSql(escapeIdentifiers(sql), parameterIndexMap);
     } catch (SQLException ex) {
@@ -158,19 +173,18 @@ public class SqlTemplate implements AutoCloseable {
     }
     // aquellos que sean listas: toca expandirlos.
     List<Integer> listSizes = new ArrayList<>();
-    for (SqlParam param : params) {
-      Object[] array = param.asArray();
-      if (null != array) {
+    arrays.forEach((name, value) -> {
+      if (value instanceof Object[] array) {
         listSizes.add(array.length);
-        Integer position = parameterIndexMap.get(param.name());
-        parameterIndexMap.forEach((key, value) -> {
-          if (value > position) {
+        Integer position = parameterIndexMap.get(name);
+        parameterIndexMap.forEach((key, index) -> {
+          if (index > position) {
             parameterIndexMap.remove(key);
-            parameterIndexMap.put(key, value + array.length - 1);
+            parameterIndexMap.put(key, index + array.length - 1);
           }
         });
       }
-    }
+    });
     if (!listSizes.isEmpty()) {
       sql = replaceInPlaceholders(sql, listSizes);
     }
@@ -182,22 +196,23 @@ public class SqlTemplate implements AutoCloseable {
     int index = 1;
 
     for (int i = 0; i < sql.length(); i++) {
-      char c = sql.charAt(i);
-      if (c == ':' && i + 1 < sql.length() && Character.isLetter(sql.charAt(i + 1))) {
-        int j = i + 1;
-        while (j < sql.length()
-            && (Character.isLetterOrDigit(sql.charAt(j)) || sql.charAt(j) == '_')) {
-          j++;
+        char c = sql.charAt(i);
+        if (c == ':' && i + 1 < sql.length() && 
+            (Character.isLetter(sql.charAt(i + 1)) || sql.charAt(i + 1) == '_')) {
+            int j = i + 1;
+            while (j < sql.length() && 
+                   (Character.isLetterOrDigit(sql.charAt(j)) || sql.charAt(j) == '_')) {
+                j++;
+            }
+            String paramName = sql.substring(i + 1, j);
+            if (!parameterIndexMap.containsKey(paramName)) {
+                parameterIndexMap.put(paramName, index++);
+            }
+            parsedSql.append('?');
+            i = j - 1;
+        } else {
+            parsedSql.append(c);
         }
-        String paramName = sql.substring(i + 1, j);
-        if (!parameterIndexMap.containsKey(paramName)) {
-          parameterIndexMap.put(paramName, index++);
-        }
-        parsedSql.append('?');
-        i = j - 1;
-      } else {
-        parsedSql.append(c);
-      }
     }
     return parsedSql.toString();
   }
@@ -250,7 +265,23 @@ public class SqlTemplate implements AutoCloseable {
     return result.toString();
   }
 
+  private void applyParameters(Map<String, Integer> parameterIndexMap,
+      PreparedStatement preparedStatement) {
+    parameters.forEach((key, value) -> {
+      if( !parameterIndexMap.containsKey(key) ) {
+        throw new IllegalArgumentException("No param " + key + " on the sentence");
+      } else {
+        try {
+          value.accept(parameterIndexMap.get(key), preparedStatement);
+        } catch (SQLException ex) {
+          throw new UncheckedSqlException(ex);
+        }
+      }
+    });
+  }
+
   private String limitResults(String query, int size) {
     return query + " limit " + size;
   }
 }
+
