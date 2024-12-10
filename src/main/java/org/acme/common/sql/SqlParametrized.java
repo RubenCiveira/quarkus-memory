@@ -13,108 +13,23 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.sql.DataSource;
 
-public abstract class SqlParametrized<T extends SqlParametrized<T>> implements AutoCloseable {
-  public static interface PsConsumer {
-    void accept(int index, PreparedStatement ps) throws SQLException;
-  }
-
-  private final Map<String, PsConsumer> parameters = new LinkedHashMap<>();
-  private final Map<String, Object> arrays = new LinkedHashMap<>();
+public abstract class SqlParametrized<T extends SqlParametrized<T>> {
+  private final Map<String, SqlParameterValue> parameters = new LinkedHashMap<>();
+  private final Map<String, Integer> arrays = new LinkedHashMap<>();
 
   private final Connection connection;
 
-  public SqlParametrized(Connection connection) {
-    if (connection == null) {
-      throw new IllegalArgumentException("Connection cannot be null");
-    }
-    this.connection = connection;
+  public SqlParametrized(SqlTemplate template) {
+    this.connection = template.currentConnection();
   }
 
-  public SqlParametrized(DataSource source) {
-    if (source == null) {
-      throw new IllegalArgumentException("Connection cannot be null");
-    }
-    try {
-      this.connection = source.getConnection();
-    } catch (SQLException ex) {
-      throw new UncheckedSqlException(ex);
-    }
-  }
-
-  /**
-   * Inicia una transacción configurando auto-commit en false.
-   */
-  public void begin() {
-    try {
-      if (connection.getAutoCommit()) {
-        connection.setAutoCommit(false);
-      }
-    } catch (SQLException ex) {
-      throw new UncheckedSqlException(ex);
-    }
-  }
-
-  /**
-   * Realiza un commit de la transacción actual.
-   */
-  public void commit() {
-    try {
-      if (!connection.getAutoCommit()) {
-        connection.commit();
-        connection.setAutoCommit(true); // Vuelve a habilitar auto-commit
-      }
-    } catch (SQLException ex) {
-      throw new UncheckedSqlException(ex);
-    }
-  }
-
-  /**
-   * Realiza un rollback de la transacción actual.
-   */
-  public void rollback() {
-    try {
-      if (!connection.getAutoCommit()) {
-        connection.rollback();
-        connection.setAutoCommit(true); // Vuelve a habilitar auto-commit
-      }
-    } catch (SQLException ex) {
-      throw new UncheckedSqlException(ex);
-    }
-  }
-
-  /**
-   * Cierra la conexión.
-   */
-  public void close() {
-    try {
-      if (!connection.isClosed()) {
-        connection.close();
-      }
-    } catch (SQLException ex) {
-      throw new UncheckedSqlException(ex);
-    }
-  }
-  
   @SuppressWarnings("unchecked")
-  protected T with(String name, PsConsumer consumer) {
+  protected T with(String name, SqlParameterValue consumer) {
     parameters.put(name, consumer);
-    return (T) this;
-  }
-
-  public T with(String name, String value) {
-    return with(name, (index, ps) -> ps.setString(index, value));
-  }
-
-  @SuppressWarnings("unchecked")
-  public T with(String name, String[] values) {
-    parameters.put(name, (index, ps) -> {
-      for (int i = 0; i < values.length; i++) {
-        ps.setString(index + i, values[i]);
-      }
-    });
-    arrays.put(name, values);
+    if(consumer instanceof SqlListParameterValue list) {
+      arrays.put(name, list.size());
+    }
     return (T) this;
   }
 
@@ -143,6 +58,11 @@ public abstract class SqlParametrized<T extends SqlParametrized<T>> implements A
       @Override
       public Optional<R> one() {
         return execute.apply(limitResults(sql, 1)).stream().findFirst();
+      }
+      
+      @Override
+      public List<R> limit(Optional<Integer> max) {
+        return max.map(this::limit).orElseGet(this::all);
       }
 
       @Override
@@ -174,16 +94,14 @@ public abstract class SqlParametrized<T extends SqlParametrized<T>> implements A
     // aquellos que sean listas: toca expandirlos.
     List<Integer> listSizes = new ArrayList<>();
     arrays.forEach((name, value) -> {
-      if (value instanceof Object[] array) {
-        listSizes.add(array.length);
-        Integer position = parameterIndexMap.get(name);
-        parameterIndexMap.forEach((key, index) -> {
-          if (index > position) {
-            parameterIndexMap.remove(key);
-            parameterIndexMap.put(key, index + array.length - 1);
-          }
-        });
-      }
+      listSizes.add(value);
+      Integer position = parameterIndexMap.get(name);
+      parameterIndexMap.forEach((key, index) -> {
+        if (index > position) {
+          parameterIndexMap.remove(key);
+          parameterIndexMap.put(key, index + value - 1);
+        }
+      });
     });
     if (!listSizes.isEmpty()) {
       sql = replaceInPlaceholders(sql, listSizes);

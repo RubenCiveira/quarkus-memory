@@ -2,7 +2,6 @@ package org.acme.common.sql;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.acme.common.sql.SqlParametrized.PsConsumer;
 
 public class SchematicQuery {
   private final String type;
@@ -60,17 +59,22 @@ public class SchematicQuery {
     join.append( escape(table) + " as " + escape(as) + " on " + escape(currentOn) + " = " + escape(remoteOn));
   }
   
-  public void set(String field, PsConsumer value) {
+  public void set(String field, SqlParameterValue value) {
     String name = "_value_" + set.size();
     parametrized.with(name, value);
     set.put(escape(field), ":" + name);
   }
   
-  public void where(String field, SqlCondition operator) {
+  public void where(String field, SqlOperator operator, SqlParameterValue value) {
     String name = "_field_" + where.length();
-    where.append(" and " + escape(field) + " " + operator.getOperator() + " :" + name);
-    parametrized.with(name, operator.getConsumer());
+    where.append(" and " + escape(field) + " " + operator + " :" + name);
+    parametrized.with(name, value);
+    
   }
+  
+//  public void where(String field, SqlCondition operator) {
+//    this.where(field, operator.getOperator(), operator.getConsumer());
+//  }
   
   public void orderAsc(String field) {
     order(field, "asc");

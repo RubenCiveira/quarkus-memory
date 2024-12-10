@@ -1,18 +1,10 @@
 package org.acme.common.sql;
 
-import java.sql.Connection;
-import javax.sql.DataSource;
-
 public final class SqlSchematicQuery<T> extends AbstractSqlQuery<T, SqlSchematicQuery<T>> {
   private final SchematicQuery query;
   
-  public SqlSchematicQuery(Connection connection, String table) {
-    super(connection);
-    this.query = new SchematicQuery("SELECT",  table, this);
-  }
-
-  public SqlSchematicQuery(DataSource source, String table) {
-    super(source);
+  public SqlSchematicQuery(SqlTemplate template, String table) {
+    super(template);
     this.query = new SchematicQuery("SELECT",  table, this);
   }
 
@@ -25,12 +17,7 @@ public final class SqlSchematicQuery<T> extends AbstractSqlQuery<T, SqlSchematic
     this.query.select(fields);
     return this;
   }
-  
-  public SqlSchematicQuery<T> where(String field, SqlCondition value) {
-    this.query.where(field, value);
-    return this;
-  }
-  
+
   public SqlSchematicQuery<T> orderAsc(String field) {
     this.query.orderAsc(field);
     return this;
@@ -38,6 +25,11 @@ public final class SqlSchematicQuery<T> extends AbstractSqlQuery<T, SqlSchematic
   
   public SqlSchematicQuery<T> orderDesc(String field) {
     this.query.orderDesc(field);
+    return this;
+  }
+
+  public SqlSchematicQuery<T>  where(String string, SqlOperator gt, SqlParameterValue of) {
+    this.query.where(string, gt, of);
     return this;
   }
 }

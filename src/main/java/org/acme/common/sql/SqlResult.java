@@ -7,6 +7,8 @@ public interface SqlResult<T> {
 
   Optional<T> one();
 
+  List<T> limit(Optional<Integer> max);
+  
   List<T> limit(int max);
 
   List<T> all();
