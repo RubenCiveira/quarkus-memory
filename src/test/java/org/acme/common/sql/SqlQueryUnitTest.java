@@ -5,6 +5,5 @@ import org.junit.jupiter.api.Test;
 class SqlQueryUnitTest {
 
   @Test
-  void test() {
-  }
+  void test() {}
 }

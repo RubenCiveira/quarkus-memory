@@ -2,6 +2,7 @@ package org.acme.common.sql;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+
 import javax.sql.DataSource;
 
 public class SqlTemplate implements AutoCloseable {

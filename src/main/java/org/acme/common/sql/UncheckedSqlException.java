@@ -23,7 +23,7 @@ public class UncheckedSqlException extends RuntimeException {
       return new UncheckedSqlException("SQL error: " + sqlException.getMessage(), sqlException);
     }
   }
-  
+
   private static String getDatabaseProductName(Connection connection) {
     try {
       DatabaseMetaData metaData = connection.getMetaData();
@@ -87,7 +87,7 @@ public class UncheckedSqlException extends RuntimeException {
     }
   }
 
-  
+
   public UncheckedSqlException(SQLException ex) {
     super(ex);
   }

@@ -28,7 +28,7 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
   @SuppressWarnings("unchecked")
   protected T with(String name, SqlParameterValue consumer) {
     parameters.put(name, consumer);
-    if(consumer instanceof SqlListParameterValue list) {
+    if (consumer instanceof SqlListParameterValue list) {
       arrays.put(name, list.size());
     }
     return (T) this;
@@ -60,7 +60,7 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
       public Optional<R> one() {
         return execute.apply(limitResults(sql, 1)).stream().findFirst();
       }
-      
+
       @Override
       public List<R> limit(Optional<Integer> max) {
         return max.map(this::limit).orElseGet(this::all);
@@ -111,23 +111,23 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
     int index = 1;
 
     for (int i = 0; i < sql.length(); i++) {
-        char c = sql.charAt(i);
-        if (c == ':' && i + 1 < sql.length() && 
-            (Character.isLetter(sql.charAt(i + 1)) || sql.charAt(i + 1) == '_')) {
-            int j = i + 1;
-            while (j < sql.length() && 
-                   (Character.isLetterOrDigit(sql.charAt(j)) || sql.charAt(j) == '_')) {
-                j++;
-            }
-            String paramName = sql.substring(i + 1, j);
-            if (!parameterIndexMap.containsKey(paramName)) {
-                parameterIndexMap.put(paramName, index++);
-            }
-            parsedSql.append('?');
-            i = j - 1;
-        } else {
-            parsedSql.append(c);
+      char c = sql.charAt(i);
+      if (c == ':' && i + 1 < sql.length()
+          && (Character.isLetter(sql.charAt(i + 1)) || sql.charAt(i + 1) == '_')) {
+        int j = i + 1;
+        while (j < sql.length()
+            && (Character.isLetterOrDigit(sql.charAt(j)) || sql.charAt(j) == '_')) {
+          j++;
         }
+        String paramName = sql.substring(i + 1, j);
+        if (!parameterIndexMap.containsKey(paramName)) {
+          parameterIndexMap.put(paramName, index++);
+        }
+        parsedSql.append('?');
+        i = j - 1;
+      } else {
+        parsedSql.append(c);
+      }
     }
     return parsedSql.toString();
   }
@@ -185,7 +185,7 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
     for (Entry<String, SqlParameterValue> entry : parameters.entrySet()) {
       String key = entry.getKey();
       SqlParameterValue value = entry.getValue();
-      if( !parameterIndexMap.containsKey(key) ) {
+      if (!parameterIndexMap.containsKey(key)) {
         throw new IllegalArgumentException("No param " + key + " on the sentence");
       } else {
         value.accept(parameterIndexMap.get(key), preparedStatement);

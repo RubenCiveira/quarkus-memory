@@ -1,6 +1,7 @@
 package org.acme.features.market.fruit.infrastructure.driven;
 
 import javax.sql.DataSource;
+
 import org.acme.common.action.Slide;
 import org.acme.common.sql.SqlOperator;
 import org.acme.common.sql.SqlParameterValue;
@@ -13,6 +14,7 @@ import org.acme.features.market.fruit.domain.model.Fruit;
 import org.acme.features.market.fruit.domain.model.valueobject.FruitNameVO;
 import org.acme.features.market.fruit.domain.model.valueobject.FruitUidVO;
 import org.acme.features.market.fruit.domain.model.valueobject.FruitVersionVO;
+
 import jakarta.enterprise.context.RequestScoped;
 import lombok.RequiredArgsConstructor;
 
@@ -26,7 +28,8 @@ public class FruitRepository implements FruitRepositoryGateway {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       SqlSchematicQuery<Fruit> sq = template.createSqlSchematicQuery("fruits");
       sq.select("uid", "name", "version");
-      cursor.getSinceUid().ifPresent(since -> sq.where("uid", SqlOperator.GT, SqlParameterValue.of(since)));
+      cursor.getSinceUid()
+          .ifPresent(since -> sq.where("uid", SqlOperator.GT, SqlParameterValue.of(since)));
       sq.orderAsc("uid");
       return new FruitRepositorySlice(cursor.getLimit(),
           sq.query(row -> Fruit.builder().uid(FruitUidVO.from(row.getString(1)))

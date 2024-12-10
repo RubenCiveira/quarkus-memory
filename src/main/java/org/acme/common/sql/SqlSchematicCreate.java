@@ -11,5 +11,5 @@ public final class SqlSchematicCreate extends AbstractSqlCommand<SqlSchematicCre
     // TODO Auto-generated method stub
     return 0;
   }
-  
+
 }

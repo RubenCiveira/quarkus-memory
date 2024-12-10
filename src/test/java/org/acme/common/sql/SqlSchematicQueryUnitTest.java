@@ -5,6 +5,5 @@ import org.junit.jupiter.api.Test;
 class SqlSchematicQueryUnitTest {
 
   @Test
-  void test() {
-  }
+  void test() {}
 }

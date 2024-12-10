@@ -14,5 +14,5 @@ public class NotExistentReferenceException extends UncheckedSqlException {
     super(msg, ex);
   }
 
-  
+
 }

@@ -11,7 +11,8 @@ class GenericSqlListParameterValues<T> implements SqlListParameterValue {
   private final T[] data;
   private final GenericSqlListParameterValues.GenericSqlListParameterValue<T> value;
 
-  public GenericSqlListParameterValues(T[] data, GenericSqlListParameterValues.GenericSqlListParameterValue<T> value) {
+  public GenericSqlListParameterValues(T[] data,
+      GenericSqlListParameterValues.GenericSqlListParameterValue<T> value) {
     this.data = data;
     this.value = value;
   }

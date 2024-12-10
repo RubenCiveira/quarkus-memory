@@ -1,7 +1,8 @@
 package org.acme.common.sql;
 
-public abstract class AbstractSqlCommand<T extends AbstractSqlCommand<T>> extends AbstractSqlParametrized<T> {
-  
+public abstract class AbstractSqlCommand<T extends AbstractSqlCommand<T>>
+    extends AbstractSqlParametrized<T> {
+
   public AbstractSqlCommand(SqlTemplate template) {
     super(template);
   }
