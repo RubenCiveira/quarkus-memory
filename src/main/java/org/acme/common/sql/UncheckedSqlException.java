@@ -10,13 +10,14 @@ public class UncheckedSqlException extends RuntimeException {
   public static UncheckedSqlException exception(Connection connection, SQLException sqlException) {
     String databaseProductName = getDatabaseProductName(connection);
     int errorCode = sqlException.getErrorCode();
-    if (isDuplicateKeyError(databaseProductName, errorCode)) {
+    String sqlState = sqlException.getSQLState();
+    if (isDuplicateKeyError(databaseProductName, sqlState, errorCode)) {
       return new NotUniqueException("Duplicate key error: " + sqlException.getMessage(),
           sqlException);
-    } else if (isReferentialIntegrityError(databaseProductName, errorCode)) {
+    } else if (isReferentialIntegrityError(databaseProductName, sqlState, errorCode)) {
       return new NotExistentReferenceException(
           "Referential integrity violation: " + sqlException.getMessage(), sqlException);
-    } else if (isCascadeDeleteError(databaseProductName, errorCode)) {
+    } else if (isCascadeDeleteError(databaseProductName, sqlState, errorCode)) {
       return new NotEmptyChildsException("Cascade delete violation: " + sqlException.getMessage(),
           sqlException);
     } else {
@@ -33,11 +34,13 @@ public class UncheckedSqlException extends RuntimeException {
     }
   }
 
-  private static boolean isDuplicateKeyError(String databaseProductName, int errorCode) {
-    System.err.println( databaseProductName + " con " + errorCode );
+  private static boolean isDuplicateKeyError(String databaseProductName, String sqlState,
+      int errorCode) {
+    System.err.println(databaseProductName + " con " + errorCode);
     switch (databaseProductName) {
       case "PostgreSQL":
-        return errorCode == 23505; // Unique violation
+      case "H2":
+        return "23505".equals(sqlState); // Unique violation
       case "Oracle":
         return errorCode == 1; // Unique constraint violated
       case "Microsoft SQL Server":
@@ -45,17 +48,17 @@ public class UncheckedSqlException extends RuntimeException {
       case "MySQL":
       case "MariaDB":
         return errorCode == 1062; // Duplicate entry
-      case "H2":
-        return errorCode == 23505; // Unique constraint violation
       default:
         return false;
     }
   }
 
-  private static boolean isReferentialIntegrityError(String databaseProductName, int errorCode) {
+  private static boolean isReferentialIntegrityError(String databaseProductName, String sqlState,
+      int errorCode) {
     switch (databaseProductName) {
       case "PostgreSQL":
-        return errorCode == 23503; // Foreign key violation
+      case "H2":
+        return "23506".equals(sqlState); // Referential integrity violation
       case "Oracle":
         return errorCode == 2291; // Parent key not found
       case "Microsoft SQL Server":
@@ -63,17 +66,17 @@ public class UncheckedSqlException extends RuntimeException {
       case "MySQL":
       case "MariaDB":
         return errorCode == 1452; // Cannot add or update child row
-      case "H2":
-        return errorCode == 23506; // Referential integrity violation
       default:
         return false;
     }
   }
 
-  private static boolean isCascadeDeleteError(String databaseProductName, int errorCode) {
+  private static boolean isCascadeDeleteError(String databaseProductName, String sqlState,
+      int errorCode) {
     switch (databaseProductName) {
       case "PostgreSQL":
-        return errorCode == 23504; // Restrict violation
+      case "H2":
+        return "23504".equals( errorCode ); // Restrict violation
       case "Oracle":
         return errorCode == 2292; // Child record found
       case "Microsoft SQL Server":
@@ -81,13 +84,10 @@ public class UncheckedSqlException extends RuntimeException {
       case "MySQL":
       case "MariaDB":
         return errorCode == 1451; // Cannot delete or update parent row
-      case "H2":
-        return errorCode == 23504; // Restrict violation
       default:
         return false;
     }
   }
-
 
   public UncheckedSqlException(SQLException ex) {
     super(ex);
