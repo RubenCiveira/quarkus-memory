@@ -40,15 +40,29 @@ paths:
           required: false
           schema:
             type: integer
+        - name: since-uid
+          in: query
+          description: The maximun number of results
+          required: false
+          schema:
+            type: string
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Fruit'
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Fruit'
+                  next:
+                    type: object
+                    properties:
+                      since-uid:
+                        type: string
     post:
       tags:
         - fruit
