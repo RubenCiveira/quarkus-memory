@@ -111,7 +111,7 @@ class AbstractSqlParametrizedUnitTest {
   void testFormatSqlWithLists() throws SQLException {
     testSql.with("params", SqlListParameterValue.of("one", "two", "three", "four"))
         .with("name", SqlParameterValue.of("his-name"))
-        .executeQuery("SELECT * FROM \"table\" where di IN(:params) and name = :name", converter)
+        .executeQuery("SELECT * FROM \"table\" where di IN(:params) and name = :name and marca = '\"uno que viene\"'", converter)
         .limit(10);
 
     verify(preparedStatement).setString(1, "one");
@@ -120,13 +120,13 @@ class AbstractSqlParametrizedUnitTest {
     verify(preparedStatement).setString(4, "four");
     verify(preparedStatement).setString(5, "his-name");
     verify(connection)
-        .prepareStatement("SELECT * FROM `table` where di IN (?, ?, ?, ?) and name = ? limit 10");
+        .prepareStatement("SELECT * FROM `table` where di IN (?, ?, ?, ?) and name = ? and marca = '\"uno que viene\"' limit 10");
   }
 
   @Test
   void testErrors() throws SQLException {
     SqlResult<String> other = testSql.with("params", SqlParameterValue.of("four"))
-        .executeQuery("SELECT * FROM \"table\" where name = :name", converter);
+        .executeQuery("SELECT * FROM \"table\" where name = :name and color = :name", converter);
     assertThrows(IllegalArgumentException.class, () -> other.all());
     SqlResult<String> one = testSql.with("name", SqlParameterValue.of("oo"))
         .with("params", SqlListParameterValue.of("one", "two", "three", "four"))
