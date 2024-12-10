@@ -76,7 +76,7 @@ public class UncheckedSqlException extends RuntimeException {
     switch (databaseProductName) {
       case "PostgreSQL":
       case "H2":
-        return "23504".equals( errorCode ); // Restrict violation
+        return "23504".equals( sqlState ); // Restrict violation
       case "Oracle":
         return errorCode == 2292; // Child record found
       case "Microsoft SQL Server":
