@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
@@ -21,15 +20,15 @@ public class Pipeline<T, K> {
     this.suppliersByActionType = new HashMap<>();
     rulesByActionType.forEach((key, rules) -> {
       suppliersByActionType.put(key, (input) -> {
-        Supplier<T> pipeline = () -> input;
+        UnaryOperator<T> pipeline = (from) -> from;
         for (int i = rules.size() - 1; i >= 0; i--) {
           Pipe<T, K> rule = rules.get(i);
           if (rule.supports(key)) {
-            Supplier<T> currentPipeline = pipeline;
-            pipeline = () -> rule.apply(input, key, currentPipeline);
+            UnaryOperator<T> currentPipeline = pipeline;
+            pipeline = (from) -> rule.apply(input, key, currentPipeline);
           }
         }
-        return pipeline.get();
+        return pipeline.apply(input);
       });
     });
   }

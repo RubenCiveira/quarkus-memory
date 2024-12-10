@@ -9,6 +9,12 @@ public final class SqlCommand extends AbstractSqlCommand<SqlCommand> {
   }
 
   @Override
+  public SqlCommand with(String name, SqlParameterValue consumer) {
+    super.with(name, consumer);
+    return this;
+  }
+
+  @Override
   public int execute() {
     return executeUpdate(this.sql);
   }

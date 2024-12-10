@@ -9,6 +9,12 @@ public final class SqlQuery<T> extends AbstractSqlQuery<T, SqlQuery<T>> {
   }
 
   @Override
+  public SqlQuery<T> with(String name, SqlParameterValue consumer) {
+    super.with(name, consumer);
+    return this;
+  }
+
+  @Override
   public SqlResult<T> query(SqlConverter<T> converter) {
     return executeQuery(sql, converter);
   }

@@ -42,7 +42,6 @@ public class HttpMetricsFilter implements ContainerResponseFilter, ContainerRequ
     if (property instanceof Long st) {
       double latencyInSeconds = (System.currentTimeMillis() - st) / 1_000d; // Replace with real
                                                                             // latency
-      System.err.println("TIME OF " + latencyInSeconds);
       requestLatence.record(latencyInSeconds);
     } else {
       double latencyInSeconds = Math.random(); // Replace with real latency

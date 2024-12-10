@@ -2,7 +2,6 @@ package org.acme.features.market.fruit.domain.model;
 
 import org.acme.features.market.fruit.domain.model.valueobject.FruitNameVO;
 import org.acme.features.market.fruit.domain.model.valueobject.FruitVersionVO;
-
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

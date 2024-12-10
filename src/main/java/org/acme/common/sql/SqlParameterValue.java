@@ -59,10 +59,6 @@ public interface SqlParameterValue {
     return (index, ps) -> ps.setTimestamp(index, value);
   }
 
-  static SqlParameterValue of(Object value) {
-    return (index, ps) -> ps.setObject(index, value);
-  }
-
   static SqlParameterValue of(byte[] value) {
     return (index, ps) -> ps.setBytes(index, value);
   }

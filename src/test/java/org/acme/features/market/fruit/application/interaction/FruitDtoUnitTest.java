@@ -48,9 +48,9 @@ class FruitDtoUnitTest {
     Assertions.assertEquals("one", dto.getUid());
     Assertions.assertEquals("one", dto.getName());
     Assertions.assertEquals(1, dto.getVersion());
-    dto.fix("uid", null);
-    dto.fix("name", null);
-    dto.fix("version", null);
+    dto.fix("uid");
+    dto.fix("name");
+    dto.fix("version");
     Assertions.assertNull(dto.getUid());
     Assertions.assertNull(dto.getName());
     Assertions.assertNull(dto.getVersion());

@@ -5,7 +5,7 @@ import java.util.List;
 import org.acme.common.action.ParametrizedPipeline;
 import org.acme.features.market.fruit.domain.model.Fruit;
 import org.acme.features.market.fruit.domain.model.Fruit.FruitEntityBuilder;
-
+import jakarta.enterprise.inject.Instance;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -21,22 +21,22 @@ public class Fruits {
     private final boolean update;
   }
 
-  private final ParametrizedPipeline<Fruit, ActionType, Fruit> rules;
-  private final ParametrizedPipeline<FruitEntityBuilder, ActionType, Fruit> builders;
+//  private final ParametrizedPipeline<Fruit, ActionType, Fruit> rules;
+//  private final ParametrizedPipeline<FruitEntityBuilder, ActionType, Fruit> builders;
+//
+//  public Fruits(Instance<FruitRule> rules, List<FruitBuilderRule> builderRules) {
+//    this.rules = new ParametrizedPipeline<>(ActionType.values(), rules);
+//    this.builders = new ParametrizedPipeline<>(ActionType.values(), builderRules);
+//  }
 
-  public Fruits(List<FruitRule> rules, List<FruitBuilderRule> builderRules) {
-    this.rules = new ParametrizedPipeline<>(ActionType.values(), rules);
-    this.builders = new ParametrizedPipeline<>(ActionType.values(), builderRules);
-  }
-
-  public Fruit initilize(FruitEntityBuilder value) {
-    Fruit entity = this.builders.applyWithoutParams(ActionType.CREATE, value).build();
-    return rules.applyWithoutParams(ActionType.CREATE, entity);
-  }
-
-  public Fruit modify(Fruit base, FruitEntityBuilder value) {
-    Fruit entity = this.builders.applyWithParams(ActionType.MODIFY, value, base).build();
-    return rules.applyWithParams(ActionType.MODIFY, entity, base);
-  }
+//  public Fruit initilize(FruitEntityBuilder value) {
+//    Fruit entity = this.builders.applyWithoutParams(ActionType.CREATE, value).build();
+//    return rules.applyWithoutParams(ActionType.CREATE, entity);
+//  }
+//
+//  public Fruit modify(Fruit base, FruitEntityBuilder value) {
+//    Fruit entity = this.builders.applyWithParams(ActionType.MODIFY, value, base).build();
+//    return rules.applyWithParams(ActionType.MODIFY, entity, base);
+//  }
 
 }

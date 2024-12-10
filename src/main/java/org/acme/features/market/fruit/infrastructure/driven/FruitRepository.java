@@ -1,8 +1,13 @@
 package org.acme.features.market.fruit.infrastructure.driven;
 
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+
 import javax.sql.DataSource;
 
 import org.acme.common.action.Slide;
+import org.acme.common.sql.SqlCommand;
 import org.acme.common.sql.SqlOperator;
 import org.acme.common.sql.SqlParameterValue;
 import org.acme.common.sql.SqlSchematicQuery;
@@ -16,6 +21,7 @@ import org.acme.features.market.fruit.domain.model.valueobject.FruitUidVO;
 import org.acme.features.market.fruit.domain.model.valueobject.FruitVersionVO;
 
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @RequestScoped
@@ -36,6 +42,49 @@ public class FruitRepository implements FruitRepositoryGateway {
               .name(FruitNameVO.from(row.getString(2))).version(FruitVersionVO.from(row.getInt(3)))
               .build()).limit(cursor.getLimit()),
           filter, cursor, this);
+    }
+  }
+
+  @Override
+  public CompletableFuture<Optional<Fruit>> retrieve(String uid, Optional<FruitFilter> filter) {
+    try (SqlTemplate template = new SqlTemplate(datasource)) {
+      SqlSchematicQuery<Fruit> sq = template.createSqlSchematicQuery("fruits");
+      sq.select("uid", "name", "version");
+      sq.where("uid", SqlOperator.EQ, SqlParameterValue.of(uid));
+      sq.orderAsc("uid");
+      return CompletableFuture.completedFuture(sq.query(row -> Fruit.builder()
+          .uid(FruitUidVO.from(row.getString(1))).name(FruitNameVO.from(row.getString(2)))
+          .version(FruitVersionVO.from(row.getInt(3))).build()).one());
+    }
+  }
+
+  @Override
+  public CompletableFuture<Boolean> exists(String uid, Optional<FruitFilter> filter) {
+    return retrieve(uid, filter).thenApply(Optional::isPresent);
+  }
+
+  @Override
+  @Transactional
+  public CompletableFuture<Optional<Fruit>> create(Fruit entity,
+      Function<Fruit, CompletableFuture<Boolean>> verifier) {
+    try (SqlTemplate template = new SqlTemplate(datasource)) {
+      SqlCommand sq = template.createSqlCommand(
+          "insert into fruits (uid, name, version) values (:uid, :name, :version)");
+      sq.with("uid", SqlParameterValue.of(entity.getUid().getValue()));
+      sq.with("name", SqlParameterValue.of(entity.getName().getValue()));
+      sq.with("version", SqlParameterValue.of(entity.getVersion().getValue().orElse(0)));
+      if (0 == sq.execute()) {
+        throw new IllegalArgumentException("No insert into");
+      }
+      return verifier.apply(entity).thenCompose(exists -> {
+        if (exists) {
+          return CompletableFuture.completedFuture(Optional.of(entity));
+        } else {
+          template.createSqlCommand("delete from fruits where uid = :uid")
+              .with("uid", SqlParameterValue.of(entity.getUid().getValue())).execute();
+          return CompletableFuture.completedFuture(Optional.empty());
+        }
+      });
     }
   }
   //
