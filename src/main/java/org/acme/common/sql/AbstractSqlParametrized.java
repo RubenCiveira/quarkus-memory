@@ -91,12 +91,15 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
     // aquellos que sean listas: toca expandirlos.
     List<Integer> listSizes = new ArrayList<>();
     arrays.forEach((name, value) -> {
+      if (!parameterIndexMap.containsKey(name)) {
+        throw new IllegalArgumentException("No param " + name + " on the sentence");
+      }
       listSizes.add(value);
       Integer position = parameterIndexMap.get(name);
       parameterIndexMap.forEach((key, index) -> {
         if (index > position) {
-          parameterIndexMap.remove(key);
-          parameterIndexMap.put(key, index + value - 1);
+          // parameterIndexMap.remove(key);
+          parameterIndexMap.replace(key, index + value - 1);
         }
       });
     });
