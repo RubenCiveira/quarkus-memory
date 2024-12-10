@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
 import org.acme.common.security.Actor;
 import org.acme.common.security.Connection;
 import org.acme.features.market.fruit.application.interaction.FruitDto;
@@ -29,6 +30,7 @@ import org.acme.openapi.api.FruitApi;
 import org.acme.openapi.model.Fruit;
 import org.acme.openapi.model.FruitApiList200Response;
 import org.acme.openapi.model.FruitApiList200ResponseNext;
+
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;

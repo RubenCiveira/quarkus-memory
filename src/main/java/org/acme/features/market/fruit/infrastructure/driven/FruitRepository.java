@@ -33,8 +33,7 @@ public class FruitRepository implements FruitRepositoryGateway {
   @Override
   public CompletableFuture<Fruit> delete(Fruit entity) {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
-      SqlCommand sq = template
-          .createSqlCommand("delete from fruits where uid = :uid");
+      SqlCommand sq = template.createSqlCommand("delete from fruits where uid = :uid");
       sq.with("uid", SqlParameterValue.of(entity.getUid().getValue()));
       if (0 == sq.execute()) {
         throw new IllegalArgumentException("No delete from");
