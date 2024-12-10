@@ -19,12 +19,12 @@ public interface ParametrizedPipe<T, K, R> extends Pipe<ParametrizedPipe.Paramet
       this.value = value;
       this.original = Optional.of(original);
     }
-    
+
     public Parametrized(T value, Optional<R> original) {
       this.value = value;
       this.original = original;
     }
-    
+
     public Parametrized<T, R> with(T value) {
       return new Parametrized<>(value, original);
     }

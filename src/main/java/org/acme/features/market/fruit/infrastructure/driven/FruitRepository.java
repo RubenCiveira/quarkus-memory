@@ -7,6 +7,7 @@ import java.util.function.Function;
 import javax.sql.DataSource;
 
 import org.acme.common.action.Slide;
+import org.acme.common.sql.OptimistLockException;
 import org.acme.common.sql.SqlCommand;
 import org.acme.common.sql.SqlOperator;
 import org.acme.common.sql.SqlParameterValue;
@@ -28,6 +29,19 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class FruitRepository implements FruitRepositoryGateway {
   private final DataSource datasource;
+
+  @Override
+  public CompletableFuture<Fruit> delete(Fruit entity) {
+    try (SqlTemplate template = new SqlTemplate(datasource)) {
+      SqlCommand sq = template
+          .createSqlCommand("delete from fruits where uid = :uid");
+      sq.with("uid", SqlParameterValue.of(entity.getUid().getValue()));
+      if (0 == sq.execute()) {
+        throw new IllegalArgumentException("No delete from");
+      }
+      return CompletableFuture.completedFuture(entity);
+    }
+  }
 
   @Override
   public Slide<Fruit> list(FruitFilter filter, FruitCursor cursor) {
@@ -65,7 +79,37 @@ public class FruitRepository implements FruitRepositoryGateway {
 
   @Override
   @Transactional
+  public CompletableFuture<Optional<Fruit>> create(Fruit entity) {
+    return doCreate(entity, null);
+  }
+
+  @Override
+  @Transactional
   public CompletableFuture<Optional<Fruit>> create(Fruit entity,
+      Function<Fruit, CompletableFuture<Boolean>> verifier) {
+    return doCreate(entity, verifier);
+  }
+
+  @Override
+  @Transactional
+  public CompletableFuture<Fruit> update(Fruit entity) {
+    try (SqlTemplate template = new SqlTemplate(datasource)) {
+      int version = entity.getVersion().getValue().orElse(0);
+      SqlCommand sq =
+          template.createSqlCommand("update fruits set name = :name, version = version + 1 "
+              + " where uid = :uid and version = :version");
+      sq.with("uid", SqlParameterValue.of(entity.getUid().getValue()));
+      sq.with("name", SqlParameterValue.of(entity.getName().getValue()));
+      sq.with("version", SqlParameterValue.of(version));
+      if (0 == sq.execute()) {
+        throw new OptimistLockException();
+      }
+      return CompletableFuture
+          .completedFuture(entity.withVersion(FruitVersionVO.from(version + 1)));
+    }
+  }
+
+  public CompletableFuture<Optional<Fruit>> doCreate(Fruit entity,
       Function<Fruit, CompletableFuture<Boolean>> verifier) {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       SqlCommand sq = template.createSqlCommand(
@@ -76,62 +120,16 @@ public class FruitRepository implements FruitRepositoryGateway {
       if (0 == sq.execute()) {
         throw new IllegalArgumentException("No insert into");
       }
-      return verifier.apply(entity).thenCompose(exists -> {
-        if (exists) {
-          return CompletableFuture.completedFuture(Optional.of(entity));
-        } else {
-          template.createSqlCommand("delete from fruits where uid = :uid")
-              .with("uid", SqlParameterValue.of(entity.getUid().getValue())).execute();
-          return CompletableFuture.completedFuture(Optional.empty());
-        }
-      });
+      return verifier == null ? CompletableFuture.completedFuture(Optional.of(entity))
+          : verifier.apply(entity).thenCompose(exists -> {
+            if (exists) {
+              return CompletableFuture.completedFuture(Optional.of(entity));
+            } else {
+              template.createSqlCommand("delete from fruits where uid = :uid")
+                  .with("uid", SqlParameterValue.of(entity.getUid().getValue())).execute();
+              return CompletableFuture.completedFuture(Optional.empty());
+            }
+          });
     }
   }
-  //
-  // @Override
-  // public Uni<Optional<Fruit>> retrieve(FruitFilter filter) {
-  // try (var template = new SqlTemplate(datasource)) {
-  // SqlResult<Fruit> result =
-  // template.query("select uid, name, version from fruits where uid = :uid",
-  // row -> Fruit.builder().uidValue(row.getString(1)).nameValue(row.getString(2))
-  // .versionValue(row.getInt(3)).build(),
-  // new SqlParam("uid", filter.getUid().get(), SqlType.STRING));
-  // return Uni.createFrom().item(result.one());
-  // }
-  // }
-  //
-  // @Override
-  // public Uni<Optional<Fruit>> update(String uid, Fruit entity) {
-  // return null;
-  // }
-  //
-  // @Override
-  // public Uni<Optional<Fruit>> create(Fruit entity) {
-  // return createAndVerify(entity, null);
-  // }
-  //
-  // @Override
-  // public Uni<Optional<Fruit>> createAndVerify(Fruit entity, Function<Fruit, Boolean> verificator)
-  // {
-  // try (var template = new SqlTemplate(datasource)) {
-  // template.execute("insert into fruits(uid, name, version) values (:uid, :name, 0)",
-  // new SqlParam("uid", entity.getUid().getValue(), SqlType.STRING),
-  // new SqlParam("name", entity.getName().getValue(), SqlType.STRING));
-  // template.commit();
-  // if (null == verificator || verificator.apply(entity)) {
-  // return Uni.createFrom().item(Optional.of(entity));
-  // } else {
-  // rollback(entity);
-  // return Uni.createFrom().item(Optional.empty());
-  // }
-  // }
-  // }
-  //
-  // private Uni<Void> rollback(Fruit entity) {
-  // try (var template = new SqlTemplate(datasource)) {
-  // template.execute("delete from fruits where uid = :uid",
-  // new SqlParam("uid", entity.getUid(), SqlType.STRING));
-  // return Uni.createFrom().voidItem();
-  // }
-  // }
 }

@@ -12,11 +12,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
+import lombok.With;
 
 @Data
 @Builder(toBuilder = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @RegisterForReflection
+@With
 public class FruitListResult {
 
   /**

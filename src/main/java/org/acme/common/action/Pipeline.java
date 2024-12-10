@@ -16,14 +16,12 @@ public class Pipeline<T, K> {
   public Pipeline(K[] values, List<? extends Pipe<T, K>> rules) {
     this(values, rules, null);
   }
+
   public Pipeline(K[] values, List<? extends Pipe<T, K>> rules, Comparator<Pipe<T, K>> comparator) {
-    List<? extends Pipe<T, K>> ruleList = new ArrayList<>( rules );
-    if( null != comparator ) {
+    List<? extends Pipe<T, K>> ruleList = new ArrayList<>(rules);
+    if (null != comparator) {
       ruleList.sort(comparator);
     }
-    ruleList.forEach(rd -> {
-      System.out.println("OOO: " + rd.getClass() );
-    });
     Map<K, List<Pipe<T, K>>> rulesByActionType = ruleList.stream()
         .flatMap(rule -> Arrays.stream(values).filter(rule::supports)
             .map(type -> new AbstractMap.SimpleEntry<>(type, rule)))

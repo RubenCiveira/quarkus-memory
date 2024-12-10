@@ -5,26 +5,30 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
 import org.acme.common.security.Actor;
 import org.acme.common.security.Connection;
 import org.acme.features.market.fruit.application.interaction.FruitDto;
 import org.acme.features.market.fruit.application.interaction.command.FruitCreateCommand;
+import org.acme.features.market.fruit.application.interaction.command.FruitDeleteCommand;
+import org.acme.features.market.fruit.application.interaction.command.FruitUpdateCommand;
 import org.acme.features.market.fruit.application.interaction.query.FruitListQuery;
 import org.acme.features.market.fruit.application.interaction.query.FruitRetrieveQuery;
 import org.acme.features.market.fruit.application.interaction.result.FruitCreateResult;
+import org.acme.features.market.fruit.application.interaction.result.FruitDeleteResult;
 import org.acme.features.market.fruit.application.interaction.result.FruitListResult;
 import org.acme.features.market.fruit.application.interaction.result.FruitRetrieveResult;
+import org.acme.features.market.fruit.application.interaction.result.FruitUpdateResult;
 import org.acme.features.market.fruit.application.usecase.CreateFruitUsecase;
+import org.acme.features.market.fruit.application.usecase.DeleteFruitUsecase;
 import org.acme.features.market.fruit.application.usecase.ListFruitUsecase;
 import org.acme.features.market.fruit.application.usecase.RetrieveFruitUsecase;
+import org.acme.features.market.fruit.application.usecase.UpdateFruitUsecase;
 import org.acme.features.market.fruit.domain.gateway.FruitCursor;
 import org.acme.features.market.fruit.domain.gateway.FruitFilter;
 import org.acme.openapi.api.FruitApi;
 import org.acme.openapi.model.Fruit;
 import org.acme.openapi.model.FruitApiList200Response;
 import org.acme.openapi.model.FruitApiList200ResponseNext;
-
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
@@ -35,10 +39,11 @@ public class ApiFirstFruitController implements FruitApi {
   private final ListFruitUsecase list;
   private final RetrieveFruitUsecase retrieve;
   private final CreateFruitUsecase create;
+  private final UpdateFruitUsecase update;
+  private final DeleteFruitUsecase delete;
 
   @Override
   public Response fruitApiCreate(Fruit fruit) {
-
     Actor actor = new Actor();
     Connection connection = new Connection();
     FruitDto dto = FruitDto.builder().uid(fruit.getUid()).name(fruit.getName())
@@ -58,7 +63,18 @@ public class ApiFirstFruitController implements FruitApi {
 
   @Override
   public Response fruitApiDelete(String uid) {
-    return null;
+    Actor actor = new Actor();
+    Connection connection = new Connection();
+    FruitDeleteResult result = delete
+        .delete(FruitDeleteCommand.builder().actor(actor).connection(connection).uid(uid).build());
+    try {
+      Optional<FruitDto> fruit = result.getFruit().get(1, TimeUnit.SECONDS);
+      return fruit.map(res -> Response.ok(toApiModel(res)).build())
+          .orElseGet(() -> Response.status(404).build());
+    } catch (InterruptedException | ExecutionException | TimeoutException e) {
+      e.printStackTrace();
+      return Response.serverError().build();
+    }
   }
 
   @Override
@@ -102,7 +118,21 @@ public class ApiFirstFruitController implements FruitApi {
 
   @Override
   public Response fruitApiUpdate(String uid, Fruit fruit) {
-    return null;
+    Actor actor = new Actor();
+    Connection connection = new Connection();
+    FruitDto dto = FruitDto.builder().uid(fruit.getUid()).name(fruit.getName())
+        .version(fruit.getVersion()).build();
+
+    FruitUpdateResult result = update.update(
+        FruitUpdateCommand.builder().actor(actor).connection(connection).uid(uid).dto(dto).build());
+    try {
+      Optional<FruitDto> output = result.getFruit().get(1, TimeUnit.SECONDS);
+      return output.map(res -> Response.ok(toApiModel(res)).build())
+          .orElseGet(() -> Response.status(404).build());
+    } catch (InterruptedException | ExecutionException | TimeoutException e) {
+      e.printStackTrace();
+      return Response.serverError().build();
+    }
   }
 
   public FruitApiList200ResponseNext next(List<FruitDto> list) {

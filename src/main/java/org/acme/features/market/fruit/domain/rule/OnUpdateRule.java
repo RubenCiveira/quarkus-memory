@@ -1,10 +1,12 @@
 package org.acme.features.market.fruit.domain.rule;
 
 import java.util.function.UnaryOperator;
+
 import org.acme.features.market.fruit.domain.FruitRule;
 import org.acme.features.market.fruit.domain.Fruits.ActionType;
 import org.acme.features.market.fruit.domain.model.Fruit;
 import org.acme.features.market.fruit.domain.model.valueobject.FruitNameVO;
+
 import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped

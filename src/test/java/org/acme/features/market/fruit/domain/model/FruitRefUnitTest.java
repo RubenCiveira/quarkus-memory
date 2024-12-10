@@ -13,7 +13,7 @@ class FruitRefUnitTest {
   @Test
   @DisplayName("Test a entity reference contruction")
   void test_fruit_ref_builder() {
-    FruitRef ref = FruitRef.builder().uid(FruitUidVO.from("one")).build();
+    FruitReference ref = FruitReference.builder().uid(FruitUidVO.from("one")).build();
     Assertions.assertEquals("one", ref.getUid().getValue());
   }
 }

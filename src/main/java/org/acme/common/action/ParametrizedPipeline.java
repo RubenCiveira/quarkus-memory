@@ -9,7 +9,7 @@ public class ParametrizedPipeline<T, K, R> extends Pipeline<Parametrized<T, R>, 
   public ParametrizedPipeline(K[] values, List<? extends ParametrizedPipe<T, K, R>> ruleList) {
     super(values, ruleList);
   }
-  
+
   public ParametrizedPipeline(K[] values, List<? extends Pipe<Parametrized<T, R>, K>> ruleList,
       Comparator<Pipe<Parametrized<T, R>, K>> comparator) {
     super(values, ruleList, comparator);
