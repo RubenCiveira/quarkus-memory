@@ -9,18 +9,19 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class SqlParametrized<T extends SqlParametrized<T>> {
+public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<T>> {
   private final Map<String, SqlParameterValue> parameters = new LinkedHashMap<>();
   private final Map<String, Integer> arrays = new LinkedHashMap<>();
 
   private final Connection connection;
 
-  public SqlParametrized(SqlTemplate template) {
+  public AbstractSqlParametrized(SqlTemplate template) {
     this.connection = template.currentConnection();
   }
 
@@ -37,7 +38,7 @@ public abstract class SqlParametrized<T extends SqlParametrized<T>> {
     try (PreparedStatement run = prepareStatement(sql)) {
       return run.executeUpdate();
     } catch (SQLException e) {
-      throw new UncheckedSqlException(e);
+      throw UncheckedSqlException.exception(connection, e);
     }
   }
 
@@ -51,7 +52,7 @@ public abstract class SqlParametrized<T extends SqlParametrized<T>> {
         }
         return data;
       } catch (SQLException ex) {
-        throw new UncheckedSqlException(ex);
+        throw UncheckedSqlException.exception(connection, ex);
       }
     };
     return new SqlResult<R>() {
@@ -77,7 +78,7 @@ public abstract class SqlParametrized<T extends SqlParametrized<T>> {
     };
   }
 
-  protected PreparedStatement prepareStatement(String sql) throws SQLException {
+  private PreparedStatement prepareStatement(String sql) throws SQLException {
     Map<String, Integer> parameterIndexMap = new LinkedHashMap<>();
     PreparedStatement prepareStatement =
         connection.prepareStatement(formatSql(sql, parameterIndexMap));
@@ -85,12 +86,8 @@ public abstract class SqlParametrized<T extends SqlParametrized<T>> {
     return prepareStatement;
   }
 
-  private String formatSql(String sql, Map<String, Integer> parameterIndexMap) {
-    try {
-      sql = parseSql(escapeIdentifiers(sql), parameterIndexMap);
-    } catch (SQLException ex) {
-      throw new UncheckedSqlException(ex);
-    }
+  private String formatSql(String sql, Map<String, Integer> parameterIndexMap) throws SQLException {
+    sql = parseSql(escapeIdentifiers(sql), parameterIndexMap);
     // aquellos que sean listas: toca expandirlos.
     List<Integer> listSizes = new ArrayList<>();
     arrays.forEach((name, value) -> {
@@ -184,18 +181,16 @@ public abstract class SqlParametrized<T extends SqlParametrized<T>> {
   }
 
   private void applyParameters(Map<String, Integer> parameterIndexMap,
-      PreparedStatement preparedStatement) {
-    parameters.forEach((key, value) -> {
+      PreparedStatement preparedStatement) throws SQLException {
+    for (Entry<String, SqlParameterValue> entry : parameters.entrySet()) {
+      String key = entry.getKey();
+      SqlParameterValue value = entry.getValue();
       if( !parameterIndexMap.containsKey(key) ) {
         throw new IllegalArgumentException("No param " + key + " on the sentence");
       } else {
-        try {
-          value.accept(parameterIndexMap.get(key), preparedStatement);
-        } catch (SQLException ex) {
-          throw new UncheckedSqlException(ex);
-        }
+        value.accept(parameterIndexMap.get(key), preparedStatement);
       }
-    });
+    }
   }
 
   private String limitResults(String query, int size) {

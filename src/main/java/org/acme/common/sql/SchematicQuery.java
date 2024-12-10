@@ -6,14 +6,14 @@ import java.util.Map;
 public class SchematicQuery {
   private final String type;
   private final String table;
-  private final SqlParametrized<?> parametrized;
+  private final AbstractSqlParametrized<?> parametrized;
   private final StringBuilder select = new StringBuilder();
   private final StringBuilder where = new StringBuilder();
   private final StringBuilder join = new StringBuilder();
   private final StringBuilder order = new StringBuilder();
   private final Map<String, String> set = new LinkedHashMap<>();
 
-  public SchematicQuery(String type, String table, SqlParametrized<?> parametrized) {
+  public SchematicQuery(String type, String table, AbstractSqlParametrized<?> parametrized) {
     this.type = type;
     this.table = table;
     this.parametrized = parametrized;
@@ -67,14 +67,10 @@ public class SchematicQuery {
   
   public void where(String field, SqlOperator operator, SqlParameterValue value) {
     String name = "_field_" + where.length();
-    where.append(" and " + escape(field) + " " + operator + " :" + name);
+    where.append(" and " + escape(field) + " " + operator.value + " :" + name);
     parametrized.with(name, value);
     
   }
-  
-//  public void where(String field, SqlCondition operator) {
-//    this.where(field, operator.getOperator(), operator.getConsumer());
-//  }
   
   public void orderAsc(String field) {
     order(field, "asc");

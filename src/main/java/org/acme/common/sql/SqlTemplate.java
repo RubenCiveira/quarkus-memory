@@ -27,7 +27,6 @@ public class SqlTemplate implements AutoCloseable {
     }
   }
 
-
   /**
    * Inicia una transacción configurando auto-commit en false.
    */
@@ -37,7 +36,7 @@ public class SqlTemplate implements AutoCloseable {
         connection.setAutoCommit(false);
       }
     } catch (SQLException ex) {
-      throw new UncheckedSqlException(ex);
+      throw UncheckedSqlException.exception(connection, ex);
     }
   }
 
@@ -51,7 +50,7 @@ public class SqlTemplate implements AutoCloseable {
         connection.setAutoCommit(true); // Vuelve a habilitar auto-commit
       }
     } catch (SQLException ex) {
-      throw new UncheckedSqlException(ex);
+      throw UncheckedSqlException.exception(connection, ex);
     }
   }
 
@@ -65,7 +64,7 @@ public class SqlTemplate implements AutoCloseable {
         connection.setAutoCommit(true); // Vuelve a habilitar auto-commit
       }
     } catch (SQLException ex) {
-      throw new UncheckedSqlException(ex);
+      throw UncheckedSqlException.exception(connection, ex);
     }
   }
 
@@ -78,23 +77,24 @@ public class SqlTemplate implements AutoCloseable {
         connection.close();
       }
     } catch (SQLException ex) {
-      throw new UncheckedSqlException(ex);
+      throw UncheckedSqlException.exception(connection, ex);
     }
   }
 
   public Connection currentConnection() {
     return connection;
   }
-  
+
   public <T> SqlSchematicQuery<T> createSqlSchematicQuery(String table) {
     return new SqlSchematicQuery<>(this, table);
   }
-  
+
   public <T> SqlQuery<T> createSqlQuery(String sql) {
     return new SqlQuery<>(this, sql);
   }
-  
+
   public SqlCommand createSqlCommand(String sql) {
     return new SqlCommand(this, sql);
   }
+
 }
