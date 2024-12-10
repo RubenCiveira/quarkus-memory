@@ -1,6 +1,7 @@
 package org.acme.features.market.fruit.domain;
 
 import org.acme.common.action.ParametrizedPipeline;
+import org.acme.common.action.PriorityComparator;
 import org.acme.features.market.fruit.domain.model.Fruit;
 import org.acme.features.market.fruit.domain.model.Fruit.FruitEntityBuilder;
 import jakarta.enterprise.context.RequestScoped;
@@ -64,9 +65,9 @@ public class Fruits {
    */
   public Fruits(final Instance<FruitRule> rules,
       final Instance<FruitBuilderRule> builderRules) {
-    this.rules = new ParametrizedPipeline<>(ActionType.values(), rules.stream().toList());
+    this.rules = new ParametrizedPipeline<>(ActionType.values(), rules.stream().toList(), new PriorityComparator<>());
     this.builderRules =
-        new ParametrizedPipeline<>(ActionType.values(), builderRules.stream().toList());
+        new ParametrizedPipeline<>(ActionType.values(), builderRules.stream().toList(), new PriorityComparator<>());
   }
 
   /**

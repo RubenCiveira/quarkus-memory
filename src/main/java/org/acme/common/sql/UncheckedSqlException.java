@@ -34,6 +34,7 @@ public class UncheckedSqlException extends RuntimeException {
   }
 
   private static boolean isDuplicateKeyError(String databaseProductName, int errorCode) {
+    System.err.println( databaseProductName + " con " + errorCode );
     switch (databaseProductName) {
       case "PostgreSQL":
         return errorCode == 23505; // Unique violation
