@@ -75,7 +75,7 @@ class AbstractSqlParametrizedUnitTest {
   @Test
   void testExecuteQueryOne() throws SQLException {
     when(resultSet.next()).thenReturn(true, false);
-    when(converter.convert(resultSet)).thenReturn("Result");
+    when(converter.convert(resultSet)).thenReturn(Optional.of("Result"));
 
     SqlResult<String> result = testSql.with("_age", SqlParameterValue.of(22))
         .executeQuery("SELECT * FROM table where age = :_age", converter);
@@ -87,10 +87,11 @@ class AbstractSqlParametrizedUnitTest {
     verify(preparedStatement, times(1)).executeQuery();
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   void testExecuteQueryAll() throws SQLException {
     when(resultSet.next()).thenReturn(true, true, false);
-    when(converter.convert(resultSet)).thenReturn("Result1", "Result2");
+    when(converter.convert(resultSet)).thenReturn(Optional.of("Result1"), Optional.of("Result2"));
 
     SqlResult<String> result = testSql.with("name", SqlParameterValue.of("green"))
         .executeQuery("SELECT * FROM table where name = :name and :", converter);

@@ -7,7 +7,7 @@ import java.util.function.Function;
 import org.acme.common.action.Slide;
 import org.acme.features.market.fruit.domain.model.Fruit;
 
-public interface FruitRepositoryGateway {
+public interface FruitWriteRepositoryGateway {
 
   /**
    * Retrieve one single value
