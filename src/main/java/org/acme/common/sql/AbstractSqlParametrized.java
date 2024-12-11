@@ -171,9 +171,11 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
       result.append(sql, lastIndex, matcher.start());
       lastIndex = matcher.end();
 
-      if (matcher.group(1) != null) { // Es un literal de cadena
+      // matcher.group(1) != null => Es un literal de cadena
+      // matcher.group(2) != null => Es un identificador entre comillas dobles
+      if (matcher.group(1) != null) {
         result.append(matcher.group());
-      } else if (matcher.group(2) != null) { // Es un identificador entre comillas dobles
+      } else {
         String identifier = matcher.group(2);
         result.append(escapeChar).append(identifier).append(escapeChar);
       }

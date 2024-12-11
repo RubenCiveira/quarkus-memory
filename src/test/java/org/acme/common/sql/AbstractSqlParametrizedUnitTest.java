@@ -93,7 +93,7 @@ class AbstractSqlParametrizedUnitTest {
     when(converter.convert(resultSet)).thenReturn("Result1", "Result2");
 
     SqlResult<String> result = testSql.with("name", SqlParameterValue.of("green"))
-        .executeQuery("SELECT * FROM table where name = :name", converter);
+        .executeQuery("SELECT * FROM table where name = :name and :", converter);
 
     List<String> all = result.all();
     assertEquals(2, all.size());
@@ -111,7 +111,9 @@ class AbstractSqlParametrizedUnitTest {
   void testFormatSqlWithLists() throws SQLException {
     testSql.with("params", SqlListParameterValue.of("one", "two", "three", "four"))
         .with("name", SqlParameterValue.of("his-name"))
-        .executeQuery("SELECT * FROM \"table\" where di IN(:params) and name = :name and marca = '\"uno que viene\"'", converter)
+        .executeQuery(
+            "SELECT * FROM \"table\" where di IN(:params) and name = :name and marca = '\"uno :22 que : viene\"' :",
+            converter)
         .limit(10);
 
     verify(preparedStatement).setString(1, "one");
@@ -119,12 +121,12 @@ class AbstractSqlParametrizedUnitTest {
     verify(preparedStatement).setString(3, "three");
     verify(preparedStatement).setString(4, "four");
     verify(preparedStatement).setString(5, "his-name");
-    verify(connection)
-        .prepareStatement("SELECT * FROM `table` where di IN (?, ?, ?, ?) and name = ? and marca = '\"uno que viene\"' limit 10");
+    verify(connection).prepareStatement(
+        "SELECT * FROM `table` where di IN (?, ?, ?, ?) and name = ? and marca = '\"uno :22 que : viene\"' : limit 10");
   }
 
   @Test
-  void testErrors() throws SQLException {
+  void testFormatErrors() throws SQLException {
     SqlResult<String> other = testSql.with("params", SqlParameterValue.of("four"))
         .executeQuery("SELECT * FROM \"table\" where name = :name and color = :name", converter);
     assertThrows(IllegalArgumentException.class, () -> other.all());
@@ -132,6 +134,18 @@ class AbstractSqlParametrizedUnitTest {
         .with("params", SqlListParameterValue.of("one", "two", "three", "four"))
         .executeQuery("SELECT * FROM \"table\" where di IN(:listParams)", converter);
     assertThrows(IllegalArgumentException.class, () -> one.all());
+    SqlResult<String> three = testSql.executeQuery(
+        "SELECT * FROM \"table\" where name = :name and di IN(:params) and do IN(:others)",
+        converter);
+    assertThrows(IllegalArgumentException.class, () -> three.all());
+  }
+
+  @Test
+  void testConnectionErrors() throws SQLException {
+    when(preparedStatement.executeQuery()).thenThrow(SQLException.class);
+    SqlResult<String> result = testSql.with("_age", SqlParameterValue.of(22))
+        .executeQuery("SELECT * FROM table where age = :_age", converter);
+    assertThrows(UncheckedSqlException.class, () -> result.one());
   }
 
   /*
