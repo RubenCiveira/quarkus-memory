@@ -3,23 +3,20 @@ package org.acme.common.action;
 import java.util.Comparator;
 import java.util.List;
 
-import org.acme.common.action.ParametrizedPipe.Parametrized;
+public class ParametrizedPipeline<T, K, R> {
 
-public class ParametrizedPipeline<T, K, R> extends Pipeline<Parametrized<T, R>, K> {
-  public ParametrizedPipeline(K[] values, List<? extends ParametrizedPipe<T, K, R>> ruleList) {
-    super(values, ruleList);
+  private final PipeRunner<T, K> runner;
+
+  public ParametrizedPipeline(K[] values, List<? extends ParametrizedPipe<T, K, R>> rules) {
+    this(values, rules, null);
   }
 
-  public ParametrizedPipeline(K[] values, List<? extends Pipe<Parametrized<T, R>, K>> ruleList,
-      Comparator<Pipe<Parametrized<T, R>, K>> comparator) {
-    super(values, ruleList, comparator);
+  public ParametrizedPipeline(K[] values, List<? extends ParametrizedPipe<T, K, R>> rules,
+      Comparator<ParametrizedPipe<T, K, R>> comparator) {
+    runner = new PipeRunner<>(values, rules, comparator);
   }
 
-  public T applyWithoutParams(K type, T initial) {
-    return apply(type, new Parametrized<>(initial)).getValue();
-  }
-
-  public T applyWithParams(K type, T initial, R original) {
-    return apply(type, new Parametrized<>(initial, original)).getValue();
+  public T apply(K type, T initial, R param) {
+    return runner.apply(type, initial, new Object[] {param});
   }
 }

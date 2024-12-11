@@ -164,9 +164,7 @@
                 <sourceFolder>src/main/java</sourceFolder>
                 <delegatePattern>true</delegatePattern>
                 <useMutiny>true</useMutiny>
-                <additionalModelTypeAnnotations>
-					@com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL) @io.quarkus.runtime.annotations.RegisterForReflection
-				</additionalModelTypeAnnotations>
+                <additionalModelTypeAnnotations>@com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL) @io.quarkus.runtime.annotations.RegisterForReflection</additionalModelTypeAnnotations>
               </configOptions>
               <additionalProperties>interfaceOnly=true,useSwaggerAnnotations=false,returnResponse=true</additionalProperties>
               <modelPackage>org.acme.openapi.model</modelPackage>

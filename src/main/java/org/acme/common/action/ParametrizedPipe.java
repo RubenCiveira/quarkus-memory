@@ -1,33 +1,12 @@
 package org.acme.common.action;
 
-import java.util.Optional;
+import java.util.function.UnaryOperator;
 
-import lombok.Getter;
-
-public interface ParametrizedPipe<T, K, R> extends Pipe<ParametrizedPipe.Parametrized<T, R>, K> {
-  @Getter
-  public static class Parametrized<T, R> {
-    private final T value;
-    private final Optional<R> original;
-
-    public Parametrized(T value) {
-      this.value = value;
-      this.original = Optional.empty();
-    }
-
-    public Parametrized(T value, R original) {
-      this.value = value;
-      this.original = Optional.of(original);
-    }
-
-    public Parametrized(T value, Optional<R> original) {
-      this.value = value;
-      this.original = original;
-    }
-
-    public Parametrized<T, R> with(T value) {
-      return new Parametrized<>(value, original);
-    }
+public interface ParametrizedPipe<T, K, R> extends RunnablePipe<T, K> {
+  @SuppressWarnings("unchecked")
+  default T apply(K actionType, T input, UnaryOperator<T> next, Object[] params) {
+    return apply(actionType, input, next, (R) params[0]);
   }
 
+  T apply(K actionType, T input, UnaryOperator<T> next, R param);
 }

@@ -2,11 +2,10 @@ package org.acme.common.action;
 
 import java.util.function.UnaryOperator;
 
-public interface Pipe<T, K> {
-  default boolean supports(K actionType) {
-    return true;
+public interface Pipe<T, K> extends RunnablePipe<T, K> {
+  default T apply(K actionType, T input, UnaryOperator<T> next, Object[] params) {
+    return apply(actionType, input, next);
   }
 
-  T apply(T input, K actionType, UnaryOperator<T> next);
-
+  T apply(K actionType, T input, UnaryOperator<T> next);
 }
