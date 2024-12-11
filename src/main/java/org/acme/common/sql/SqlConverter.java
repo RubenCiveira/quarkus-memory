@@ -2,8 +2,9 @@ package org.acme.common.sql;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 
 @FunctionalInterface
 public interface SqlConverter<R> {
-  R convert(ResultSet t) throws SQLException;
+  Optional<R> convert(ResultSet t) throws SQLException;
 }

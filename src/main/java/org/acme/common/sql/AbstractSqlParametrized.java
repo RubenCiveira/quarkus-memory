@@ -48,15 +48,7 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
           ResultSet executeQuery = prepareStatement.executeQuery()) {
         List<R> data = new ArrayList<>();
         while (executeQuery.next()) {
-          try {
-            data.add(converter.convert(executeQuery));
-          } catch(RuntimeException ex) {
-            if( ex instanceof UncheckedSqlException) {
-              throw ex;
-            } else {
-              ex.printStackTrace();
-            }
-          }
+          converter.convert(executeQuery).ifPresent(data::add);
         }
         return data;
       } catch (SQLException ex) {
