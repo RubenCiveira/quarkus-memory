@@ -51,9 +51,12 @@ public class FruitRepository implements FruitRepositoryGateway {
           .ifPresent(since -> sq.where("uid", SqlOperator.GT, SqlParameterValue.of(since)));
       sq.orderAsc("uid");
       return new FruitRepositorySlice(cursor.getLimit(),
-          sq.query(row -> Fruit.builder().uid(FruitUidVO.from(row.getString(1)))
-              .name(FruitNameVO.from(row.getString(2))).version(FruitVersionVO.from(row.getInt(3)))
-              .build()).limit(cursor.getLimit()),
+          CompletableFuture
+              .completedFuture(sq
+                  .query(row -> Fruit.builder().uid(FruitUidVO.from(row.getString(1)))
+                      .name(FruitNameVO.from(row.getString(2)))
+                      .version(FruitVersionVO.from(row.getInt(3))).build())
+                  .limit(cursor.getLimit())),
           filter, cursor, this);
     }
   }
