@@ -15,7 +15,7 @@ public interface SqlParameterValue {
   static SqlParameterValue of(String value) {
     return (index, ps) -> ps.setString(index, value);
   }
-  
+
   static SqlParameterValue ofNullString() {
     return (index, ps) -> ps.setNull(index, Types.VARCHAR);
   }
@@ -27,15 +27,15 @@ public interface SqlParameterValue {
   static SqlParameterValue ofNullLong() {
     return (index, ps) -> ps.setNull(index, Types.NUMERIC);
   }
-  
+
   static SqlParameterValue of(int value) {
     return (index, ps) -> ps.setInt(index, value);
   }
-  
+
   static SqlParameterValue ofNullInteger() {
     return (index, ps) -> ps.setNull(index, Types.INTEGER);
   }
-  
+
   static SqlParameterValue of(double value) {
     return (index, ps) -> ps.setDouble(index, value);
   }
@@ -43,7 +43,7 @@ public interface SqlParameterValue {
   static SqlParameterValue ofNullDouble() {
     return (index, ps) -> ps.setNull(index, Types.DOUBLE);
   }
-  
+
   static SqlParameterValue of(float value) {
     return (index, ps) -> ps.setFloat(index, value);
   }
@@ -55,7 +55,7 @@ public interface SqlParameterValue {
   static SqlParameterValue of(boolean value) {
     return (index, ps) -> ps.setBoolean(index, value);
   }
-  
+
   static SqlParameterValue ofNullBoolean() {
     return (index, ps) -> ps.setNull(index, Types.BOOLEAN);
   }
@@ -67,7 +67,7 @@ public interface SqlParameterValue {
   static SqlParameterValue ofNullByte() {
     return (index, ps) -> ps.setNull(index, Types.SMALLINT);
   }
-  
+
   static SqlParameterValue of(short value) {
     return (index, ps) -> ps.setShort(index, value);
   }
@@ -111,7 +111,7 @@ public interface SqlParameterValue {
   static SqlParameterValue ofNullStream() {
     return (index, ps) -> ps.setNull(index, Types.BINARY);
   }
-  
+
   static SqlParameterValue of(byte[] value) {
     return (index, ps) -> ps.setBytes(index, value);
   }
@@ -127,7 +127,7 @@ public interface SqlParameterValue {
   static SqlParameterValue of(LocalDate value) {
     return (index, ps) -> ps.setDate(index, Date.valueOf(value));
   }
-  
+
   static SqlParameterValue ofNullLocalDate() {
     return (index, ps) -> ps.setNull(index, Types.DATE);
   }
@@ -140,6 +140,6 @@ public interface SqlParameterValue {
     return (index, ps) -> ps.setNull(index, Types.TIMESTAMP);
   }
 
-  
+
   void accept(int index, PreparedStatement ps) throws SQLException;
 }
