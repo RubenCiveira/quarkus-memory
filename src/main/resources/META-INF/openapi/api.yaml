@@ -25,6 +25,8 @@ security:
 tags:
   - name: fruit
     description: fruit
+  - name: fruit-acl
+    description: Access control for fruit
 
 paths:
   /api/market/fruits:
@@ -151,6 +153,41 @@ paths:
                 $ref: '#/components/schemas/Fruit'
         '404':
           description: The item dont exists
+  /api/me/acl/market/fruits:
+    get:
+      tags:
+        - fruit-acl
+      summary: Check for allow permissions for the current user on fruit
+      operationId: fruit-api-generic-acl
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FruitAcl'
+  /api/me/acl/market/fruits/{uid}:
+    get:
+      tags:
+        - fruit-acl
+      summary: Check for allow permissions for the current user on fruit by their uid
+      operationId: fruit-api-contextual-acl
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FruitAcl'
+        '404':
+          description: The item dont exists
 
 components:
   securitySchemes:
@@ -169,4 +206,31 @@ components:
         version:
           type: integer
           format: int32
+    CommonAllow:
+      type: object
+      properties:
+        name:
+          type: string
+        allowed:
+          type: boolean
+        reason:
+          type: string
+    FruitAcl:
+      type: object
+      properties:
+        allows:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommonAllow'
+        fields:
+          type: object
+          properties:
+            noEditables:
+              type: array
+              items:
+                type: string
+            noVisibles:
+              type: array
+              items:
+                type: string
 
