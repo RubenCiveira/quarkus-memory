@@ -167,7 +167,7 @@
                 <additionalModelTypeAnnotations>@com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL) @io.quarkus.runtime.annotations.RegisterForReflection</additionalModelTypeAnnotations>
               </configOptions>
               <additionalProperties>interfaceOnly=true,useSwaggerAnnotations=false,returnResponse=true</additionalProperties>
-              <modelPackage>org.acme.openapi.model</modelPackage>
+              <modelPackage>org.acme.generated.openapi.model</modelPackage>
               <apiPackage>org.acme.openapi.api</apiPackage>
               <generateApiTests>false</generateApiTests>
               <generateModels>true</generateModels>
@@ -176,6 +176,7 @@
               <inputSpec>${project.basedir}/src/main/resources/META-INF/openapi/api.yaml</inputSpec>
               <generateModelDocumentation>false</generateModelDocumentation>
               <generateApis>true</generateApis>
+              <apiPackage>org.acme.generated.openapi.api</apiPackage>
             </configuration>
           </execution>
         </executions>
@@ -218,8 +219,8 @@
                 <delete file="${project.basedir}/target/generated-sources/openapi/README.md" />
                 <delete file="${project.basedir}/target/generated-sources/openapi/.openapi-generator-ignore" />
                 <delete file="${project.basedir}/target/generated-sources/openapi/.dockerignore" />
-                <delete file="${project.basedir}/target/generated-sources/openapi/src/main/java/org/acme/openapi/RestApplication.java" />
-                <delete file="${project.basedir}/target/generated-sources/openapi/src/main/java/org/acme/openapi/RestResourceRoot.java" />
+                <delete file="${project.basedir}/target/generated-sources/openapi/src/main/java/org/acme/generated/openapi/RestApplication.java" />
+                <delete file="${project.basedir}/target/generated-sources/openapi/src/main/java/org/acme/generated/openapi/RestResourceRoot.java" />
               </target>
             </configuration>
           </execution>
@@ -338,7 +339,11 @@
                 </goals>
               </execution>
             </executions>
-            <configuration />
+            <configuration>
+              <excludes>
+                <exclude>**/org/acme/generated/**</exclude>
+              </excludes>
+            </configuration>
           </plugin>
         </plugins>
       </build>

@@ -26,10 +26,10 @@ import org.acme.features.market.fruit.application.usecase.RetrieveFruitUsecase;
 import org.acme.features.market.fruit.application.usecase.UpdateFruitUsecase;
 import org.acme.features.market.fruit.domain.gateway.FruitCursor;
 import org.acme.features.market.fruit.domain.gateway.FruitFilter;
-import org.acme.openapi.api.FruitApi;
-import org.acme.openapi.model.Fruit;
-import org.acme.openapi.model.FruitApiList200Response;
-import org.acme.openapi.model.FruitApiList200ResponseNext;
+import org.acme.generated.openapi.api.FruitApi;
+import org.acme.generated.openapi.model.Fruit;
+import org.acme.generated.openapi.model.FruitApiList200Response;
+import org.acme.generated.openapi.model.FruitApiList200ResponseNext;
 
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.core.Response;
