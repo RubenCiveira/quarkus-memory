@@ -1,5 +1,7 @@
 package org.acme.common.exception;
 
+import java.util.stream.Stream;
+
 import org.acme.common.validation.ConstraintFail;
 import org.acme.common.validation.ConstraintFailList;
 
@@ -10,6 +12,18 @@ public class ConstraintException extends RuntimeException {
 
   public ConstraintException(ConstraintFailList fails) {
     this.fails = fails;
+  }
+
+  public ConstraintException(ConstraintFail fail) {
+    this(new ConstraintFailList(fail));
+  }
+
+  public ConstraintException(String code, String field, Object wrongValue) {
+    this(new ConstraintFailList(code, field, wrongValue));
+  }
+
+  public ConstraintException(String code, String field, Object wrongValue, String errorMessage) {
+    this(new ConstraintFailList(code, field, wrongValue, errorMessage));
   }
 
   public boolean hasErrors() {
@@ -26,5 +40,9 @@ public class ConstraintException extends RuntimeException {
 
   public boolean includeCode(String code) {
     return fails.includeCode(code);
+  }
+
+  public Stream<ConstraintFail> getFails() {
+    return fails.getFails();
   }
 }

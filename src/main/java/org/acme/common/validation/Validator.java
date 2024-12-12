@@ -11,10 +11,13 @@ public interface Validator<T> {
     return obj -> {
       ValidationResult oneResult = this.validate(obj);
       ValidationResult otherResult = other.validate(obj);
+      boolean valid = oneResult.isValid() && otherResult.isValid();
       List<String> msgs = new ArrayList<>();
-      msgs.addAll(oneResult.getErrors());
-      msgs.addAll(otherResult.getErrors());
-      return new ValidationResult(oneResult.isValid() && otherResult.isValid(), msgs);
+      if (!valid) {
+        msgs.addAll(oneResult.getErrors());
+        msgs.addAll(otherResult.getErrors());
+      }
+      return new ValidationResult(valid, msgs);
     };
   }
 
@@ -22,10 +25,13 @@ public interface Validator<T> {
     return obj -> {
       ValidationResult oneResult = this.validate(obj);
       ValidationResult otherResult = other.validate(obj);
+      boolean valid = oneResult.isValid() || otherResult.isValid();
       List<String> msgs = new ArrayList<>();
-      msgs.addAll(oneResult.getErrors());
-      msgs.addAll(otherResult.getErrors());
-      return new ValidationResult(oneResult.isValid() || otherResult.isValid(), msgs);
+      if (!valid) {
+        msgs.addAll(oneResult.getErrors());
+        msgs.addAll(otherResult.getErrors());
+      }
+      return new ValidationResult(valid, msgs);
     };
   }
 
