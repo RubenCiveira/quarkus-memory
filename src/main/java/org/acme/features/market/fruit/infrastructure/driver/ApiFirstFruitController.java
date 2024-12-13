@@ -26,6 +26,7 @@ import org.acme.features.market.fruit.application.usecase.RetrieveFruitUsecase;
 import org.acme.features.market.fruit.application.usecase.UpdateFruitUsecase;
 import org.acme.features.market.fruit.domain.gateway.FruitCursor;
 import org.acme.features.market.fruit.domain.gateway.FruitFilter;
+import org.acme.features.market.fruit.domain.model.FruitReference;
 import org.acme.generated.openapi.api.FruitApi;
 import org.acme.generated.openapi.model.Fruit;
 import org.acme.generated.openapi.model.FruitApiList200Response;
@@ -67,8 +68,8 @@ public class ApiFirstFruitController implements FruitApi {
   public Response fruitApiDelete(String uid) {
     Actor actor = new Actor();
     Connection connection = new Connection();
-    FruitDeleteResult result = delete
-        .delete(FruitDeleteCommand.builder().actor(actor).connection(connection).uid(uid).build());
+    FruitDeleteResult result = delete.delete(FruitDeleteCommand.builder().actor(actor)
+        .connection(connection).reference(FruitReference.builder().uidValue(uid).build()).build());
     try {
       Optional<FruitDto> fruit = result.getFruit().get(1, TimeUnit.SECONDS);
       return fruit.map(res -> Response.ok(toApiModel(res)).build())
@@ -106,8 +107,8 @@ public class ApiFirstFruitController implements FruitApi {
   public Response fruitApiRetrieve(String uid) {
     Actor actor = new Actor();
     Connection connection = new Connection();
-    FruitRetrieveResult result = retrieve.retrieve(
-        FruitRetrieveQuery.builder().actor(actor).connection(connection).uid(uid).build());
+    FruitRetrieveResult result = retrieve.retrieve(FruitRetrieveQuery.builder().actor(actor)
+        .connection(connection).reference(FruitReference.builder().uidValue(uid).build()).build());
     try {
       Optional<FruitDto> fruit = result.getFruit().get(1, TimeUnit.SECONDS);
       return fruit.map(res -> Response.ok(toApiModel(res)).build())
@@ -125,8 +126,9 @@ public class ApiFirstFruitController implements FruitApi {
     FruitDto dto = FruitDto.builder().uid(fruit.getUid()).name(fruit.getName())
         .version(fruit.getVersion()).build();
 
-    FruitUpdateResult result = update.update(
-        FruitUpdateCommand.builder().actor(actor).connection(connection).uid(uid).dto(dto).build());
+    FruitUpdateResult result =
+        update.update(FruitUpdateCommand.builder().actor(actor).connection(connection)
+            .reference(FruitReference.builder().uidValue(uid).build()).dto(dto).build());
     try {
       Optional<FruitDto> output = result.getFruit().get(1, TimeUnit.SECONDS);
       return output.map(res -> Response.ok(toApiModel(res)).build())

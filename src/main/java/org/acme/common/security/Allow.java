@@ -9,9 +9,9 @@ import lombok.experimental.SuperBuilder;
 @RegisterForReflection
 public class Allow {
   private boolean allowed;
-  private String name;
+  // private String name;
   private String description;
 
-  private final Actor actor;
-  private final Connection connection;
+  // private final Actor actor;
+  // private final Connection connection;
 }

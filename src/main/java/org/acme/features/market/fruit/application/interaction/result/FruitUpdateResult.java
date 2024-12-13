@@ -6,7 +6,6 @@ import java.util.concurrent.CompletableFuture;
 import org.acme.features.market.fruit.application.interaction.FruitDto;
 import org.acme.features.market.fruit.application.interaction.command.FruitUpdateCommand;
 
-import io.quarkus.runtime.annotations.RegisterForReflection;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -14,10 +13,9 @@ import lombok.NonNull;
 import lombok.With;
 
 @Data
+@With
 @Builder(toBuilder = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@RegisterForReflection
-@With
 public class FruitUpdateResult {
 
   /**

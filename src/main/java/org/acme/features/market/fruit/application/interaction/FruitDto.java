@@ -9,17 +9,15 @@ import org.acme.features.market.fruit.domain.model.valueobject.FruitNameVO;
 import org.acme.features.market.fruit.domain.model.valueobject.FruitUidVO;
 import org.acme.features.market.fruit.domain.model.valueobject.FruitVersionVO;
 
-import io.quarkus.runtime.annotations.RegisterForReflection;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.With;
 
 @Data
+@With
 @Builder(toBuilder = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@RegisterForReflection
-@With
 public class FruitDto {
 
   /**
