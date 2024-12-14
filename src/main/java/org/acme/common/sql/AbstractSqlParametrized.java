@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,15 +35,16 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
     return (T) this;
   }
 
-  protected int executeUpdate(String sql) {
+  protected CompletableFuture<Integer> executeUpdate(String sql) {
     try (PreparedStatement run = prepareStatement(sql)) {
-      return run.executeUpdate();
+      return CompletableFuture.completedFuture(run.executeUpdate());
     } catch (SQLException e) {
       throw UncheckedSqlException.exception(connection, e);
     }
   }
 
-  protected <R> SqlResult<R> executeQuery(String sql, SqlConverter<R> converter) {
+  protected <R> CompletableFuture<SqlResult<R>> executeQuery(String sql,
+      SqlConverter<R> converter) {
     Function<String, List<R>> execute = (query) -> {
       try (PreparedStatement prepareStatement = prepareStatement(query);
           ResultSet executeQuery = prepareStatement.executeQuery()) {
@@ -55,7 +57,7 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
         throw UncheckedSqlException.exception(connection, ex);
       }
     };
-    return new SqlResult<R>() {
+    return CompletableFuture.completedFuture(new SqlResult<R>() {
       @Override
       public Optional<R> one() {
         return execute.apply(limitResults(sql, 1)).stream().findFirst();
@@ -75,7 +77,7 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
       public List<R> all() {
         return execute.apply(sql);
       }
-    };
+    });
   }
 
   private PreparedStatement prepareStatement(String sql) throws SQLException {

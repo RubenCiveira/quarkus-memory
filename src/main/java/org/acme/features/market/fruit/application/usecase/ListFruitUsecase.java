@@ -87,7 +87,8 @@ public class ListFruitUsecase {
    * @param fruits
    * @return The slide with some values
    */
-  private List<Fruit> filterUnitLimit(final FruitListQuery query, final List<Fruit> fruits) {
+  private CompletableFuture<List<Fruit>> filterUnitLimit(final FruitListQuery query,
+      final List<Fruit> fruits) {
     return visibility.listableFilter(query, fruits);
   }
 

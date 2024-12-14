@@ -1,5 +1,7 @@
 package org.acme.common.sql;
 
+import java.util.concurrent.CompletableFuture;
+
 public final class SqlCommand extends AbstractSqlCommand<SqlCommand> {
   private final String sql;
 
@@ -15,7 +17,7 @@ public final class SqlCommand extends AbstractSqlCommand<SqlCommand> {
   }
 
   @Override
-  public int execute() {
+  public CompletableFuture<Integer> execute() {
     return executeUpdate(this.sql);
   }
 

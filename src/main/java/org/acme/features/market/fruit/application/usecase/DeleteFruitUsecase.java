@@ -95,8 +95,8 @@ public class DeleteFruitUsecase {
    * @return The slide with some values
    */
   private CompletableFuture<Optional<Fruit>> deleteEntity(final Fruit original) {
-    Fruit fruit = aggregate.clean(original);
-    return gateway.delete(fruit).thenApply(Optional::of);
+    return aggregate.clean(original)
+        .thenCompose(fruit -> gateway.delete(fruit).thenApply(Optional::of));
   }
 
   /**

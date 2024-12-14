@@ -117,8 +117,8 @@ public class UpdateFruitUsecase {
    * @return The slide with some values
    */
   private CompletableFuture<Optional<Fruit>> saveEntity(final Fruit original, final FruitDto dto) {
-    Fruit fruit = aggregate.modify(original, dto.toEntityBuilder());
-    return gateway.update(fruit).thenApply(Optional::of);
+    return aggregate.modify(original, dto.toEntityBuilder())
+        .thenCompose(fruit -> gateway.update(fruit).thenApply(Optional::of));
   }
 
   /**

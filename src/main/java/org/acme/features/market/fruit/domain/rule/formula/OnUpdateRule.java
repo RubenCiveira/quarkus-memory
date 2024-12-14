@@ -1,6 +1,7 @@
 package org.acme.features.market.fruit.domain.rule.formula;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.UnaryOperator;
 
 import org.acme.features.market.fruit.domain.model.Fruit;
@@ -18,11 +19,11 @@ public class OnUpdateRule implements FruitRule {
   }
 
   @Override
-  public Fruit apply(FruitActionType actionType, Fruit input, UnaryOperator<Fruit> next,
-      Optional<Fruit> param) {
-    System.out.println("==>>>ESTOY en el On update");
-    Fruit build = input.withNameValue("UPDATE BY " + input.getNameValue());
-    return next.apply(build);
+  public CompletableFuture<Fruit> apply(FruitActionType actionType, CompletableFuture<Fruit> input,
+      UnaryOperator<CompletableFuture<Fruit>> next, Optional<Fruit> param) {
+    return next.apply(input.thenApply(base -> {
+      System.out.println("==>>>ESTOY en el On update");
+      return base.withNameValue("UPDATE BY " + base.getNameValue());
+    }));
   }
-
 }

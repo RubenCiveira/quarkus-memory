@@ -1,5 +1,7 @@
 package org.acme.common.sql;
 
+import java.util.concurrent.CompletableFuture;
+
 public final class SqlSchematicQuery<T> extends AbstractSqlQuery<T, SqlSchematicQuery<T>> {
   private final SchematicQuery query;
 
@@ -9,7 +11,7 @@ public final class SqlSchematicQuery<T> extends AbstractSqlQuery<T, SqlSchematic
   }
 
   @Override
-  public SqlResult<T> query(SqlConverter<T> converter) {
+  public CompletableFuture<SqlResult<T>> query(SqlConverter<T> converter) {
     return executeQuery(this.query.buildQuery(), converter);
   }
 

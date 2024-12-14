@@ -3,7 +3,7 @@ package org.acme.common.action;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.UnaryOperator;
+import java.util.function.Function;
 
 public abstract class Slide<T> {
   private final Optional<Integer> limit;
@@ -16,17 +16,19 @@ public abstract class Slide<T> {
 
   public abstract CompletableFuture<List<T>> get();
 
-  public CompletableFuture<List<T>> filterUnitLimit(UnaryOperator<List<T>> consumer) {
+  public CompletableFuture<List<T>> filterUnitLimit(
+      Function<List<T>, CompletableFuture<List<T>>> consumer) {
     return get().thenCompose(initial -> {
       int readed = initial.size();
       boolean more = limit.map(l -> readed == l).orElse(false);
-      List<T> filtered = consumer.apply(initial);
-      Integer theLimit = limit.orElse(null);
-      return CompletableFuture.completedFuture(filtered)
-          .thenCompose(result -> (limit.isPresent() && more)
-              ? fetchMorePages(this, filtered, consumer, theLimit,
-                  windowSize(initial, readed, theLimit))
-              : CompletableFuture.completedFuture(result));
+      return consumer.apply(initial).thenCompose(filtered -> {
+        Integer theLimit = limit.orElse(null);
+        return CompletableFuture.completedFuture(filtered)
+            .thenCompose(result -> (limit.isPresent() && more)
+                ? fetchMorePages(this, filtered, consumer, theLimit,
+                    windowSize(initial, readed, theLimit))
+                : CompletableFuture.completedFuture(result));
+      });
     });
   }
 
@@ -37,14 +39,15 @@ public abstract class Slide<T> {
   }
 
   private CompletableFuture<List<T>> fetchMorePages(Slide<T> current, List<T> result,
-      UnaryOperator<List<T>> consumer, Integer limit, int window) {
+      Function<List<T>, CompletableFuture<List<T>>> consumer, Integer limit, int window) {
     Slide<T> slice = current.next(window);
     return slice.get().thenCompose(next -> {
       int readed = next.size();
-      List<T> rest = consumer.apply(next);
-      append(result, rest, limit - result.size());
-      return (readed == 0 || result.size() >= limit) ? CompletableFuture.completedFuture(result)
-          : fetchMorePages(slice, result, consumer, limit, windowSize(next, readed, limit));
+      return consumer.apply(next).thenCompose(rest -> {
+        append(result, rest, limit - result.size());
+        return (readed == 0 || result.size() >= limit) ? CompletableFuture.completedFuture(result)
+            : fetchMorePages(slice, result, consumer, limit, windowSize(next, readed, limit));
+      });
     });
   }
 

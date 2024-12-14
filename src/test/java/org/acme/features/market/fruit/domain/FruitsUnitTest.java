@@ -46,7 +46,7 @@ class FruitsUnitTest {
     Fruit one = Fruit.builder().uid(FruitUidVO.from("one")).name(FruitNameVO.from("one"))
         .version(FruitVersionVO.from(1)).build();
     instance.clean(one);
-    Mockito.verify(entityRule).apply(Mockito.eq(FruitActionType.DELETE), Mockito.eq(one),
+    Mockito.verify(entityRule).apply(Mockito.eq(FruitActionType.DELETE), Mockito.any(),
         Mockito.any(), Mockito.eq(new Object[] {Optional.of(one)}));
   }
 
@@ -78,9 +78,9 @@ class FruitsUnitTest {
         .version(FruitVersionVO.from(1)).build();
     FruitBuilder oneBuilder = one.toBuilder();
     instance.initialize(oneBuilder);
-    Mockito.verify(builderRule).apply(Mockito.eq(FruitActionType.CREATE), Mockito.eq(oneBuilder),
+    Mockito.verify(builderRule).apply(Mockito.eq(FruitActionType.CREATE), Mockito.any(),
         Mockito.any(), Mockito.eq(new Object[] {Optional.empty()}));
-    Mockito.verify(entityRule).apply(Mockito.eq(FruitActionType.CREATE), Mockito.eq(one),
+    Mockito.verify(entityRule).apply(Mockito.eq(FruitActionType.CREATE), Mockito.any(),
         Mockito.any(), Mockito.eq(new Object[] {Optional.empty()}));
   }
 
@@ -114,9 +114,9 @@ class FruitsUnitTest {
         .version(FruitVersionVO.from(2)).build();
     FruitBuilder otherBuilder = other.toBuilder();
     instance.modify(one, otherBuilder);
-    Mockito.verify(builderRule).apply(Mockito.eq(FruitActionType.UPDATE), Mockito.eq(otherBuilder),
+    Mockito.verify(builderRule).apply(Mockito.eq(FruitActionType.UPDATE), Mockito.any(),
         Mockito.any(), Mockito.eq(new Object[] {Optional.of(one)}));
-    Mockito.verify(entityRule).apply(Mockito.eq(FruitActionType.UPDATE), Mockito.eq(other),
+    Mockito.verify(entityRule).apply(Mockito.eq(FruitActionType.UPDATE), Mockito.any(),
         Mockito.any(), Mockito.eq(new Object[] {Optional.of(one)}));
   }
 }

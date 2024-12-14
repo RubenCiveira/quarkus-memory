@@ -1,5 +1,7 @@
 package org.acme.common.sql;
 
+import java.util.concurrent.CompletableFuture;
+
 public final class SqlQuery<T> extends AbstractSqlQuery<T, SqlQuery<T>> {
   private final String sql;
 
@@ -15,7 +17,7 @@ public final class SqlQuery<T> extends AbstractSqlQuery<T, SqlQuery<T>> {
   }
 
   @Override
-  public SqlResult<T> query(SqlConverter<T> converter) {
+  public CompletableFuture<SqlResult<T>> query(SqlConverter<T> converter) {
     return executeQuery(sql, converter);
   }
 }

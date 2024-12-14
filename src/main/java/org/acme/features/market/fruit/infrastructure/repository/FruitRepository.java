@@ -8,11 +8,11 @@ import javax.sql.DataSource;
 
 import org.acme.common.action.Slide;
 import org.acme.common.exception.ConstraintException;
-import org.acme.common.sql.OptimistLockException;
 import org.acme.common.sql.SqlCommand;
 import org.acme.common.sql.SqlConverter;
 import org.acme.common.sql.SqlOperator;
 import org.acme.common.sql.SqlParameterValue;
+import org.acme.common.sql.SqlResult;
 import org.acme.common.sql.SqlSchematicQuery;
 import org.acme.common.sql.SqlTemplate;
 import org.acme.features.market.fruit.domain.gateway.FruitCursor;
@@ -60,10 +60,12 @@ public class FruitRepository {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       SqlCommand sq = template.createSqlCommand("delete from \"fruit\" where \"uid\" = :uid");
       sq.with("uid", SqlParameterValue.of(entity.getUidValue()));
-      if (0 == sq.execute()) {
-        throw new IllegalArgumentException("No delete from");
-      }
-      return CompletableFuture.completedFuture(entity);
+      return sq.execute().thenApply(num -> {
+        if (0 == num) {
+          throw new IllegalArgumentException("No delete from");
+        }
+        return entity;
+      });
     }
   }
 
@@ -105,8 +107,8 @@ public class FruitRepository {
           .ifPresent(since -> sq.where("uid", SqlOperator.GT, SqlParameterValue.of(since)));
       sq.orderAsc("uid");
       return new FruitSlice(cursor.getLimit(),
-          CompletableFuture.completedFuture(sq.query(converter()).limit(cursor.getLimit())),
-          this::list, filter, cursor);
+          sq.query(converter()).thenApply(res -> res.limit(cursor.getLimit())), this::list, filter,
+          cursor);
     }
   }
 
@@ -121,7 +123,7 @@ public class FruitRepository {
       FruitFilter readyFilter = filter.map(val -> val.withUid(uid))
           .orElseGet(() -> FruitFilter.builder().uid(uid).build());
       SqlSchematicQuery<Fruit> sq = filteredQuery(template, readyFilter);
-      return CompletableFuture.completedFuture(sq.query(converter()).one());
+      return sq.query(converter()).thenApply(SqlResult::one);
     }
   }
 
@@ -139,10 +141,12 @@ public class FruitRepository {
       sq.with("name", SqlParameterValue.of(entity.getNameValue()));
       sq.with("version", entity.getVersionValue().map(SqlParameterValue::of)
           .orElseGet(SqlParameterValue::ofNullInteger));
-      if (0 == sq.execute()) {
-        throw new OptimistLockException();
-      }
-      return CompletableFuture.completedFuture(entity.withVersionValue(version + 1));
+      return sq.execute().thenApply(num -> {
+        if (0 == num) {
+          throw new IllegalArgumentException("No delete from");
+        }
+        return entity.withVersionValue(version + 1);
+      });
     }
   }
 
@@ -177,19 +181,21 @@ public class FruitRepository {
       sq.with("name", SqlParameterValue.of(entity.getNameValue()));
       sq.with("version", entity.getVersionValue().map(SqlParameterValue::of)
           .orElseGet(SqlParameterValue::ofNullInteger));
-      if (0 == sq.execute()) {
-        throw new IllegalArgumentException("No insert into");
-      }
-      return verifier == null ? CompletableFuture.completedFuture(Optional.of(entity))
-          : verifier.apply(entity).thenCompose(exists -> {
-            if (exists) {
-              return CompletableFuture.completedFuture(Optional.of(entity));
-            } else {
-              template.createSqlCommand("delete from \"fruit\" where \"uid\" = :uid")
-                  .with("uid", SqlParameterValue.of(entity.getUidValue())).execute();
-              return CompletableFuture.completedFuture(Optional.empty());
-            }
-          });
+      return sq.execute().thenCompose(num -> {
+        if (0 == num) {
+          throw new IllegalArgumentException("No insert into");
+        }
+        return verifier == null ? CompletableFuture.completedFuture(Optional.of(entity))
+            : verifier.apply(entity).thenCompose(exists -> {
+              if (exists) {
+                return CompletableFuture.completedFuture(Optional.of(entity));
+              } else {
+                template.createSqlCommand("delete from \"fruit\" where \"uid\" = :uid")
+                    .with("uid", SqlParameterValue.of(entity.getUidValue())).execute();
+                return CompletableFuture.completedFuture(Optional.empty());
+              }
+            });
+      });
     }
   }
 }

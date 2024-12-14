@@ -1,6 +1,7 @@
 package org.acme.features.market.fruit.domain.rule.formula;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.UnaryOperator;
 
 import org.acme.features.market.fruit.domain.model.Fruit;
@@ -18,10 +19,12 @@ public class MoreCreateRule implements FruitRule {
   }
 
   @Override
-  public Fruit apply(FruitActionType actionType, Fruit input, UnaryOperator<Fruit> next,
-      Optional<Fruit> param) {
-    System.out.println("==>>>ALSO ESTOY en el More create");
-    Fruit build = input.withNameValue("MORE BY " + input.getNameValue());
-    return next.apply(build);
+  public CompletableFuture<Fruit> apply(FruitActionType actionType, CompletableFuture<Fruit> input,
+      UnaryOperator<CompletableFuture<Fruit>> next, Optional<Fruit> param) {
+    return next.apply(input.thenApply(base -> {
+      System.out.println("==>>>ALSO ESTOY en el More create");
+      return base.withNameValue("MORE BY " + base.getNameValue());
+    }));
   }
+
 }

@@ -1,5 +1,7 @@
 package org.acme.common.sql;
 
+import java.util.concurrent.CompletableFuture;
+
 public abstract class AbstractSqlCommand<T extends AbstractSqlCommand<T>>
     extends AbstractSqlParametrized<T> {
 
@@ -7,5 +9,5 @@ public abstract class AbstractSqlCommand<T extends AbstractSqlCommand<T>>
     super(template);
   }
 
-  public abstract int execute();
+  public abstract CompletableFuture<Integer> execute();
 }
