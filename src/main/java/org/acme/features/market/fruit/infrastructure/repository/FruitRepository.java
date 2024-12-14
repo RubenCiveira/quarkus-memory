@@ -8,6 +8,7 @@ import javax.sql.DataSource;
 
 import org.acme.common.action.Slide;
 import org.acme.common.exception.ConstraintException;
+import org.acme.common.sql.OptimistLockException;
 import org.acme.common.sql.SqlCommand;
 import org.acme.common.sql.SqlConverter;
 import org.acme.common.sql.SqlOperator;
@@ -143,7 +144,7 @@ public class FruitRepository {
           .orElseGet(SqlParameterValue::ofNullInteger));
       return sq.execute().thenApply(num -> {
         if (0 == num) {
-          throw new IllegalArgumentException("No delete from");
+          throw new OptimistLockException("No delete from");
         }
         return entity.withVersionValue(version + 1);
       });

@@ -45,7 +45,8 @@ public class RetrieveFruitUsecase {
    * @return
    */
   public FruitRetrieveAllow allow(final FruitEntityAllowQuery query) {
-    FruitRetrieveAllow base = FruitRetrieveAllow.build(true, "Allowed by default");
+    FruitRetrieveAllow base =
+        FruitRetrieveAllow.build(query.getReference(), true, "Allowed by default");
     retrieveAllow.fire(base);
     return base;
   }
@@ -63,11 +64,11 @@ public class RetrieveFruitUsecase {
         throw new NotAllowedException(detail.getDescription());
       }
       FruitFilter filter = FruitFilter.builder().uid(query.getReference().getUidValue()).build();
-      return gateway.retrieve(query.getReference().getUidValue(),
-          Optional.of(visibility.visibleFilter(query, filter)));
+      return visibility.visibleFilter(query, filter).thenCompose(visibleFilter -> gateway
+          .retrieve(query.getReference().getUidValue(), Optional.of(visibleFilter)));
     });
     return FruitRetrieveResult.builder().interaction(query)
-        .fruit(result.thenApply(op -> this.mapEntity(query, op))).build();
+        .fruit(result.thenCompose(op -> this.mapEntity(query, op))).build();
   }
 
   /**
@@ -87,8 +88,9 @@ public class RetrieveFruitUsecase {
    * @param opfruit
    * @return The slide with some values
    */
-  private Optional<FruitDto> mapEntity(final FruitRetrieveQuery query,
+  private CompletableFuture<Optional<FruitDto>> mapEntity(final FruitRetrieveQuery query,
       final Optional<Fruit> opfruit) {
-    return opfruit.map(fruit -> visibility.hide(query, fruit));
+    return opfruit.map(fruit -> visibility.hide(query, fruit).thenApply(Optional::of))
+        .orElseGet(() -> CompletableFuture.completedFuture(Optional.empty()));
   }
 }
