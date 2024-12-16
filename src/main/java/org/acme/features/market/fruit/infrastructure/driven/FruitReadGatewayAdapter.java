@@ -1,7 +1,7 @@
 package org.acme.features.market.fruit.infrastructure.driven;
 
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import javax.sql.DataSource;
 
@@ -37,7 +37,7 @@ public class FruitReadGatewayAdapter implements FruitReadRepositoryGateway {
    * @return
    */
   @Override
-  public CompletableFuture<Boolean> exists(String uid, Optional<FruitFilter> filter) {
+  public CompletionStage<Boolean> exists(String uid, Optional<FruitFilter> filter) {
     return repository.exists(uid, filter);
   }
 
@@ -59,7 +59,7 @@ public class FruitReadGatewayAdapter implements FruitReadRepositoryGateway {
    * @return
    */
   @Override
-  public CompletableFuture<Optional<Fruit>> retrieve(String uid, Optional<FruitFilter> filter) {
+  public CompletionStage<Optional<Fruit>> retrieve(String uid, Optional<FruitFilter> filter) {
     return repository.retrieve(uid, filter);
   }
 }

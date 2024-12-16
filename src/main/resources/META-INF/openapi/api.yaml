@@ -23,19 +23,53 @@ servers:
 security:
   - BearerAuth: [] # Aplica el esquema de seguridad por defecto a toda la API
 tags:
+  - name: color
+    description: color
+  - name: color-acl
+    description: Access control for color
   - name: fruit
     description: fruit
   - name: fruit-acl
     description: Access control for fruit
+  - name: merchant
+    description: merchant
+  - name: merchant-acl
+    description: Access control for merchant
+  - name: place
+    description: place
+  - name: place-acl
+    description: Access control for place
 
 paths:
-  /api/market/fruits:
+  /api/market/colors:
     get:
       tags:
-        - fruit
-      summary: List of fruit
-      operationId: fruit-api-list
+        - color
+      summary: List of color
+      operationId: color-api-list
       parameters:
+        - name: uid
+          in: query
+          description: A number to identify the db record
+          required: false
+          schema:
+            type: string
+        - name: uids
+          in: query
+          description: A number to identify the db record
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+        - name: search
+          in: query
+          description: Textual search
+          required: false
+          schema:
+            type: string
         - name: limit
           in: query
           description: The maximun number of results
@@ -54,17 +88,178 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  content:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Fruit'
-                  next:
-                    type: object
-                    properties:
-                      since-uid:
-                        type: string
+                $ref: '#/components/schemas/ColorList'
+    post:
+      tags:
+        - color
+      summary: Create a new color
+      operationId: color-api-create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Color'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Color'
+  /api/market/colors/{uid}:
+    get:
+      tags:
+        - color
+      summary: Retrive on  color by their uid
+      operationId: color-api-retrieve
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Color'
+        '404':
+          description: The item dont exists
+    put:
+      tags:
+        - color
+      summary: Update a color by their uid
+      operationId: color-api-update
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Color'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Color'
+        '404':
+          description: The item dont exists
+    delete:
+      tags:
+        - color
+      summary: Delete a  color by their uid
+      operationId: color-api-delete
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Color'
+        '404':
+          description: The item dont exists
+  /api/me/acl/market/colors:
+    get:
+      tags:
+        - color-acl
+      summary: Check for allow permissions for the current user on color
+      operationId: color-api-generic-acl
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ColorAcl'
+  /api/me/acl/market/colors/{uid}:
+    get:
+      tags:
+        - color-acl
+      summary: Check for allow permissions for the current user on color by their uid
+      operationId: color-api-contextual-acl
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ColorAcl'
+        '404':
+          description: The item dont exists
+  /api/market/fruits:
+    get:
+      tags:
+        - fruit
+      summary: List of fruit
+      operationId: fruit-api-list
+      parameters:
+        - name: uid
+          in: query
+          description: A number to identify the db record
+          required: false
+          schema:
+            type: string
+        - name: uids
+          in: query
+          description: A number to identify the db record
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+        - name: search
+          in: query
+          description: Textual search
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: The maximun number of results
+          required: false
+          schema:
+            type: integer
+        - name: since-uid
+          in: query
+          description: The maximun number of results
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FruitList'
     post:
       tags:
         - fruit
@@ -188,6 +383,360 @@ paths:
                 $ref: '#/components/schemas/FruitAcl'
         '404':
           description: The item dont exists
+  /api/market/merchants:
+    get:
+      tags:
+        - merchant
+      summary: List of merchant
+      operationId: merchant-api-list
+      parameters:
+        - name: uid
+          in: query
+          description: A number to identify the db record
+          required: false
+          schema:
+            type: string
+        - name: uids
+          in: query
+          description: A number to identify the db record
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+        - name: search
+          in: query
+          description: Textual search
+          required: false
+          schema:
+            type: string
+        - name: enabled
+          in: query
+          description: 
+          required: false
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          description: The maximun number of results
+          required: false
+          schema:
+            type: integer
+        - name: since-uid
+          in: query
+          description: The maximun number of results
+          required: false
+          schema:
+            type: string
+        - name: order
+          in: query
+          description: The result order information
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantList'
+    post:
+      tags:
+        - merchant
+      summary: Create a new merchant
+      operationId: merchant-api-create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Merchant'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Merchant'
+  /api/market/merchants/{uid}:
+    get:
+      tags:
+        - merchant
+      summary: Retrive on  merchant by their uid
+      operationId: merchant-api-retrieve
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Merchant'
+        '404':
+          description: The item dont exists
+    put:
+      tags:
+        - merchant
+      summary: Update a merchant by their uid
+      operationId: merchant-api-update
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Merchant'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Merchant'
+        '404':
+          description: The item dont exists
+    delete:
+      tags:
+        - merchant
+      summary: Delete a  merchant by their uid
+      operationId: merchant-api-delete
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Merchant'
+        '404':
+          description: The item dont exists
+  /api/me/acl/market/merchants:
+    get:
+      tags:
+        - merchant-acl
+      summary: Check for allow permissions for the current user on merchant
+      operationId: merchant-api-generic-acl
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantAcl'
+  /api/me/acl/market/merchants/{uid}:
+    get:
+      tags:
+        - merchant-acl
+      summary: Check for allow permissions for the current user on merchant by their uid
+      operationId: merchant-api-contextual-acl
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantAcl'
+        '404':
+          description: The item dont exists
+  /api/market/places:
+    get:
+      tags:
+        - place
+      summary: List of place
+      operationId: place-api-list
+      parameters:
+        - name: uid
+          in: query
+          description: A number to identify the db record
+          required: false
+          schema:
+            type: string
+        - name: uids
+          in: query
+          description: A number to identify the db record
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+        - name: search
+          in: query
+          description: Textual search
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: The maximun number of results
+          required: false
+          schema:
+            type: integer
+        - name: since-uid
+          in: query
+          description: The maximun number of results
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaceList'
+    post:
+      tags:
+        - place
+      summary: Create a new place
+      operationId: place-api-create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Place'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Place'
+  /api/market/places/{uid}:
+    get:
+      tags:
+        - place
+      summary: Retrive on  place by their uid
+      operationId: place-api-retrieve
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Place'
+        '404':
+          description: The item dont exists
+    put:
+      tags:
+        - place
+      summary: Update a place by their uid
+      operationId: place-api-update
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Place'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Place'
+        '404':
+          description: The item dont exists
+    delete:
+      tags:
+        - place
+      summary: Delete a  place by their uid
+      operationId: place-api-delete
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Place'
+        '404':
+          description: The item dont exists
+  /api/me/acl/market/places:
+    get:
+      tags:
+        - place-acl
+      summary: Check for allow permissions for the current user on place
+      operationId: place-api-generic-acl
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaceAcl'
+  /api/me/acl/market/places/{uid}:
+    get:
+      tags:
+        - place-acl
+      summary: Check for allow permissions for the current user on place by their uid
+      operationId: place-api-contextual-acl
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaceAcl'
+        '404':
+          description: The item dont exists
 
 components:
   securitySchemes:
@@ -196,6 +745,57 @@ components:
       scheme: bearer
       bearerFormat: JWT # Opcional, para indicar que es un JWT
   schemas:
+    Color:
+      type: object
+      properties:
+        uid:
+          type: string
+        name:
+          type: string
+        version:
+          type: integer
+          format: int32
+    ColorList:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Color'
+        next:
+          $ref: '#/components/schemas/ColorListNextOffset'
+    ColorListNextOffset:
+      type: object
+      properties:
+        since-uid:
+          type: string
+    CommonAllow:
+      type: object
+      properties:
+        name:
+          type: string
+        allowed:
+          type: boolean
+        reason:
+          type: string
+    ColorAcl:
+      type: object
+      properties:
+        allows:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommonAllow'
+        fields:
+          type: object
+          properties:
+            noEditables:
+              type: array
+              items:
+                type: string
+            noVisibles:
+              type: array
+              items:
+                type: string
     Fruit:
       type: object
       properties:
@@ -206,16 +806,107 @@ components:
         version:
           type: integer
           format: int32
-    CommonAllow:
+    FruitList:
       type: object
       properties:
-        name:
-          type: string
-        allowed:
-          type: boolean
-        reason:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Fruit'
+        next:
+          $ref: '#/components/schemas/FruitListNextOffset'
+    FruitListNextOffset:
+      type: object
+      properties:
+        since-uid:
           type: string
     FruitAcl:
+      type: object
+      properties:
+        allows:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommonAllow'
+        fields:
+          type: object
+          properties:
+            noEditables:
+              type: array
+              items:
+                type: string
+            noVisibles:
+              type: array
+              items:
+                type: string
+    Merchant:
+      type: object
+      properties:
+        uid:
+          type: string
+        name:
+          type: string
+        enabled:
+          type: boolean
+        version:
+          type: integer
+          format: int32
+    MerchantList:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Merchant'
+        next:
+          $ref: '#/components/schemas/MerchantListNextOffset'
+    MerchantListNextOffset:
+      type: object
+      properties:
+        since-uid:
+          type: string
+    MerchantAcl:
+      type: object
+      properties:
+        allows:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommonAllow'
+        fields:
+          type: object
+          properties:
+            noEditables:
+              type: array
+              items:
+                type: string
+            noVisibles:
+              type: array
+              items:
+                type: string
+    Place:
+      type: object
+      properties:
+        uid:
+          type: string
+        name:
+          type: string
+        version:
+          type: integer
+          format: int32
+    PlaceList:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Place'
+        next:
+          $ref: '#/components/schemas/PlaceListNextOffset'
+    PlaceListNextOffset:
+      type: object
+      properties:
+        since-uid:
+          type: string
+    PlaceAcl:
       type: object
       properties:
         allows:

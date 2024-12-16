@@ -2,6 +2,7 @@ package org.acme.features.market.fruit.application.usecase;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.acme.common.exception.NotAllowedException;
 import org.acme.features.market.fruit.application.allow.FruitRetrieveAllow;
@@ -59,7 +60,7 @@ public class RetrieveFruitUsecase {
    * @return The slide with some values
    */
   public FruitRetrieveResult retrieve(final FruitRetrieveQuery query) {
-    CompletableFuture<Optional<Fruit>> result = allow(query).getDetail().thenCompose(detail -> {
+    CompletionStage<Optional<Fruit>> result = allow(query).getDetail().thenCompose(detail -> {
       if (!detail.isAllowed()) {
         throw new NotAllowedException(detail.getDescription());
       }
@@ -88,7 +89,7 @@ public class RetrieveFruitUsecase {
    * @param opfruit
    * @return The slide with some values
    */
-  private CompletableFuture<Optional<FruitDto>> mapEntity(final FruitRetrieveQuery query,
+  private CompletionStage<Optional<FruitDto>> mapEntity(final FruitRetrieveQuery query,
       final Optional<Fruit> opfruit) {
     return opfruit.map(fruit -> visibility.hide(query, fruit).thenApply(Optional::of))
         .orElseGet(() -> CompletableFuture.completedFuture(Optional.empty()));

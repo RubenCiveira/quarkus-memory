@@ -2,6 +2,7 @@ package org.acme.features.market.fruit.application.usecase;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.acme.common.action.Slide;
 import org.acme.common.exception.NotAllowedException;
@@ -58,7 +59,7 @@ public class ListFruitUsecase {
    * @return The slide with some values
    */
   public FruitListResult list(final FruitListQuery query) {
-    CompletableFuture<List<Fruit>> future = allow(query).getDetail().thenCompose(detail -> {
+    CompletionStage<List<Fruit>> future = allow(query).getDetail().thenCompose(detail -> {
       if (!detail.isAllowed()) {
         throw new NotAllowedException(detail.getDescription());
       }
@@ -88,7 +89,7 @@ public class ListFruitUsecase {
    * @param fruits
    * @return The slide with some values
    */
-  private CompletableFuture<List<Fruit>> filterUnitLimit(final FruitListQuery query,
+  private CompletionStage<List<Fruit>> filterUnitLimit(final FruitListQuery query,
       final List<Fruit> fruits) {
     return visibility.listableFilter(query, fruits);
   }
@@ -101,10 +102,11 @@ public class ListFruitUsecase {
    * @param fruits
    * @return The slide with some values
    */
-  private CompletableFuture<List<FruitDto>> mapList(final FruitListQuery query,
+  private CompletionStage<List<FruitDto>> mapList(final FruitListQuery query,
       final List<Fruit> fruits) {
     List<CompletableFuture<FruitDto>> futures =
-        fruits.stream().map(fruit -> visibility.hide(query, fruit)).toList();
+        fruits.stream().map(fruit -> visibility.hide(query, fruit))
+            .map(CompletionStage::toCompletableFuture).toList();
     return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
         .thenApply(voidResult -> futures.stream().map(CompletableFuture::join).toList());
   }

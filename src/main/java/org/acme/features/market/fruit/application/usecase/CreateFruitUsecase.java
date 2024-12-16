@@ -2,6 +2,7 @@ package org.acme.features.market.fruit.application.usecase;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.acme.common.exception.NotAllowedException;
 import org.acme.features.market.fruit.application.allow.FruitCreateAllow;
@@ -64,7 +65,7 @@ public class CreateFruitUsecase {
    * @return The slide with some values
    */
   public FruitCreateResult create(final FruitCreateCommand query) {
-    CompletableFuture<Optional<Fruit>> create = allow(query).getDetail().thenCompose(detail -> {
+    CompletionStage<Optional<Fruit>> create = allow(query).getDetail().thenCompose(detail -> {
       if (!detail.isAllowed()) {
         throw new NotAllowedException(detail.getDescription());
       }
@@ -91,7 +92,7 @@ public class CreateFruitUsecase {
    * @param fruitEntity
    * @return
    */
-  private CompletableFuture<Optional<Fruit>> createAndVerify(final FruitCreateCommand query,
+  private CompletionStage<Optional<Fruit>> createAndVerify(final FruitCreateCommand query,
       final Fruit fruitEntity) {
     return gateway.create(fruitEntity, created -> verifyCreation(query, created));
   }
@@ -104,7 +105,7 @@ public class CreateFruitUsecase {
    * @param opfruit
    * @return The slide with some values
    */
-  private CompletableFuture<Optional<FruitDto>> mapEntity(final FruitCreateCommand command,
+  private CompletionStage<Optional<FruitDto>> mapEntity(final FruitCreateCommand command,
       final Optional<Fruit> opfruit) {
     return opfruit.map(fruit -> visibility.hide(command, fruit).thenApply(Optional::of))
         .orElseGet(() -> CompletableFuture.completedFuture(Optional.empty()));
@@ -116,7 +117,7 @@ public class CreateFruitUsecase {
    * @param created
    * @return
    */
-  private CompletableFuture<Boolean> verifyCreation(final FruitCreateCommand query,
+  private CompletionStage<Boolean> verifyCreation(final FruitCreateCommand query,
       final Fruit created) {
     FruitFilter filter = FruitFilter.builder().uid(created.getUidValue()).build();
     return visibility.visibleFilter(query, filter).thenCompose(

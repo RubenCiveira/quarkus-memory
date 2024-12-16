@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,7 +36,7 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
     return (T) this;
   }
 
-  protected CompletableFuture<Integer> executeUpdate(String sql) {
+  protected CompletionStage<Integer> executeUpdate(String sql) {
     try (PreparedStatement run = prepareStatement(sql)) {
       return CompletableFuture.completedFuture(run.executeUpdate());
     } catch (SQLException e) {
@@ -43,8 +44,7 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
     }
   }
 
-  protected <R> CompletableFuture<SqlResult<R>> executeQuery(String sql,
-      SqlConverter<R> converter) {
+  protected <R> CompletionStage<SqlResult<R>> executeQuery(String sql, SqlConverter<R> converter) {
     Function<String, List<R>> execute = (query) -> {
       try (PreparedStatement prepareStatement = prepareStatement(query);
           ResultSet executeQuery = prepareStatement.executeQuery()) {

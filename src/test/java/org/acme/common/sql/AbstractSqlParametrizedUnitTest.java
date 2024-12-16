@@ -61,7 +61,7 @@ class AbstractSqlParametrizedUnitTest {
 
   @Test
   void testExecuteUpdate() throws SQLException, InterruptedException, ExecutionException {
-    int result = testSql.executeUpdate("UPDATE table SET column = ? WHERE id = ?").get();
+    int result = testSql.executeUpdate("UPDATE table SET column = ? WHERE id = ?").toCompletableFuture().get();
     assertEquals(1, result);
     verify(preparedStatement, times(1)).executeUpdate();
   }
@@ -79,7 +79,7 @@ class AbstractSqlParametrizedUnitTest {
     when(converter.convert(resultSet)).thenReturn(Optional.of("Result"));
 
     SqlResult<String> result = testSql.with("_age", SqlParameterValue.of(22))
-        .executeQuery("SELECT * FROM table where age = :_age", converter).get();
+        .executeQuery("SELECT * FROM table where age = :_age", converter).toCompletableFuture().get();
 
     Optional<String> one = result.one();
     assertTrue(one.isPresent());
@@ -95,7 +95,7 @@ class AbstractSqlParametrizedUnitTest {
     when(converter.convert(resultSet)).thenReturn(Optional.of("Result1"), Optional.of("Result2"));
 
     SqlResult<String> result = testSql.with("name", SqlParameterValue.of("green"))
-        .executeQuery("SELECT * FROM table where name = :name and :", converter).get();
+        .executeQuery("SELECT * FROM table where name = :name and :", converter).toCompletableFuture().get();
 
     List<String> all = result.all();
     assertEquals(2, all.size());
@@ -116,7 +116,7 @@ class AbstractSqlParametrizedUnitTest {
         .executeQuery(
             "SELECT * FROM \"table\" where di IN(:params) and name = :name and marca = '\"uno :22 que : viene\"' :",
             converter)
-        .get().limit(10);
+        .toCompletableFuture().get().limit(10);
 
     verify(preparedStatement).setString(1, "one");
     verify(preparedStatement).setString(2, "two");
@@ -131,15 +131,15 @@ class AbstractSqlParametrizedUnitTest {
   void testFormatErrors() throws SQLException, InterruptedException, ExecutionException {
     SqlResult<String> other = testSql.with("params", SqlParameterValue.of("four"))
         .executeQuery("SELECT * FROM \"table\" where name = :name and color = :name", converter)
-        .get();
+        .toCompletableFuture().get();
     assertThrows(IllegalArgumentException.class, () -> other.all());
     SqlResult<String> one = testSql.with("name", SqlParameterValue.of("oo"))
         .with("params", SqlListParameterValue.of("one", "two", "three", "four"))
-        .executeQuery("SELECT * FROM \"table\" where di IN(:listParams)", converter).get();
+        .executeQuery("SELECT * FROM \"table\" where di IN(:listParams)", converter).toCompletableFuture().get();
     assertThrows(IllegalArgumentException.class, () -> one.all());
     SqlResult<String> three = testSql.executeQuery(
         "SELECT * FROM \"table\" where name = :name and di IN(:params) and do IN(:others)",
-        converter).get();
+        converter).toCompletableFuture().get();
     assertThrows(IllegalArgumentException.class, () -> three.all());
   }
 
@@ -147,7 +147,7 @@ class AbstractSqlParametrizedUnitTest {
   void testConnectionErrors() throws SQLException, InterruptedException, ExecutionException {
     when(preparedStatement.executeQuery()).thenThrow(SQLException.class);
     SqlResult<String> result = testSql.with("_age", SqlParameterValue.of(22))
-        .executeQuery("SELECT * FROM table where age = :_age", converter).get();
+        .executeQuery("SELECT * FROM table where age = :_age", converter).toCompletableFuture().get();
     assertThrows(UncheckedSqlException.class, () -> result.one());
   }
 

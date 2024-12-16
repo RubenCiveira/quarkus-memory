@@ -2,6 +2,7 @@ package org.acme.features.market.fruit.application.usecase;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.acme.common.exception.NotAllowedException;
 import org.acme.features.market.fruit.application.allow.FruitUpdateAllow;
@@ -73,7 +74,7 @@ public class UpdateFruitUsecase {
    * @return The slide with some values
    */
   public FruitUpdateResult update(final FruitUpdateCommand command) {
-    CompletableFuture<Optional<Fruit>> updated = allow(command).getDetail().thenCompose(detail -> {
+    CompletionStage<Optional<Fruit>> updated = allow(command).getDetail().thenCompose(detail -> {
       if (!detail.isAllowed()) {
         throw new NotAllowedException(detail.getDescription());
       }
@@ -104,7 +105,7 @@ public class UpdateFruitUsecase {
    * @param opfruit
    * @return The slide with some values
    */
-  private CompletableFuture<Optional<FruitDto>> mapEntity(final FruitUpdateCommand command,
+  private CompletionStage<Optional<FruitDto>> mapEntity(final FruitUpdateCommand command,
       final Optional<Fruit> opfruit) {
     return opfruit.map(fruit -> visibility.hide(command, fruit).thenApply(Optional::of))
         .orElseGet(() -> CompletableFuture.completedFuture(Optional.empty()));
@@ -118,7 +119,7 @@ public class UpdateFruitUsecase {
    * @param filter a filter to retrieve only matching values
    * @return The slide with some values
    */
-  private CompletableFuture<Optional<Fruit>> retrieve(final FruitUpdateCommand command,
+  private CompletionStage<Optional<Fruit>> retrieve(final FruitUpdateCommand command,
       final FruitFilter filter) {
     return visibility.visibleFilter(command, filter).thenCompose(visibleFilter -> gateway
         .retrieve(command.getReference().getUidValue(), Optional.of(visibleFilter)));
@@ -132,7 +133,7 @@ public class UpdateFruitUsecase {
    * @param dto a filter to retrieve only matching values
    * @return The slide with some values
    */
-  private CompletableFuture<Optional<Fruit>> saveEntity(final Fruit original, final FruitDto dto) {
+  private CompletionStage<Optional<Fruit>> saveEntity(final Fruit original, final FruitDto dto) {
     return aggregate.modify(original, dto.toEntityBuilder())
         .thenCompose(fruit -> gateway.update(fruit).thenApply(Optional::of));
   }
@@ -145,7 +146,7 @@ public class UpdateFruitUsecase {
    * @param dto a filter to retrieve only matching values
    * @return The slide with some values
    */
-  private CompletableFuture<Optional<Fruit>> saveIfIsPresent(final Optional<Fruit> result,
+  private CompletionStage<Optional<Fruit>> saveIfIsPresent(final Optional<Fruit> result,
       final FruitDto dto) {
     return result.map(original -> saveEntity(original, dto))
         .orElseGet(() -> CompletableFuture.completedFuture(Optional.empty()));

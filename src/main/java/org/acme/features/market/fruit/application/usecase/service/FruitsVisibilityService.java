@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.acme.common.action.Interaction;
 import org.acme.features.market.fruit.application.interaction.FruitDto;
@@ -76,7 +77,7 @@ public class FruitsVisibilityService {
    * @param source The source interaction
    * @return The input entity with the copy values without hidden
    */
-  public CompletableFuture<FruitDto> copyWithFixed(Interaction prev, Fruit original,
+  public CompletionStage<FruitDto> copyWithFixed(Interaction prev, Fruit original,
       FruitDto source) {
     return fieldsToFix(prev, original).getFixed().thenApply(fixeds -> {
       fixeds.forEach(field -> source.fix(field, original));
@@ -92,7 +93,7 @@ public class FruitsVisibilityService {
    * @param source The source interaction
    * @return The input entity with the copy values without hidden
    */
-  public CompletableFuture<FruitDto> copyWithFixed(Interaction prev, FruitDto source) {
+  public CompletionStage<FruitDto> copyWithFixed(Interaction prev, FruitDto source) {
     return fieldsToFix(prev).getFixed().thenApply(fixeds -> {
       fixeds.forEach(field -> source.fix(field));
       return source;
@@ -107,7 +108,7 @@ public class FruitsVisibilityService {
    * @return initialsFixFields
    */
   public FruitFixedFields fieldsToFix(Interaction prev) {
-    CompletableFuture<Set<String>> fields = fieldsToHide(prev).getHidden().thenApply(hidden -> {
+    CompletionStage<Set<String>> fields = fieldsToHide(prev).getHidden().thenApply(hidden -> {
       Set<String> set = new HashSet<>(aggregate.calcultadFields());
       set.addAll(hidden);
       return set;
@@ -126,7 +127,7 @@ public class FruitsVisibilityService {
    * @return initialsFixFields
    */
   public FruitFixedFields fieldsToFix(Interaction prev, FruitRef fruit) {
-    CompletableFuture<Set<String>> fields = fieldsToFix(prev).getFixed()
+    CompletionStage<Set<String>> fields = fieldsToFix(prev).getFixed()
         .thenCombine(fieldsToHide(prev, fruit).getHidden(), (set1, set2) -> {
           Set<String> set = new HashSet<>(set1);
           set.addAll(set2);
@@ -145,7 +146,7 @@ public class FruitsVisibilityService {
    * @return initialsHideFields
    */
   public FruitHiddenFields fieldsToHide(Interaction prev) {
-    CompletableFuture<Set<String>> fields = CompletableFuture.completedFuture(Set.of());
+    CompletionStage<Set<String>> fields = CompletableFuture.completedFuture(Set.of());
     FruitHiddenFields value = FruitHiddenFields.builder().hidden(fields).build(prev);
     fireHide.fire(value);
     return value;
@@ -160,7 +161,7 @@ public class FruitsVisibilityService {
    * @return initialsHideFields
    */
   public FruitHiddenFields fieldsToHide(Interaction prev, FruitRef fruit) {
-    CompletableFuture<Set<String>> fields = fieldsToHide(prev).getHidden();
+    CompletionStage<Set<String>> fields = fieldsToHide(prev).getHidden();
     FruitHiddenFields value = FruitHiddenFields.builder().hidden(fields).fruit(fruit).build(prev);
     fireHide.fire(value);
     return value;
@@ -174,7 +175,7 @@ public class FruitsVisibilityService {
    * @param fruit
    * @return The input dto with hidden values
    */
-  public CompletableFuture<FruitDto> hide(Interaction prev, Fruit fruit) {
+  public CompletionStage<FruitDto> hide(Interaction prev, Fruit fruit) {
     return fieldsToHide(prev, fruit).getHidden().thenApply(hidden -> {
       FruitDto target = FruitDto.from(fruit);
       hidden.forEach(target::hide);
@@ -190,7 +191,7 @@ public class FruitsVisibilityService {
    * @param fruitRefs The source interaction
    * @return The input dto with hidden values
    */
-  public CompletableFuture<List<Fruit>> listableFilter(Interaction prev, List<Fruit> fruitRefs) {
+  public CompletionStage<List<Fruit>> listableFilter(Interaction prev, List<Fruit> fruitRefs) {
     return visibleFilter(prev, fruitRefs).thenCompose(visibles -> {
       FruitListableContent list = FruitListableContent.builder()
           .listables(CompletableFuture.completedFuture(visibles)).build(prev);
@@ -207,7 +208,7 @@ public class FruitsVisibilityService {
    * @param fruitRefs The source interaction
    * @return The input dto with hidden values
    */
-  public CompletableFuture<List<Fruit>> visibleFilter(Interaction prev, List<Fruit> fruitRefs) {
+  public CompletionStage<List<Fruit>> visibleFilter(Interaction prev, List<Fruit> fruitRefs) {
     FruitVisibleContent list = FruitVisibleContent.builder()
         .visibles(CompletableFuture.completedFuture(new ArrayList<>(fruitRefs))).build(prev);
     fireVisibleList.fire(list);
@@ -222,7 +223,7 @@ public class FruitsVisibilityService {
    * @param fruitRef The source interaction
    * @return The input dto with hidden values
    */
-  public CompletableFuture<Optional<Fruit>> visibleFilter(Interaction prev, Fruit fruitRef) {
+  public CompletionStage<Optional<Fruit>> visibleFilter(Interaction prev, Fruit fruitRef) {
     return visibleFilter(prev, List.of(fruitRef))
         .thenApply(list -> list.isEmpty() ? Optional.empty() : Optional.of(list.get(0)));
   }
@@ -235,7 +236,7 @@ public class FruitsVisibilityService {
    * @param filter The filter to retrieve values
    * @return The self filter modified with the prepared values.
    */
-  public CompletableFuture<FruitFilter> visibleFilter(Interaction prev, FruitFilter filter) {
+  public CompletionStage<FruitFilter> visibleFilter(Interaction prev, FruitFilter filter) {
     FruitVisibleFilter visible =
         FruitVisibleFilter.builder().filter(CompletableFuture.completedFuture(filter)).build(prev);
     fireVisibleFilter.fire(visible);

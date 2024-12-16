@@ -9,13 +9,13 @@ import jakarta.enterprise.event.Observes;
 public class FilterCoffeeFruits {
 
   public void filterCoffeeFruits(@Observes FruitListableContent list) {
-    list.replace(list.getListables().thenApply(ll -> {
+    list.getListables().thenApply(ll -> {
       System.out.println("\t\tFiter coffe, before" + ll.size());
       ll.removeIf(fruit -> !(fruit.getName().getValue().contains("Coffee")
           || fruit.getName().getValue().contains("Wine")
           || fruit.getName().getValue().contains("Vinegar")));
       System.out.println("\t\tFiter coffe, after" + ll.size());
       return ll;
-    }));
+    });
   }
 }

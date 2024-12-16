@@ -1,7 +1,7 @@
 package org.acme.features.market.fruit.infrastructure.driven;
 
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 import javax.sql.DataSource;
@@ -44,7 +44,7 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public CompletableFuture<Optional<Fruit>> create(Fruit entity) {
+  public CompletionStage<Optional<Fruit>> create(Fruit entity) {
     return repository.create(entity);
   }
 
@@ -55,8 +55,8 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public CompletableFuture<Optional<Fruit>> create(Fruit entity,
-      Function<Fruit, CompletableFuture<Boolean>> verifier) {
+  public CompletionStage<Optional<Fruit>> create(Fruit entity,
+      Function<Fruit, CompletionStage<Boolean>> verifier) {
     return repository.create(entity, verifier);
   }
 
@@ -66,7 +66,7 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public CompletableFuture<Fruit> delete(Fruit entity) {
+  public CompletionStage<Fruit> delete(Fruit entity) {
     return repository.delete(entity);
   }
 
@@ -77,7 +77,7 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public CompletableFuture<Boolean> exists(String uid, Optional<FruitFilter> filter) {
+  public CompletionStage<Boolean> exists(String uid, Optional<FruitFilter> filter) {
     return repository.exists(uid, filter);
   }
 
@@ -99,7 +99,7 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public CompletableFuture<Optional<Fruit>> retrieve(String uid, Optional<FruitFilter> filter) {
+  public CompletionStage<Optional<Fruit>> retrieve(String uid, Optional<FruitFilter> filter) {
     return repository.retrieve(uid, filter);
   }
 
@@ -109,7 +109,7 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public CompletableFuture<Fruit> update(Fruit entity) {
+  public CompletionStage<Fruit> update(Fruit entity) {
     return repository.update(entity);
   }
 }

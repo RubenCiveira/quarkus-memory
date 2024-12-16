@@ -2,6 +2,7 @@ package org.acme.features.market.fruit.application.usecase;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.acme.common.exception.NotAllowedException;
 import org.acme.features.market.fruit.application.allow.FruitDeleteAllow;
@@ -65,7 +66,7 @@ public class DeleteFruitUsecase {
    * @return The slide with some values
    */
   public FruitDeleteResult delete(final FruitDeleteCommand command) {
-    CompletableFuture<Optional<Fruit>> updated = allow(command).getDetail().thenCompose(detail -> {
+    CompletionStage<Optional<Fruit>> updated = allow(command).getDetail().thenCompose(detail -> {
       if (!detail.isAllowed()) {
         throw new NotAllowedException(detail.getDescription());
       }
@@ -95,7 +96,7 @@ public class DeleteFruitUsecase {
    * @param original
    * @return The slide with some values
    */
-  private CompletableFuture<Optional<Fruit>> deleteEntity(final Fruit original) {
+  private CompletionStage<Optional<Fruit>> deleteEntity(final Fruit original) {
     return aggregate.clean(original)
         .thenCompose(fruit -> gateway.delete(fruit).thenApply(Optional::of));
   }
@@ -107,7 +108,7 @@ public class DeleteFruitUsecase {
    * @param result
    * @return The slide with some values
    */
-  private CompletableFuture<Optional<Fruit>> deleteIfIsPresent(final Optional<Fruit> result) {
+  private CompletionStage<Optional<Fruit>> deleteIfIsPresent(final Optional<Fruit> result) {
     return result.map(this::deleteEntity)
         .orElseGet(() -> CompletableFuture.completedFuture(Optional.empty()));
   }
@@ -120,7 +121,7 @@ public class DeleteFruitUsecase {
    * @param opfruit
    * @return The slide with some values
    */
-  private CompletableFuture<Optional<FruitDto>> mapEntity(final FruitDeleteCommand command,
+  private CompletionStage<Optional<FruitDto>> mapEntity(final FruitDeleteCommand command,
       final Optional<Fruit> opfruit) {
     return opfruit.map(fruit -> visibility.hide(command, fruit).thenApply(Optional::of))
         .orElseGet(() -> CompletableFuture.completedFuture(Optional.empty()));

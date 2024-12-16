@@ -3,6 +3,7 @@ package org.acme.common.action;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 public abstract class Slide<T> {
@@ -14,10 +15,10 @@ public abstract class Slide<T> {
 
   public abstract Slide<T> next(int limit);
 
-  public abstract CompletableFuture<List<T>> get();
+  public abstract CompletionStage<List<T>> get();
 
-  public CompletableFuture<List<T>> filterUnitLimit(
-      Function<List<T>, CompletableFuture<List<T>>> consumer) {
+  public CompletionStage<List<T>> filterUnitLimit(
+      Function<List<T>, CompletionStage<List<T>>> consumer) {
     return get().thenCompose(initial -> {
       int readed = initial.size();
       boolean more = limit.map(l -> readed == l).orElse(false);
@@ -38,8 +39,8 @@ public abstract class Slide<T> {
     return Math.max(limit, (int) (neededResults * (1 + aceptationRange)));
   }
 
-  private CompletableFuture<List<T>> fetchMorePages(Slide<T> current, List<T> result,
-      Function<List<T>, CompletableFuture<List<T>>> consumer, Integer limit, int window) {
+  private CompletionStage<List<T>> fetchMorePages(Slide<T> current, List<T> result,
+      Function<List<T>, CompletionStage<List<T>>> consumer, Integer limit, int window) {
     Slide<T> slice = current.next(window);
     return slice.get().thenCompose(next -> {
       int readed = next.size();

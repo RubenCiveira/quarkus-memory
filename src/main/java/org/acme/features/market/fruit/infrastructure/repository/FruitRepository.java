@@ -2,6 +2,7 @@ package org.acme.features.market.fruit.infrastructure.repository;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 import javax.sql.DataSource;
@@ -37,7 +38,7 @@ public class FruitRepository {
    * @param entity
    * @return
    */
-  public CompletableFuture<Optional<Fruit>> create(Fruit entity) {
+  public CompletionStage<Optional<Fruit>> create(Fruit entity) {
     return runCreate(entity, null);
   }
 
@@ -47,8 +48,8 @@ public class FruitRepository {
    * @param verifier
    * @return
    */
-  public CompletableFuture<Optional<Fruit>> create(Fruit entity,
-      Function<Fruit, CompletableFuture<Boolean>> verifier) {
+  public CompletionStage<Optional<Fruit>> create(Fruit entity,
+      Function<Fruit, CompletionStage<Boolean>> verifier) {
     return runCreate(entity, verifier);
   }
 
@@ -57,7 +58,7 @@ public class FruitRepository {
    * @param entity
    * @return
    */
-  public CompletableFuture<Fruit> delete(Fruit entity) {
+  public CompletionStage<Fruit> delete(Fruit entity) {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       SqlCommand sq = template.createSqlCommand("delete from \"fruit\" where \"uid\" = :uid");
       sq.with("uid", SqlParameterValue.of(entity.getUidValue()));
@@ -76,7 +77,7 @@ public class FruitRepository {
    * @param filter
    * @return
    */
-  public CompletableFuture<Boolean> exists(String uid, Optional<FruitFilter> filter) {
+  public CompletionStage<Boolean> exists(String uid, Optional<FruitFilter> filter) {
     return retrieve(uid, filter).thenApply(Optional::isPresent);
   }
 
@@ -89,9 +90,9 @@ public class FruitRepository {
   public SqlSchematicQuery<Fruit> filteredQuery(SqlTemplate template, FruitFilter filter) {
     SqlSchematicQuery<Fruit> sq = template.createSqlSchematicQuery("fruit");
     sq.select("uid", "name", "version");
-    filter.getUid().ifPresent(uid -> {
-      sq.where("uid", SqlOperator.EQ, SqlParameterValue.of(uid));
-    });
+    filter.getUid().ifPresent(uid -> sq.where("uid", SqlOperator.EQ, SqlParameterValue.of(uid)));
+    filter.getSearch().ifPresent(
+        search -> sq.where("name", SqlOperator.LIKE, SqlParameterValue.of("%" + search + "%")));
     return sq;
   }
 
@@ -119,7 +120,7 @@ public class FruitRepository {
    * @param filter
    * @return
    */
-  public CompletableFuture<Optional<Fruit>> retrieve(String uid, Optional<FruitFilter> filter) {
+  public CompletionStage<Optional<Fruit>> retrieve(String uid, Optional<FruitFilter> filter) {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       FruitFilter readyFilter = filter.map(val -> val.withUid(uid))
           .orElseGet(() -> FruitFilter.builder().uid(uid).build());
@@ -133,7 +134,7 @@ public class FruitRepository {
    * @param entity
    * @return
    */
-  public CompletableFuture<Fruit> update(Fruit entity) {
+  public CompletionStage<Fruit> update(Fruit entity) {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       int version = entity.getVersionValue().orElse(0);
       SqlCommand sq = template.createSqlCommand(
@@ -173,8 +174,8 @@ public class FruitRepository {
    * @param verifier
    * @return
    */
-  private CompletableFuture<Optional<Fruit>> runCreate(Fruit entity,
-      Function<Fruit, CompletableFuture<Boolean>> verifier) {
+  private CompletionStage<Optional<Fruit>> runCreate(Fruit entity,
+      Function<Fruit, CompletionStage<Boolean>> verifier) {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       SqlCommand sq = template.createSqlCommand(
           "insert into \"fruit\" ( \"uid\", \"name\", \"version\") values ( :uid, :name, :version)");

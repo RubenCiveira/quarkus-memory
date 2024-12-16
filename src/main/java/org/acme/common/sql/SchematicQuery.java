@@ -13,67 +13,68 @@ public class SchematicQuery {
       p.apply(partial);
       return partial;
     }
-    
+
     public static Partial and(Function<Partial, List<Partial>> p) {
       Partial partial = new Partial("and", "");
       p.apply(partial);
       return partial;
     }
-    
+
     public static Partial not(Function<Partial, List<Partial>> p) {
       Partial partial = new Partial("and", "not");
       p.apply(partial);
       return partial;
     }
-    
+
     private final String join;
     private final String converter;
     List<Object[]> params = new ArrayList<>();
-    
-    
+
+
     private Partial(String join, String converter) {
       this.join = join;
       this.converter = converter;
     }
-    
+
     public Partial where(String on, String field, SqlOperator operator, SqlParameterValue value) {
-      params.add(new Object[] { on, field, operator, value });
+      params.add(new Object[] {on, field, operator, value});
       return this;
     }
-    
+
     public Partial where(String field, SqlOperator operator, SqlParameterValue value) {
       this.where(null, field, operator, value);
       return this;
     }
-    
+
     public Partial where(Partial partial) {
-      params.add(new Object[] { partial });
+      params.add(new Object[] {partial});
       return this;
     }
-    
+
     public String append(int prefix, SchematicQuery parametrized) {
       List<String> wheres = new ArrayList<>();
       for (Object[] param : params) {
-        if( param.length == 1 ) {
-          String where = ((Partial)param[0]).append( ++prefix, parametrized ) ;
+        if (param.length == 1) {
+          String where = ((Partial) param[0]).append(++prefix, parametrized);
           prefix += where.length();
-          wheres.add( where );
+          wheres.add(where);
         } else {
-          String on = (String)param[0];
-          String field = (String)param[1];
-          SqlOperator operator = (SqlOperator)param[2];
-          SqlParameterValue value = (SqlParameterValue)param[3];
-          
+          String on = (String) param[0];
+          String field = (String) param[1];
+          SqlOperator operator = (SqlOperator) param[2];
+          SqlParameterValue value = (SqlParameterValue) param[3];
+
           String name = "_field_" + (++prefix);
           parametrized.parametrized.with(name, value);
-          wheres.add( (null==on?"":parametrized.escape(on) + "." ) + parametrized.escape(field) + " " + operator.value + " :" + name );
+          wheres.add((null == on ? "" : parametrized.escape(on) + ".") + parametrized.escape(field)
+              + " " + operator.value + " :" + name);
         }
       }
-      return " " + converter + " ( " + String.join(" " + join + " " , wheres) + " )";
+      return " " + converter + " ( " + String.join(" " + join + " ", wheres) + " )";
     }
   }
-  
-  
+
+
   private final String type;
   private final String table;
   private final AbstractSqlParametrized<?> parametrized;
@@ -136,13 +137,14 @@ public class SchematicQuery {
   public void where(Partial partial) {
     where.append(" and " + partial.append(where.length(), this));
   }
-  
+
   public void where(String on, String field, SqlOperator operator, SqlParameterValue value) {
     String name = "_field_" + where.length();
-    where.append(" and " + (null==on?"":escape(on) + "." ) + escape(field) + " " + operator.value + " :" + name);
+    where.append(" and " + (null == on ? "" : escape(on) + ".") + escape(field) + " "
+        + operator.value + " :" + name);
     parametrized.with(name, value);
   }
-  
+
   public void where(String field, SqlOperator operator, SqlParameterValue value) {
     where(null, field, operator, value);
   }

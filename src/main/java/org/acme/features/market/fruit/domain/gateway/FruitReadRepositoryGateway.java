@@ -1,7 +1,7 @@
 package org.acme.features.market.fruit.domain.gateway;
 
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.acme.common.action.Slide;
 import org.acme.features.market.fruit.domain.model.Fruit;
@@ -16,7 +16,7 @@ public interface FruitReadRepositoryGateway {
    * @param filter a filter to retrieve only matching values
    * @return Retrieve one single value
    */
-  CompletableFuture<Boolean> exists(String uid, Optional<FruitFilter> filter);
+  CompletionStage<Boolean> exists(String uid, Optional<FruitFilter> filter);
 
   /**
    * The slide with some values
@@ -36,5 +36,5 @@ public interface FruitReadRepositoryGateway {
    * @param filter a filter to retrieve only matching values
    * @return Retrieve one single value
    */
-  CompletableFuture<Optional<Fruit>> retrieve(String uid, Optional<FruitFilter> filter);
+  CompletionStage<Optional<Fruit>> retrieve(String uid, Optional<FruitFilter> filter);
 }
