@@ -1,6 +1,7 @@
 package org.acme.features.market.fruit.domain;
 
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
@@ -75,7 +76,7 @@ public class Fruits {
    * @return The entity
    */
   public CompletionStage<Fruit> initialize(final FruitBuilder builder) {
-    return applyModify(FruitActionType.CREATE, Optional.empty(), builder);
+    return applyModify(FruitActionType.CREATE, Optional.empty(), builder, null);
   }
 
   /**
@@ -87,7 +88,7 @@ public class Fruits {
    * @return The entity
    */
   public CompletionStage<Fruit> modify(final Fruit base, final FruitBuilder builder) {
-    return applyModify(FruitActionType.UPDATE, Optional.of(base), builder);
+    return applyModify(FruitActionType.UPDATE, Optional.of(base), builder, null);
   }
 
   /**
@@ -97,15 +98,18 @@ public class Fruits {
    * @param type
    * @param original a filter to retrieve only matching values
    * @param builder a filter to retrieve only matching values
+   * @param ignore
    * @return The entity
    */
   private CompletionStage<Fruit> applyModify(final FruitActionType type,
-      final Optional<Fruit> original, final FruitBuilder builder) {
+      final Optional<Fruit> original, final FruitBuilder builder, final String ignore) {
     CompletionStage<FruitBuilder> ruledBuilder =
         this.builderRules.applyCurrent(type, builder, original);
-    for (BiFunction<CompletionStage<FruitBuilder>, Optional<Fruit>, CompletionStage<FruitBuilder>> callback : calculatedFields
-        .values()) {
-      ruledBuilder = callback.apply(ruledBuilder, original);
+    for (Entry<String, BiFunction<CompletionStage<FruitBuilder>, Optional<Fruit>, CompletionStage<FruitBuilder>>> entry : calculatedFields
+        .entrySet()) {
+      if (!entry.getKey().equals(ignore)) {
+        ruledBuilder = entry.getValue().apply(ruledBuilder, original);
+      }
     }
     return ruledBuilder
         .thenCompose(resultBuilder -> rules.applyCurrent(type, resultBuilder.build(), original));

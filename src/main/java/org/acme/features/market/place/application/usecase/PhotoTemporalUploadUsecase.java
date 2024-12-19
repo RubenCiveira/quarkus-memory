@@ -8,8 +8,8 @@ import org.acme.common.exception.NotAllowedException;
 import org.acme.common.store.BinaryContent;
 import org.acme.features.market.place.application.allow.PlacePhotoTempUploadAllow;
 import org.acme.features.market.place.application.interaction.command.PlacePhotoTemporalUploadCommand;
-import org.acme.features.market.place.application.interaction.command.PlacePhotoTemporalUploadReadCommand;
 import org.acme.features.market.place.application.interaction.query.PlaceAllowQuery;
+import org.acme.features.market.place.application.interaction.query.PlacePhotoTemporalUploadReadQuery;
 import org.acme.features.market.place.application.interaction.result.PlacePhotoTemporalUploadReadResult;
 import org.acme.features.market.place.application.interaction.result.PlacePhotoTemporalUploadResult;
 import org.acme.features.market.place.domain.gateway.PlacePhotoUploadGateway;
@@ -50,7 +50,7 @@ public class PhotoTemporalUploadUsecase {
    * @param query
    * @return
    */
-  public PlacePhotoTemporalUploadReadResult read(final PlacePhotoTemporalUploadReadCommand query) {
+  public PlacePhotoTemporalUploadReadResult read(final PlacePhotoTemporalUploadReadQuery query) {
     CompletionStage<Optional<BinaryContent>> result =
         allow(query).getDetail().thenCompose(detail -> {
           if (!detail.isAllowed()) {

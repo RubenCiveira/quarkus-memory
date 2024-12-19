@@ -195,7 +195,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ColorAcl'
+                $ref: '#/components/schemas/ColorGenericAcl'
   /api/me/acl/market/colors/{uid}:
     get:
       tags:
@@ -215,7 +215,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ColorAcl'
+                $ref: '#/components/schemas/ColorSpecificAcl'
         '404':
           description: The item dont exists
   /api/market/fruits:
@@ -366,7 +366,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FruitAcl'
+                $ref: '#/components/schemas/FruitGenericAcl'
   /api/me/acl/market/fruits/{uid}:
     get:
       tags:
@@ -386,7 +386,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FruitAcl'
+                $ref: '#/components/schemas/FruitSpecificAcl'
         '404':
           description: The item dont exists
   /api/market/merchants:
@@ -537,6 +537,50 @@ paths:
                 $ref: '#/components/schemas/Merchant'
         '404':
           description: The item dont exists
+  /api/market/merchants/{uid}/enable:
+    patch:
+      tags:
+        - merchant
+      summary: Update a merchant by their uid
+      operationId: merchant-api-enable
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Merchant'
+        '404':
+          description: The item dont exists
+  /api/market/merchants/{uid}/disable:
+    patch:
+      tags:
+        - merchant
+      summary: Update a merchant by their uid
+      operationId: merchant-api-disable
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Merchant'
+        '404':
+          description: The item dont exists
   /api/me/acl/market/merchants:
     get:
       tags:
@@ -549,7 +593,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MerchantAcl'
+                $ref: '#/components/schemas/MerchantGenericAcl'
   /api/me/acl/market/merchants/{uid}:
     get:
       tags:
@@ -569,7 +613,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MerchantAcl'
+                $ref: '#/components/schemas/MerchantSpecificAcl'
         '404':
           description: The item dont exists
   /api/market/places:
@@ -726,7 +770,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PlaceAcl'
+                $ref: '#/components/schemas/PlaceGenericAcl'
   /api/me/acl/market/places/{uid}:
     get:
       tags:
@@ -746,7 +790,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PlaceAcl'
+                $ref: '#/components/schemas/PlaceSpecificAcl'
         '404':
           description: The item dont exists
   /api/market/places/{uid}/photo:
@@ -862,30 +906,70 @@ components:
     CommonAllow:
       type: object
       properties:
-        name:
-          type: string
         allowed:
           type: boolean
         reason:
           type: string
-    ColorAcl:
+    ColorGenericAcl:
       type: object
       properties:
         allows:
+          $ref: '#/components/schemas/ColorAclGenericAllows'
+        fields:
+          $ref: '#/components/schemas/ColorAclFields'
+    ColorSpecificAcl:
+      type: object
+      properties:
+        allows:
+          $ref: '#/components/schemas/ColorAclSpecificAllows'
+        fields:
+          $ref: '#/components/schemas/ColorAclFields'
+    ColorAclGenericAllows:
+      type: object
+      properties:
+        retrieve:
+          $ref: '#/components/schemas/CommonAllow'
+        create:
+          $ref: '#/components/schemas/CommonAllow'
+        update:
+          $ref: '#/components/schemas/CommonAllow'
+        delete:
+          $ref: '#/components/schemas/CommonAllow'
+        list:
+          $ref: '#/components/schemas/CommonAllow'
+      required:
+        - retrieve
+        - create
+        - update
+        - delete
+        - list
+    ColorAclSpecificAllows:
+      type: object
+      properties:
+        retrieve:
+          $ref: '#/components/schemas/CommonAllow'
+        create:
+          $ref: '#/components/schemas/CommonAllow'
+        update:
+          $ref: '#/components/schemas/CommonAllow'
+        delete:
+          $ref: '#/components/schemas/CommonAllow'
+      required:
+        - retrieve
+        - create
+        - update
+        - delete
+    ColorAclFields:
+      type: object
+      properties:
+        noEditables:
           type: array
           items:
-            $ref: '#/components/schemas/CommonAllow'
-        fields:
-          type: object
-          properties:
-            noEditables:
-              type: array
-              items:
-                type: string
-            noVisibles:
-              type: array
-              items:
-                type: string
+            type: string
+        noVisibles:
+          type: array
+          items:
+            type: string
     Fruit:
       type: object
       properties:
@@ -910,24 +994,66 @@ components:
       properties:
         since-uid:
           type: string
-    FruitAcl:
+    FruitGenericAcl:
       type: object
       properties:
         allows:
+          $ref: '#/components/schemas/FruitAclGenericAllows'
+        fields:
+          $ref: '#/components/schemas/FruitAclFields'
+    FruitSpecificAcl:
+      type: object
+      properties:
+        allows:
+          $ref: '#/components/schemas/FruitAclSpecificAllows'
+        fields:
+          $ref: '#/components/schemas/FruitAclFields'
+    FruitAclGenericAllows:
+      type: object
+      properties:
+        retrieve:
+          $ref: '#/components/schemas/CommonAllow'
+        create:
+          $ref: '#/components/schemas/CommonAllow'
+        update:
+          $ref: '#/components/schemas/CommonAllow'
+        delete:
+          $ref: '#/components/schemas/CommonAllow'
+        list:
+          $ref: '#/components/schemas/CommonAllow'
+      required:
+        - retrieve
+        - create
+        - update
+        - delete
+        - list
+    FruitAclSpecificAllows:
+      type: object
+      properties:
+        retrieve:
+          $ref: '#/components/schemas/CommonAllow'
+        create:
+          $ref: '#/components/schemas/CommonAllow'
+        update:
+          $ref: '#/components/schemas/CommonAllow'
+        delete:
+          $ref: '#/components/schemas/CommonAllow'
+      required:
+        - retrieve
+        - create
+        - update
+        - delete
+    FruitAclFields:
+      type: object
+      properties:
+        noEditables:
           type: array
           items:
-            $ref: '#/components/schemas/CommonAllow'
-        fields:
-          type: object
-          properties:
-            noEditables:
-              type: array
-              items:
-                type: string
-            noVisibles:
-              type: array
-              items:
-                type: string
+            type: string
+        noVisibles:
+          type: array
+          items:
+            type: string
     Merchant:
       type: object
       properties:
@@ -956,24 +1082,78 @@ components:
       properties:
         since-uid:
           type: string
-    MerchantAcl:
+    MerchantGenericAcl:
       type: object
       properties:
         allows:
+          $ref: '#/components/schemas/MerchantAclGenericAllows'
+        fields:
+          $ref: '#/components/schemas/MerchantAclFields'
+    MerchantSpecificAcl:
+      type: object
+      properties:
+        allows:
+          $ref: '#/components/schemas/MerchantAclSpecificAllows'
+        fields:
+          $ref: '#/components/schemas/MerchantAclFields'
+    MerchantAclGenericAllows:
+      type: object
+      properties:
+        retrieve:
+          $ref: '#/components/schemas/CommonAllow'
+        create:
+          $ref: '#/components/schemas/CommonAllow'
+        update:
+          $ref: '#/components/schemas/CommonAllow'
+        delete:
+          $ref: '#/components/schemas/CommonAllow'
+        enable:
+          $ref: '#/components/schemas/CommonAllow'
+        disable:
+          $ref: '#/components/schemas/CommonAllow'
+        list:
+          $ref: '#/components/schemas/CommonAllow'
+      required:
+        - retrieve
+        - create
+        - update
+        - delete
+        - enable
+        - disable
+        - list
+    MerchantAclSpecificAllows:
+      type: object
+      properties:
+        retrieve:
+          $ref: '#/components/schemas/CommonAllow'
+        create:
+          $ref: '#/components/schemas/CommonAllow'
+        update:
+          $ref: '#/components/schemas/CommonAllow'
+        delete:
+          $ref: '#/components/schemas/CommonAllow'
+        enable:
+          $ref: '#/components/schemas/CommonAllow'
+        disable:
+          $ref: '#/components/schemas/CommonAllow'
+      required:
+        - retrieve
+        - create
+        - update
+        - delete
+        - enable
+        - disable
+    MerchantAclFields:
+      type: object
+      properties:
+        noEditables:
           type: array
           items:
-            $ref: '#/components/schemas/CommonAllow'
-        fields:
-          type: object
-          properties:
-            noEditables:
-              type: array
-              items:
-                type: string
-            noVisibles:
-              type: array
-              items:
-                type: string
+            type: string
+        noVisibles:
+          type: array
+          items:
+            type: string
     Place:
       type: object
       properties:
@@ -1005,22 +1185,67 @@ components:
       properties:
         since-uid:
           type: string
-    PlaceAcl:
+    PlaceGenericAcl:
       type: object
       properties:
         allows:
+          $ref: '#/components/schemas/PlaceAclGenericAllows'
+        fields:
+          $ref: '#/components/schemas/PlaceAclFields'
+    PlaceSpecificAcl:
+      type: object
+      properties:
+        allows:
+          $ref: '#/components/schemas/PlaceAclSpecificAllows'
+        fields:
+          $ref: '#/components/schemas/PlaceAclFields'
+    PlaceAclGenericAllows:
+      type: object
+      properties:
+        retrieve:
+          $ref: '#/components/schemas/CommonAllow'
+        create:
+          $ref: '#/components/schemas/CommonAllow'
+        update:
+          $ref: '#/components/schemas/CommonAllow'
+        delete:
+          $ref: '#/components/schemas/CommonAllow'
+        list:
+          $ref: '#/components/schemas/CommonAllow'
+        uploadPhoto:
+          $ref: '#/components/schemas/CommonAllow'
+      required:
+        - retrieve
+        - create
+        - update
+        - delete
+        - list
+        - uploadPhoto
+    PlaceAclSpecificAllows:
+      type: object
+      properties:
+        retrieve:
+          $ref: '#/components/schemas/CommonAllow'
+        create:
+          $ref: '#/components/schemas/CommonAllow'
+        update:
+          $ref: '#/components/schemas/CommonAllow'
+        delete:
+          $ref: '#/components/schemas/CommonAllow'
+      required:
+        - retrieve
+        - create
+        - update
+        - delete
+    PlaceAclFields:
+      type: object
+      properties:
+        noEditables:
           type: array
           items:
-            $ref: '#/components/schemas/CommonAllow'
-        fields:
-          type: object
-          properties:
-            noEditables:
-              type: array
-              items:
-                type: string
-            noVisibles:
-              type: array
-              items:
-                type: string
+            type: string
+        noVisibles:
+          type: array
+          items:
+            type: string
 

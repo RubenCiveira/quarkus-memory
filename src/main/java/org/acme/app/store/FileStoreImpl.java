@@ -191,6 +191,7 @@ public class FileStoreImpl implements FileStore {
         updateStatement.setString(3, source.getName());
         updateStatement.setString(4, source.getContentType());
         updateStatement.setTimestamp(5, new Timestamp(System.currentTimeMillis()));
+        System.out.println(source.getInputStream());
         updateStatement.setBinaryStream(6, source.getInputStream());
         if (updateStatement.executeUpdate() != 1) {
           throw new IOException("Imposible insertar para " + path);
