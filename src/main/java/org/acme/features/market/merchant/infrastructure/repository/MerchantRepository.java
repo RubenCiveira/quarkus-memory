@@ -89,7 +89,7 @@ public class MerchantRepository {
    */
   public SqlSchematicQuery<Merchant> filteredQuery(SqlTemplate template, MerchantFilter filter) {
     SqlSchematicQuery<Merchant> sq = template.createSqlSchematicQuery("merchant");
-    sq.select("uid", "name", "enabled", "version");
+    sq.select("uid", "name", "enabled", "key", "version");
     filter.getUid().ifPresent(uid -> sq.where("uid", SqlOperator.EQ, SqlParameterValue.of(uid)));
     filter.getSearch().ifPresent(
         search -> sq.where("name", SqlOperator.LIKE, SqlParameterValue.of("%" + search + "%")));
@@ -138,10 +138,12 @@ public class MerchantRepository {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       int version = entity.getVersionValue().orElse(0);
       SqlCommand sq = template.createSqlCommand(
-          "update \"merchant\" set  \"name\" = :name, \"enabled\" = :enabled, \"version\" = \"version\" + 1 where \"uid\" = :uid and \"version\" = :version");
+          "update \"merchant\" set  \"name\" = :name, \"enabled\" = :enabled, \"key\" = :key, \"version\" = \"version\" + 1 where \"uid\" = :uid and \"version\" = :version");
       sq.with("uid", SqlParameterValue.of(entity.getUidValue()));
       sq.with("name", SqlParameterValue.of(entity.getNameValue()));
       sq.with("enabled", SqlParameterValue.of(entity.getEnabledValue()));
+      sq.with("key", entity.getKeyValue().map(SqlParameterValue::of)
+          .orElseGet(SqlParameterValue::ofNullString));
       sq.with("version", entity.getVersionValue().map(SqlParameterValue::of)
           .orElseGet(SqlParameterValue::ofNullInteger));
       return sq.execute().thenApply(num -> {
@@ -161,7 +163,8 @@ public class MerchantRepository {
     return (row) -> {
       try {
         return Optional.of(Merchant.builder().uidValue(row.getString(1)).nameValue(row.getString(2))
-            .enabledValue(row.getBoolean(3)).versionValue(row.getInt(4)).build());
+            .enabledValue(row.getBoolean(3)).keyValue(row.getString(4)).versionValue(row.getInt(5))
+            .build());
       } catch (ConstraintException ce) {
         log.error("Unable to map data for {}", row.getString(1), ce);
         return Optional.empty();
@@ -179,10 +182,12 @@ public class MerchantRepository {
       Function<Merchant, CompletionStage<Boolean>> verifier) {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       SqlCommand sq = template.createSqlCommand(
-          "insert into \"merchant\" ( \"uid\", \"name\", \"enabled\", \"version\") values ( :uid, :name, :enabled, :version)");
+          "insert into \"merchant\" ( \"uid\", \"name\", \"enabled\", \"key\", \"version\") values ( :uid, :name, :enabled, :key, :version)");
       sq.with("uid", SqlParameterValue.of(entity.getUidValue()));
       sq.with("name", SqlParameterValue.of(entity.getNameValue()));
       sq.with("enabled", SqlParameterValue.of(entity.getEnabledValue()));
+      sq.with("key", entity.getKeyValue().map(SqlParameterValue::of)
+          .orElseGet(SqlParameterValue::ofNullString));
       sq.with("version", entity.getVersionValue().map(SqlParameterValue::of)
           .orElseGet(SqlParameterValue::ofNullInteger));
       return sq.execute().thenCompose(num -> {

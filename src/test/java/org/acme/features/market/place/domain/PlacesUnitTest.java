@@ -5,7 +5,10 @@ import java.util.Optional;
 
 import org.acme.features.market.place.domain.model.Place;
 import org.acme.features.market.place.domain.model.Place.PlaceBuilder;
+import org.acme.features.market.place.domain.model.valueobject.PlaceMerchantVO;
 import org.acme.features.market.place.domain.model.valueobject.PlaceNameVO;
+import org.acme.features.market.place.domain.model.valueobject.PlaceOpeningDateVO;
+import org.acme.features.market.place.domain.model.valueobject.PlacePhotoVO;
 import org.acme.features.market.place.domain.model.valueobject.PlaceUidVO;
 import org.acme.features.market.place.domain.model.valueobject.PlaceVersionVO;
 import org.acme.features.market.place.domain.rule.PlaceActionType;
@@ -44,7 +47,8 @@ class PlacesUnitTest {
         .then(call -> call.getArgument(1));
     Places instance = new Places(entityRules, builderRules);
     Place one = Place.builder().uid(PlaceUidVO.from("one")).name(PlaceNameVO.from("one"))
-        .version(PlaceVersionVO.from(1)).build();
+        .merchant(PlaceMerchantVO.from(null)).photo(PlacePhotoVO.from(null))
+        .openingDate(PlaceOpeningDateVO.from(null)).version(PlaceVersionVO.from(1)).build();
     instance.clean(one);
     Mockito.verify(entityRule).apply(Mockito.eq(PlaceActionType.DELETE), Mockito.any(),
         Mockito.any(), Mockito.eq(new Object[] {Optional.of(one)}));
@@ -75,7 +79,8 @@ class PlacesUnitTest {
         .then(call -> call.getArgument(1));
     Places instance = new Places(entityRules, builderRules);
     Place one = Place.builder().uid(PlaceUidVO.from("one")).name(PlaceNameVO.from("one"))
-        .version(PlaceVersionVO.from(1)).build();
+        .merchant(PlaceMerchantVO.from(null)).photo(PlacePhotoVO.from(null))
+        .openingDate(PlaceOpeningDateVO.from(null)).version(PlaceVersionVO.from(1)).build();
     PlaceBuilder oneBuilder = one.toBuilder();
     instance.initialize(oneBuilder);
     Mockito.verify(builderRule).apply(Mockito.eq(PlaceActionType.CREATE), Mockito.any(),
@@ -109,9 +114,11 @@ class PlacesUnitTest {
         .then(call -> call.getArgument(1));
     Places instance = new Places(entityRules, builderRules);
     Place one = Place.builder().uid(PlaceUidVO.from("one")).name(PlaceNameVO.from("one"))
-        .version(PlaceVersionVO.from(1)).build();
+        .merchant(PlaceMerchantVO.from(null)).photo(PlacePhotoVO.from(null))
+        .openingDate(PlaceOpeningDateVO.from(null)).version(PlaceVersionVO.from(1)).build();
     Place other = Place.builder().uid(PlaceUidVO.from("two")).name(PlaceNameVO.from("two"))
-        .version(PlaceVersionVO.from(2)).build();
+        .merchant(PlaceMerchantVO.from(null)).photo(PlacePhotoVO.from(null))
+        .openingDate(PlaceOpeningDateVO.from(null)).version(PlaceVersionVO.from(2)).build();
     PlaceBuilder otherBuilder = other.toBuilder();
     instance.modify(one, otherBuilder);
     Mockito.verify(builderRule).apply(Mockito.eq(PlaceActionType.UPDATE), Mockito.any(),

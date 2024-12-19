@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.acme.features.market.color.domain.model.Color;
 import org.acme.features.market.color.domain.model.Color.ColorBuilder;
+import org.acme.features.market.color.domain.model.valueobject.ColorMerchantVO;
 import org.acme.features.market.color.domain.model.valueobject.ColorNameVO;
 import org.acme.features.market.color.domain.model.valueobject.ColorUidVO;
 import org.acme.features.market.color.domain.model.valueobject.ColorVersionVO;
@@ -44,7 +45,7 @@ class ColorsUnitTest {
         .then(call -> call.getArgument(1));
     Colors instance = new Colors(entityRules, builderRules);
     Color one = Color.builder().uid(ColorUidVO.from("one")).name(ColorNameVO.from("one"))
-        .version(ColorVersionVO.from(1)).build();
+        .merchant(ColorMerchantVO.from(null)).version(ColorVersionVO.from(1)).build();
     instance.clean(one);
     Mockito.verify(entityRule).apply(Mockito.eq(ColorActionType.DELETE), Mockito.any(),
         Mockito.any(), Mockito.eq(new Object[] {Optional.of(one)}));
@@ -75,7 +76,7 @@ class ColorsUnitTest {
         .then(call -> call.getArgument(1));
     Colors instance = new Colors(entityRules, builderRules);
     Color one = Color.builder().uid(ColorUidVO.from("one")).name(ColorNameVO.from("one"))
-        .version(ColorVersionVO.from(1)).build();
+        .merchant(ColorMerchantVO.from(null)).version(ColorVersionVO.from(1)).build();
     ColorBuilder oneBuilder = one.toBuilder();
     instance.initialize(oneBuilder);
     Mockito.verify(builderRule).apply(Mockito.eq(ColorActionType.CREATE), Mockito.any(),
@@ -109,9 +110,9 @@ class ColorsUnitTest {
         .then(call -> call.getArgument(1));
     Colors instance = new Colors(entityRules, builderRules);
     Color one = Color.builder().uid(ColorUidVO.from("one")).name(ColorNameVO.from("one"))
-        .version(ColorVersionVO.from(1)).build();
+        .merchant(ColorMerchantVO.from(null)).version(ColorVersionVO.from(1)).build();
     Color other = Color.builder().uid(ColorUidVO.from("two")).name(ColorNameVO.from("two"))
-        .version(ColorVersionVO.from(2)).build();
+        .merchant(ColorMerchantVO.from(null)).version(ColorVersionVO.from(2)).build();
     ColorBuilder otherBuilder = other.toBuilder();
     instance.modify(one, otherBuilder);
     Mockito.verify(builderRule).apply(Mockito.eq(ColorActionType.UPDATE), Mockito.any(),

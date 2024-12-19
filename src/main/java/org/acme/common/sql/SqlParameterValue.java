@@ -10,6 +10,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 public interface SqlParameterValue {
   static SqlParameterValue of(String value) {
@@ -137,6 +138,14 @@ public interface SqlParameterValue {
   }
 
   static SqlParameterValue ofNullLocalDateTime() {
+    return (index, ps) -> ps.setNull(index, Types.TIMESTAMP);
+  }
+
+  static SqlParameterValue of(OffsetDateTime value) {
+    return (index, ps) -> ps.setTimestamp(index, Timestamp.valueOf(value.toLocalDateTime()));
+  }
+
+  static SqlParameterValue ofNullOffsetDateTime() {
     return (index, ps) -> ps.setNull(index, Types.TIMESTAMP);
   }
 

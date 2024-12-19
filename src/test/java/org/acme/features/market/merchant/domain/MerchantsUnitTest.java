@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.acme.features.market.merchant.domain.model.Merchant;
 import org.acme.features.market.merchant.domain.model.Merchant.MerchantBuilder;
 import org.acme.features.market.merchant.domain.model.valueobject.MerchantEnabledVO;
+import org.acme.features.market.merchant.domain.model.valueobject.MerchantKeyVO;
 import org.acme.features.market.merchant.domain.model.valueobject.MerchantNameVO;
 import org.acme.features.market.merchant.domain.model.valueobject.MerchantUidVO;
 import org.acme.features.market.merchant.domain.model.valueobject.MerchantVersionVO;
@@ -44,9 +45,9 @@ class MerchantsUnitTest {
         builderRule.apply(Mockito.any(), Mockito.any(), Mockito.any(), (Object[]) Mockito.any()))
         .then(call -> call.getArgument(1));
     Merchants instance = new Merchants(entityRules, builderRules);
-    Merchant one =
-        Merchant.builder().uid(MerchantUidVO.from("one")).name(MerchantNameVO.from("one"))
-            .enabled(MerchantEnabledVO.from(true)).version(MerchantVersionVO.from(1)).build();
+    Merchant one = Merchant.builder().uid(MerchantUidVO.from("one"))
+        .name(MerchantNameVO.from("one")).enabled(MerchantEnabledVO.from(true))
+        .key(MerchantKeyVO.from("one")).version(MerchantVersionVO.from(1)).build();
     instance.clean(one);
     Mockito.verify(entityRule).apply(Mockito.eq(MerchantActionType.DELETE), Mockito.any(),
         Mockito.any(), Mockito.eq(new Object[] {Optional.of(one)}));
@@ -76,9 +77,9 @@ class MerchantsUnitTest {
         builderRule.apply(Mockito.any(), Mockito.any(), Mockito.any(), (Object[]) Mockito.any()))
         .then(call -> call.getArgument(1));
     Merchants instance = new Merchants(entityRules, builderRules);
-    Merchant one =
-        Merchant.builder().uid(MerchantUidVO.from("one")).name(MerchantNameVO.from("one"))
-            .enabled(MerchantEnabledVO.from(true)).version(MerchantVersionVO.from(1)).build();
+    Merchant one = Merchant.builder().uid(MerchantUidVO.from("one"))
+        .name(MerchantNameVO.from("one")).enabled(MerchantEnabledVO.from(true))
+        .key(MerchantKeyVO.from("one")).version(MerchantVersionVO.from(1)).build();
     MerchantBuilder oneBuilder = one.toBuilder();
     instance.initialize(oneBuilder);
     Mockito.verify(builderRule).apply(Mockito.eq(MerchantActionType.CREATE), Mockito.any(),
@@ -111,12 +112,12 @@ class MerchantsUnitTest {
         builderRule.apply(Mockito.any(), Mockito.any(), Mockito.any(), (Object[]) Mockito.any()))
         .then(call -> call.getArgument(1));
     Merchants instance = new Merchants(entityRules, builderRules);
-    Merchant one =
-        Merchant.builder().uid(MerchantUidVO.from("one")).name(MerchantNameVO.from("one"))
-            .enabled(MerchantEnabledVO.from(true)).version(MerchantVersionVO.from(1)).build();
-    Merchant other =
-        Merchant.builder().uid(MerchantUidVO.from("two")).name(MerchantNameVO.from("two"))
-            .enabled(MerchantEnabledVO.from(false)).version(MerchantVersionVO.from(2)).build();
+    Merchant one = Merchant.builder().uid(MerchantUidVO.from("one"))
+        .name(MerchantNameVO.from("one")).enabled(MerchantEnabledVO.from(true))
+        .key(MerchantKeyVO.from("one")).version(MerchantVersionVO.from(1)).build();
+    Merchant other = Merchant.builder().uid(MerchantUidVO.from("two"))
+        .name(MerchantNameVO.from("two")).enabled(MerchantEnabledVO.from(false))
+        .key(MerchantKeyVO.from("two")).version(MerchantVersionVO.from(2)).build();
     MerchantBuilder otherBuilder = other.toBuilder();
     instance.modify(one, otherBuilder);
     Mockito.verify(builderRule).apply(Mockito.eq(MerchantActionType.UPDATE), Mockito.any(),

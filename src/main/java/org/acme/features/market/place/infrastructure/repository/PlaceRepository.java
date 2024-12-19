@@ -1,5 +1,8 @@
 package org.acme.features.market.place.infrastructure.repository;
 
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -89,7 +92,7 @@ public class PlaceRepository {
    */
   public SqlSchematicQuery<Place> filteredQuery(SqlTemplate template, PlaceFilter filter) {
     SqlSchematicQuery<Place> sq = template.createSqlSchematicQuery("place");
-    sq.select("uid", "name", "version");
+    sq.select("uid", "name", "merchant", "photo", "opening_date", "version");
     filter.getUid().ifPresent(uid -> sq.where("uid", SqlOperator.EQ, SqlParameterValue.of(uid)));
     filter.getSearch().ifPresent(
         search -> sq.where("name", SqlOperator.LIKE, SqlParameterValue.of("%" + search + "%")));
@@ -138,9 +141,14 @@ public class PlaceRepository {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       int version = entity.getVersionValue().orElse(0);
       SqlCommand sq = template.createSqlCommand(
-          "update \"place\" set  \"name\" = :name, \"version\" = \"version\" + 1 where \"uid\" = :uid and \"version\" = :version");
+          "update \"place\" set  \"name\" = :name, \"merchant\" = :merchant, \"photo\" = :photo, \"opening_date\" = :openingDate, \"version\" = \"version\" + 1 where \"uid\" = :uid and \"version\" = :version");
       sq.with("uid", SqlParameterValue.of(entity.getUidValue()));
       sq.with("name", SqlParameterValue.of(entity.getNameValue()));
+      sq.with("merchant", SqlParameterValue.of(entity.getMerchantReferenceValue()));
+      sq.with("photo", entity.getPhotoValue().map(SqlParameterValue::of)
+          .orElseGet(SqlParameterValue::ofNullString));
+      sq.with("openingDate", entity.getOpeningDateValue().map(SqlParameterValue::of)
+          .orElseGet(SqlParameterValue::ofNullOffsetDateTime));
       sq.with("version", entity.getVersionValue().map(SqlParameterValue::of)
           .orElseGet(SqlParameterValue::ofNullInteger));
       return sq.execute().thenApply(num -> {
@@ -160,7 +168,10 @@ public class PlaceRepository {
     return (row) -> {
       try {
         return Optional.of(Place.builder().uidValue(row.getString(1)).nameValue(row.getString(2))
-            .versionValue(row.getInt(3)).build());
+            .merchantReferenceValue(row.getString(3)).photoValue(row.getString(4))
+            .openingDateValue(
+                OffsetDateTime.ofInstant(Instant.ofEpochMilli( row.getTime(5).getTime() ), ZoneId.systemDefault()))
+            .versionValue(row.getInt(6)).build());
       } catch (ConstraintException ce) {
         log.error("Unable to map data for {}", row.getString(1), ce);
         return Optional.empty();
@@ -178,9 +189,14 @@ public class PlaceRepository {
       Function<Place, CompletionStage<Boolean>> verifier) {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       SqlCommand sq = template.createSqlCommand(
-          "insert into \"place\" ( \"uid\", \"name\", \"version\") values ( :uid, :name, :version)");
+          "insert into \"place\" ( \"uid\", \"name\", \"merchant\", \"photo\", \"opening_date\", \"version\") values ( :uid, :name, :merchant, :photo, :openingDate, :version)");
       sq.with("uid", SqlParameterValue.of(entity.getUidValue()));
       sq.with("name", SqlParameterValue.of(entity.getNameValue()));
+      sq.with("merchant", SqlParameterValue.of(entity.getMerchantReferenceValue()));
+      sq.with("photo", entity.getPhotoValue().map(SqlParameterValue::of)
+          .orElseGet(SqlParameterValue::ofNullString));
+      sq.with("openingDate", entity.getOpeningDateValue().map(SqlParameterValue::of)
+          .orElseGet(SqlParameterValue::ofNullOffsetDateTime));
       sq.with("version", entity.getVersionValue().map(SqlParameterValue::of)
           .orElseGet(SqlParameterValue::ofNullInteger));
       return sq.execute().thenCompose(num -> {

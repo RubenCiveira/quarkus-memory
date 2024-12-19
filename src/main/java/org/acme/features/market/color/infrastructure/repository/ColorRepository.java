@@ -89,7 +89,7 @@ public class ColorRepository {
    */
   public SqlSchematicQuery<Color> filteredQuery(SqlTemplate template, ColorFilter filter) {
     SqlSchematicQuery<Color> sq = template.createSqlSchematicQuery("color");
-    sq.select("uid", "name", "version");
+    sq.select("uid", "name", "merchant", "version");
     filter.getUid().ifPresent(uid -> sq.where("uid", SqlOperator.EQ, SqlParameterValue.of(uid)));
     filter.getSearch().ifPresent(
         search -> sq.where("name", SqlOperator.LIKE, SqlParameterValue.of("%" + search + "%")));
@@ -138,9 +138,11 @@ public class ColorRepository {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       int version = entity.getVersionValue().orElse(0);
       SqlCommand sq = template.createSqlCommand(
-          "update \"color\" set  \"name\" = :name, \"version\" = \"version\" + 1 where \"uid\" = :uid and \"version\" = :version");
+          "update \"color\" set  \"name\" = :name, \"merchant\" = :merchant, \"version\" = \"version\" + 1 where \"uid\" = :uid and \"version\" = :version");
       sq.with("uid", SqlParameterValue.of(entity.getUidValue()));
       sq.with("name", SqlParameterValue.of(entity.getNameValue()));
+      sq.with("merchant", entity.getMerchantReferenceValue().map(SqlParameterValue::of)
+          .orElseGet(SqlParameterValue::ofNullString));
       sq.with("version", entity.getVersionValue().map(SqlParameterValue::of)
           .orElseGet(SqlParameterValue::ofNullInteger));
       return sq.execute().thenApply(num -> {
@@ -160,7 +162,7 @@ public class ColorRepository {
     return (row) -> {
       try {
         return Optional.of(Color.builder().uidValue(row.getString(1)).nameValue(row.getString(2))
-            .versionValue(row.getInt(3)).build());
+            .merchantReferenceValue(row.getString(3)).versionValue(row.getInt(4)).build());
       } catch (ConstraintException ce) {
         log.error("Unable to map data for {}", row.getString(1), ce);
         return Optional.empty();
@@ -178,9 +180,11 @@ public class ColorRepository {
       Function<Color, CompletionStage<Boolean>> verifier) {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       SqlCommand sq = template.createSqlCommand(
-          "insert into \"color\" ( \"uid\", \"name\", \"version\") values ( :uid, :name, :version)");
+          "insert into \"color\" ( \"uid\", \"name\", \"merchant\", \"version\") values ( :uid, :name, :merchant, :version)");
       sq.with("uid", SqlParameterValue.of(entity.getUidValue()));
       sq.with("name", SqlParameterValue.of(entity.getNameValue()));
+      sq.with("merchant", entity.getMerchantReferenceValue().map(SqlParameterValue::of)
+          .orElseGet(SqlParameterValue::ofNullString));
       sq.with("version", entity.getVersionValue().map(SqlParameterValue::of)
           .orElseGet(SqlParameterValue::ofNullInteger));
       return sq.execute().thenCompose(num -> {

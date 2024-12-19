@@ -23,5 +23,4 @@ public class FruitListableContent extends Interaction {
    */
   @NonNull
   private CompletionStage<List<Fruit>> listables;
-
 }

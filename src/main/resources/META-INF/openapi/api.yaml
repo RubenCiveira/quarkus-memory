@@ -50,13 +50,13 @@ paths:
       parameters:
         - name: uid
           in: query
-          description: A number to identify the db record
+          description: Filter by one existent id
           required: false
           schema:
             type: string
         - name: uids
           in: query
-          description: A number to identify the db record
+          description: Filter by a list of ids
           required: false
           schema:
             type: array
@@ -67,6 +67,12 @@ paths:
         - name: search
           in: query
           description: Textual search
+          required: false
+          schema:
+            type: string
+        - name: merchant
+          in: query
+          description: merchant
           required: false
           schema:
             type: string
@@ -221,13 +227,13 @@ paths:
       parameters:
         - name: uid
           in: query
-          description: A number to identify the db record
+          description: Filter by one existent id
           required: false
           schema:
             type: string
         - name: uids
           in: query
-          description: A number to identify the db record
+          description: Filter by a list of ids
           required: false
           schema:
             type: array
@@ -392,13 +398,13 @@ paths:
       parameters:
         - name: uid
           in: query
-          description: A number to identify the db record
+          description: Filter by one existent id
           required: false
           schema:
             type: string
         - name: uids
           in: query
-          description: A number to identify the db record
+          description: Filter by a list of ids
           required: false
           schema:
             type: array
@@ -414,7 +420,7 @@ paths:
             type: string
         - name: enabled
           in: query
-          description: 
+          description: enabled
           required: false
           schema:
             type: boolean
@@ -575,13 +581,13 @@ paths:
       parameters:
         - name: uid
           in: query
-          description: A number to identify the db record
+          description: Filter by one existent id
           required: false
           schema:
             type: string
         - name: uids
           in: query
-          description: A number to identify the db record
+          description: Filter by a list of ids
           required: false
           schema:
             type: array
@@ -592,6 +598,12 @@ paths:
         - name: search
           in: query
           description: Textual search
+          required: false
+          schema:
+            type: string
+        - name: merchant
+          in: query
+          description: merchant
           required: false
           schema:
             type: string
@@ -737,6 +749,74 @@ paths:
                 $ref: '#/components/schemas/PlaceAcl'
         '404':
           description: The item dont exists
+  /api/market/places/{uid}/photo:
+    get:
+      tags:
+        - place
+      summary: Retrieve binary content for photo of place
+      operationId: place-api-retrieve-photo
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+  /api/market/places/-/temp-photo:
+    get:
+      tags:
+        - place
+      summary: Retrieve binary content of a temporal upload for photo of place
+      operationId: place-api-retrieve-temp-upload-photo
+      parameters:
+        - name: temp
+          in: query
+          description: The temp code
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+    post:
+      tags:
+        - place
+      summary: Retrieve binary content of a temporal upload for photo of place
+      operationId: place-api-upload-temp-upload-photo
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The file to upload
+              required:
+                - file
+      responses:
+        '200':
+          description: File uploaded successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+        '400':
+          description: Invalid input or missing file
 
 components:
   securitySchemes:
@@ -745,6 +825,14 @@ components:
       scheme: bearer
       bearerFormat: JWT # Opcional, para indicar que es un JWT
   schemas:
+    MerchantRef:
+      type: object
+      properties:
+        $ref:
+          type: string
+      required:
+        - uid
+        - name
     Color:
       type: object
       properties:
@@ -752,6 +840,8 @@ components:
           type: string
         name:
           type: string
+        merchant:
+          $ref: '#/components/schemas/MerchantRef'
         version:
           type: integer
           format: int32
@@ -847,6 +937,8 @@ components:
           type: string
         enabled:
           type: boolean
+        key:
+          type: string
         version:
           type: integer
           format: int32
@@ -889,6 +981,13 @@ components:
           type: string
         name:
           type: string
+        merchant:
+          $ref: '#/components/schemas/MerchantRef'
+        photo:
+          type: string
+        openingDate:
+          type: string
+          format: date-time
         version:
           type: integer
           format: int32

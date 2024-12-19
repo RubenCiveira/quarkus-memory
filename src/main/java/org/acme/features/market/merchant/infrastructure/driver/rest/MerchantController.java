@@ -254,6 +254,7 @@ public class MerchantController implements MerchantApi {
     merchant.setUid(dto.getUid());
     merchant.setName(dto.getName());
     merchant.setEnabled(dto.getEnabled());
+    merchant.setKey(dto.getKey());
     merchant.setVersion(dto.getVersion());
     return merchant;
   }
@@ -265,6 +266,7 @@ public class MerchantController implements MerchantApi {
    */
   private MerchantDto toDomainModel(Merchant merchant) {
     return MerchantDto.builder().uid(merchant.getUid()).name(merchant.getName())
-        .enabled(merchant.getEnabled()).version(merchant.getVersion()).build();
+        .enabled(merchant.getEnabled()).key(merchant.getKey()).version(merchant.getVersion())
+        .build();
   }
 }

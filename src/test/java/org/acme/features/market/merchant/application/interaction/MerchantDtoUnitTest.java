@@ -2,6 +2,7 @@ package org.acme.features.market.merchant.application.interaction;
 
 import org.acme.features.market.merchant.domain.model.Merchant;
 import org.acme.features.market.merchant.domain.model.valueobject.MerchantEnabledVO;
+import org.acme.features.market.merchant.domain.model.valueobject.MerchantKeyVO;
 import org.acme.features.market.merchant.domain.model.valueobject.MerchantNameVO;
 import org.acme.features.market.merchant.domain.model.valueobject.MerchantUidVO;
 import org.acme.features.market.merchant.domain.model.valueobject.MerchantVersionVO;
@@ -17,17 +18,18 @@ class MerchantDtoUnitTest {
   @Test
   @DisplayName("Test a entity reference contruction")
   void test_merchant_dto_builder() {
-    Merchant entity =
-        Merchant.builder().uid(MerchantUidVO.from("one")).name(MerchantNameVO.from("one"))
-            .enabled(MerchantEnabledVO.from(true)).version(MerchantVersionVO.from(1)).build();
-    Merchant fixRef =
-        Merchant.builder().uid(MerchantUidVO.from("two")).name(MerchantNameVO.from("two"))
-            .enabled(MerchantEnabledVO.from(false)).version(MerchantVersionVO.from(2)).build();
+    Merchant entity = Merchant.builder().uid(MerchantUidVO.from("one"))
+        .name(MerchantNameVO.from("one")).enabled(MerchantEnabledVO.from(true))
+        .key(MerchantKeyVO.from("one")).version(MerchantVersionVO.from(1)).build();
+    Merchant fixRef = Merchant.builder().uid(MerchantUidVO.from("two"))
+        .name(MerchantNameVO.from("two")).enabled(MerchantEnabledVO.from(false))
+        .key(MerchantKeyVO.from("two")).version(MerchantVersionVO.from(2)).build();
     Merchant other;
     MerchantDto dto = MerchantDto.from(entity);
     Assertions.assertEquals("one", dto.getUid());
     Assertions.assertEquals("one", dto.getName());
     Assertions.assertEquals(true, dto.getEnabled());
+    Assertions.assertEquals("one", dto.getKey());
     Assertions.assertEquals(1, dto.getVersion());
     other = dto.toEntityBuilder().build();
     dto.hide("-");
@@ -35,36 +37,44 @@ class MerchantDtoUnitTest {
     Assertions.assertEquals("one", other.getUid().getValue());
     Assertions.assertEquals("one", other.getName().getValue());
     Assertions.assertEquals(true, other.getEnabled().getValue());
+    Assertions.assertEquals("one", other.getKey().getValue().orElse(null));
     Assertions.assertEquals(1, other.getVersion().getValue().orElse(null));
     dto.fix("uid", fixRef);
     dto.fix("name", fixRef);
     dto.fix("enabled", fixRef);
+    dto.fix("key", fixRef);
     dto.fix("version", fixRef);
     other = dto.toEntityBuilder().build();
     Assertions.assertEquals("two", other.getUid().getValue());
     Assertions.assertEquals("two", other.getName().getValue());
     Assertions.assertEquals(false, other.getEnabled().getValue());
+    Assertions.assertEquals("two", other.getKey().getValue().orElse(null));
     Assertions.assertEquals(2, other.getVersion().getValue().orElse(null));
     dto.hide("uid");
     dto.hide("name");
     dto.hide("enabled");
+    dto.hide("key");
     dto.hide("version");
     Assertions.assertNull(dto.getUid());
     Assertions.assertNull(dto.getName());
     Assertions.assertNull(dto.getEnabled());
+    Assertions.assertNull(dto.getKey());
     Assertions.assertNull(dto.getVersion());
     dto = MerchantDto.from(entity);
     Assertions.assertEquals("one", dto.getUid());
     Assertions.assertEquals("one", dto.getName());
     Assertions.assertEquals(true, dto.getEnabled());
+    Assertions.assertEquals("one", dto.getKey());
     Assertions.assertEquals(1, dto.getVersion());
     dto.fix("uid");
     dto.fix("name");
     dto.fix("enabled");
+    dto.fix("key");
     dto.fix("version");
     Assertions.assertNull(dto.getUid());
     Assertions.assertNull(dto.getName());
     Assertions.assertNull(dto.getEnabled());
+    Assertions.assertNull(dto.getKey());
     Assertions.assertNull(dto.getVersion());
   }
 }

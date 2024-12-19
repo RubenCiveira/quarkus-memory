@@ -27,7 +27,6 @@ class FruitUnitTest {
     Assertions.assertEquals(1, entity.getVersionValue().orElse(null));
     Assertions.assertEquals("two", entity.withUidValue("two").getUidValue());
     Assertions.assertEquals("two", entity.withNameValue("two").getNameValue());
-    Assertions.assertEquals(2, entity.withVersionValue(2).getVersionValue().orElse(null));
     Assertions.assertEquals(2,
         entity.withVersionValue(Optional.of(2)).getVersionValue().orElse(null));
     Assertions.assertNull(entity.withVersionValue(Optional.empty()).getVersionValue().orElse(null));

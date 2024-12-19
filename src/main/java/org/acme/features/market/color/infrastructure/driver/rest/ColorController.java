@@ -27,10 +27,12 @@ import org.acme.features.market.color.application.usecase.UpdateColorUsecase;
 import org.acme.features.market.color.domain.gateway.ColorCursor;
 import org.acme.features.market.color.domain.gateway.ColorFilter;
 import org.acme.features.market.color.domain.model.ColorReference;
+import org.acme.features.market.merchant.domain.model.MerchantReference;
 import org.acme.generated.openapi.api.ColorApi;
 import org.acme.generated.openapi.model.Color;
 import org.acme.generated.openapi.model.ColorList;
 import org.acme.generated.openapi.model.ColorListNextOffset;
+import org.acme.generated.openapi.model.MerchantRef;
 
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.core.Response;
@@ -114,13 +116,14 @@ public class ColorController implements ColorApi {
    * @param uid
    * @param uids
    * @param search
+   * @param merchant
    * @param limit
    * @param sinceUid
    * @return
    */
   @Override
   public Response colorApiList(final String uid, final List<String> uids, final String search,
-      final Integer limit, final String sinceUid) {
+      final String merchant, final Integer limit, final String sinceUid) {
     ColorFilter.ColorFilterBuilder filter = ColorFilter.builder();
     ColorCursor.ColorCursorBuilder cursor = ColorCursor.builder();
     cursor = cursor.limit(limit);
@@ -128,6 +131,9 @@ public class ColorController implements ColorApi {
     filter = filter.uid(uid);
     filter = filter.uids(uids);
     filter = filter.search(search);
+    if (null != merchant) {
+      filter = filter.merchant(MerchantReference.of(merchant));
+    }
     Actor actor = new Actor();
     Connection connection = new Connection();
     ColorListResult result = list.list(ColorListQuery.builder().actor(actor).connection(connection)
@@ -223,6 +229,7 @@ public class ColorController implements ColorApi {
     Color color = new Color();
     color.setUid(dto.getUid());
     color.setName(dto.getName());
+    color.setMerchant(new MerchantRef().$ref(dto.getMerchant()));
     color.setVersion(dto.getVersion());
     return color;
   }
@@ -233,7 +240,8 @@ public class ColorController implements ColorApi {
    * @return
    */
   private ColorDto toDomainModel(Color color) {
-    return ColorDto.builder().uid(color.getUid()).name(color.getName()).version(color.getVersion())
-        .build();
+    return ColorDto.builder().uid(color.getUid()).name(color.getName())
+        .merchant(Optional.ofNullable(color.getMerchant()).map(MerchantRef::get$Ref).orElse(null))
+        .version(color.getVersion()).build();
   }
 }
