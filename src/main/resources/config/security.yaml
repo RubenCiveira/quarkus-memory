@@ -4,3 +4,11 @@ mp:
     verify:
       publickey:
         location: ${security.jwt.public.key}
+
+quarkus:
+  http:
+    cors:
+      ~: true
+      origins: /.*/
+      method: "*"
+      headers: "*"
