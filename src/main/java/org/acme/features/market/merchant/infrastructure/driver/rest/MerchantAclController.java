@@ -5,8 +5,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.acme.common.action.Interaction;
 import org.acme.common.rest.CurrentRequest;
-import org.acme.common.security.Actor;
-import org.acme.common.security.Connection;
 import org.acme.features.market.merchant.application.interaction.query.MerchantAllowQuery;
 import org.acme.features.market.merchant.application.interaction.query.MerchantEntityAllowQuery;
 import org.acme.features.market.merchant.application.usecase.CreateMerchantUsecase;
@@ -82,20 +80,19 @@ public class MerchantAclController implements MerchantAclApi {
    */
   @Override
   public Response merchantApiContextualAcl(final String uid) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    MerchantEntityAllowQuery query = MerchantEntityAllowQuery.builder()
-        .reference(MerchantReference.of(uid)).build(actor, connection);
-    MerchantSpecificAcl response = new MerchantSpecificAcl();
-    response.setAllows(new MerchantAclSpecificAllows());
-    response.setFields(new MerchantAclFields());
-    return currentRequest
-        .response(CompletableFuture
-            .allOf(fixedFields(response.getFields(), query),
-                hiddenFields(response.getFields(), query), updateAllows(response, query),
-                deleteAllows(response, query), retrieveAllows(response, query),
-                enableAllows(response, query), disableAllows(response, query))
-            .thenApply(noop -> response));
+    return currentRequest.resolve(interaction -> {
+      MerchantEntityAllowQuery query = MerchantEntityAllowQuery.builder()
+          .reference(MerchantReference.of(uid)).build(interaction);
+      MerchantSpecificAcl response = new MerchantSpecificAcl();
+      response.setAllows(new MerchantAclSpecificAllows());
+      response.setFields(new MerchantAclFields());
+      return CompletableFuture
+          .allOf(fixedFields(response.getFields(), query),
+              hiddenFields(response.getFields(), query), updateAllows(response, query),
+              deleteAllows(response, query), retrieveAllows(response, query),
+              enableAllows(response, query), disableAllows(response, query))
+          .thenApply(noop -> response);
+    });
   }
 
   /**
@@ -104,22 +101,20 @@ public class MerchantAclController implements MerchantAclApi {
    */
   @Override
   public Response merchantApiGenericAcl() {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    MerchantAllowQuery query = MerchantAllowQuery.builder().build(actor, connection);
-    MerchantEntityAllowQuery entityQuery =
-        MerchantEntityAllowQuery.builder().build(actor, connection);
-    MerchantGenericAcl response = new MerchantGenericAcl();
-    response.setAllows(new MerchantAclGenericAllows());
-    response.setFields(new MerchantAclFields());
-    return currentRequest
-        .response(CompletableFuture
-            .allOf(fixedFields(response.getFields(), query),
-                hiddenFields(response.getFields(), query), listAllows(response, query),
-                createAllows(response, query), updateAllows(response, entityQuery),
-                deleteAllows(response, entityQuery), retrieveAllows(response, entityQuery),
-                enableAllows(response, entityQuery), disableAllows(response, entityQuery))
-            .thenApply(noop -> response));
+    return currentRequest.resolve(interaction -> {
+      MerchantAllowQuery query = MerchantAllowQuery.builder().build(interaction);
+      MerchantEntityAllowQuery entityQuery = MerchantEntityAllowQuery.builder().build(interaction);
+      MerchantGenericAcl response = new MerchantGenericAcl();
+      response.setAllows(new MerchantAclGenericAllows());
+      response.setFields(new MerchantAclFields());
+      return CompletableFuture
+          .allOf(fixedFields(response.getFields(), query),
+              hiddenFields(response.getFields(), query), listAllows(response, query),
+              createAllows(response, query), updateAllows(response, entityQuery),
+              deleteAllows(response, entityQuery), retrieveAllows(response, entityQuery),
+              enableAllows(response, entityQuery), disableAllows(response, entityQuery))
+          .thenApply(noop -> response);
+    });
   }
 
   /**

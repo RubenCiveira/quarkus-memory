@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Objects;
 
 import org.acme.common.rest.CurrentRequest;
-import org.acme.common.security.Actor;
-import org.acme.common.security.Connection;
 import org.acme.features.market.merchant.application.interaction.MerchantDto;
 import org.acme.features.market.merchant.application.interaction.command.MerchantCreateCommand;
 import org.acme.features.market.merchant.application.interaction.command.MerchantDeleteCommand;
@@ -95,13 +93,12 @@ public class MerchantController implements MerchantApi {
    */
   @Override
   public Response merchantApiCreate(Merchant merchant) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    MerchantDto dto = toDomainModel(merchant);
-    MerchantCreateResult result = create.create(
-        MerchantCreateCommand.builder().actor(actor).connection(connection).dto(dto).build());
-    return currentRequest
-        .response(result.getMerchant().thenApply(res -> res.map(this::toApiModel)));
+    return currentRequest.resolve(interaction -> {
+      MerchantDto dto = toDomainModel(merchant);
+      MerchantCreateResult result =
+          create.create(MerchantCreateCommand.builder().dto(dto).build(interaction));
+      return result.getMerchant().thenApply(res -> res.map(this::toApiModel));
+    });
   }
 
   /**
@@ -111,12 +108,11 @@ public class MerchantController implements MerchantApi {
    */
   @Override
   public Response merchantApiDelete(final String uid) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    MerchantDeleteResult result = delete.delete(MerchantDeleteCommand.builder().actor(actor)
-        .connection(connection).reference(MerchantReference.of(uid)).build());
-    return currentRequest
-        .response(result.getMerchant().thenApply(res -> res.map(this::toApiModel)));
+    return currentRequest.resolve(interaction -> {
+      MerchantDeleteResult result = delete.delete(
+          MerchantDeleteCommand.builder().reference(MerchantReference.of(uid)).build(interaction));
+      return result.getMerchant().thenApply(res -> res.map(this::toApiModel));
+    });
   }
 
   /**
@@ -126,12 +122,11 @@ public class MerchantController implements MerchantApi {
    */
   @Override
   public Response merchantApiDisable(final String uid) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    MerchantDisableResult result = disable.disable(MerchantDisableCommand.builder().actor(actor)
-        .connection(connection).reference(MerchantReference.of(uid)).build());
-    return currentRequest
-        .response(result.getMerchant().thenApply(res -> res.map(this::toApiModel)));
+    return currentRequest.resolve(interaction -> {
+      MerchantDisableResult result = disable.disable(
+          MerchantDisableCommand.builder().reference(MerchantReference.of(uid)).build(interaction));
+      return result.getMerchant().thenApply(res -> res.map(this::toApiModel));
+    });
   }
 
   /**
@@ -141,12 +136,11 @@ public class MerchantController implements MerchantApi {
    */
   @Override
   public Response merchantApiEnable(final String uid) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    MerchantEnableResult result = enable.enable(MerchantEnableCommand.builder().actor(actor)
-        .connection(connection).reference(MerchantReference.of(uid)).build());
-    return currentRequest
-        .response(result.getMerchant().thenApply(res -> res.map(this::toApiModel)));
+    return currentRequest.resolve(interaction -> {
+      MerchantEnableResult result = enable.enable(
+          MerchantEnableCommand.builder().reference(MerchantReference.of(uid)).build(interaction));
+      return result.getMerchant().thenApply(res -> res.map(this::toApiModel));
+    });
   }
 
   /**
@@ -163,24 +157,24 @@ public class MerchantController implements MerchantApi {
   @Override
   public Response merchantApiList(final String uid, final List<String> uids, final String search,
       final Boolean enabled, final Integer limit, final String sinceUid, final String order) {
-    MerchantFilter.MerchantFilterBuilder filter = MerchantFilter.builder();
-    MerchantCursor.MerchantCursorBuilder cursor = MerchantCursor.builder();
-    cursor = cursor.limit(limit);
-    cursor = cursor.sinceUid(sinceUid);
-    filter = filter.uid(uid);
-    filter = filter.uids(uids);
-    filter = filter.search(search);
-    filter = filter.enabled(enabled);
-    if (null != order) {
-      cursor = cursor.order(Arrays.asList(order.split(",")).stream().map(this::mapOrder)
-          .filter(Objects::nonNull).toList());
-    }
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    MerchantListResult result = list.list(MerchantListQuery.builder().actor(actor)
-        .connection(connection).filter(filter.build()).cursor(cursor.build()).build());
-    return currentRequest.response(result.getMerchants().thenApply(
-        merchants -> new MerchantList().content(toApiModel(merchants)).next(next(merchants))));
+    return currentRequest.resolve(interaction -> {
+      MerchantFilter.MerchantFilterBuilder filter = MerchantFilter.builder();
+      MerchantCursor.MerchantCursorBuilder cursor = MerchantCursor.builder();
+      cursor = cursor.limit(limit);
+      cursor = cursor.sinceUid(sinceUid);
+      filter = filter.uid(uid);
+      filter = filter.uids(uids);
+      filter = filter.search(search);
+      filter = filter.enabled(enabled);
+      if (null != order) {
+        cursor = cursor.order(Arrays.asList(order.split(",")).stream().map(this::mapOrder)
+            .filter(Objects::nonNull).toList());
+      }
+      MerchantListResult result = list.list(MerchantListQuery.builder().filter(filter.build())
+          .cursor(cursor.build()).build(interaction));
+      return result.getMerchants().thenApply(
+          merchants -> new MerchantList().content(toApiModel(merchants)).next(next(merchants)));
+    });
   }
 
   /**
@@ -190,12 +184,11 @@ public class MerchantController implements MerchantApi {
    */
   @Override
   public Response merchantApiRetrieve(final String uid) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    MerchantRetrieveResult result = retrieve.retrieve(MerchantRetrieveQuery.builder().actor(actor)
-        .connection(connection).reference(MerchantReference.of(uid)).build());
-    return currentRequest
-        .response(result.getMerchant().thenApply(res -> res.map(this::toApiModel)));
+    return currentRequest.resolve(interaction -> {
+      MerchantRetrieveResult result = retrieve.retrieve(
+          MerchantRetrieveQuery.builder().reference(MerchantReference.of(uid)).build(interaction));
+      return result.getMerchant().thenApply(res -> res.map(this::toApiModel));
+    });
   }
 
   /**
@@ -206,13 +199,12 @@ public class MerchantController implements MerchantApi {
    */
   @Override
   public Response merchantApiUpdate(final String uid, final Merchant merchant) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    MerchantDto dto = toDomainModel(merchant);
-    MerchantUpdateResult result = update.update(MerchantUpdateCommand.builder().actor(actor)
-        .connection(connection).dto(dto).reference(MerchantReference.of(uid)).build());
-    return currentRequest
-        .response(result.getMerchant().thenApply(res -> res.map(this::toApiModel)));
+    return currentRequest.resolve(interaction -> {
+      MerchantDto dto = toDomainModel(merchant);
+      MerchantUpdateResult result = update.update(MerchantUpdateCommand.builder().dto(dto)
+          .reference(MerchantReference.of(uid)).build(interaction));
+      return result.getMerchant().thenApply(res -> res.map(this::toApiModel));
+    });
   }
 
   /**

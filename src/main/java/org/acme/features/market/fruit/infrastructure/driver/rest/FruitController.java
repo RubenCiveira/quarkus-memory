@@ -3,8 +3,6 @@ package org.acme.features.market.fruit.infrastructure.driver.rest;
 import java.util.List;
 
 import org.acme.common.rest.CurrentRequest;
-import org.acme.common.security.Actor;
-import org.acme.common.security.Connection;
 import org.acme.features.market.fruit.application.interaction.FruitDto;
 import org.acme.features.market.fruit.application.interaction.command.FruitCreateCommand;
 import org.acme.features.market.fruit.application.interaction.command.FruitDeleteCommand;
@@ -76,12 +74,12 @@ public class FruitController implements FruitApi {
    */
   @Override
   public Response fruitApiCreate(Fruit fruit) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    FruitDto dto = toDomainModel(fruit);
-    FruitCreateResult result = create
-        .create(FruitCreateCommand.builder().actor(actor).connection(connection).dto(dto).build());
-    return currentRequest.response(result.getFruit().thenApply(res -> res.map(this::toApiModel)));
+    return currentRequest.resolve(interaction -> {
+      FruitDto dto = toDomainModel(fruit);
+      FruitCreateResult result =
+          create.create(FruitCreateCommand.builder().dto(dto).build(interaction));
+      return result.getFruit().thenApply(res -> res.map(this::toApiModel));
+    });
   }
 
   /**
@@ -91,11 +89,11 @@ public class FruitController implements FruitApi {
    */
   @Override
   public Response fruitApiDelete(final String uid) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    FruitDeleteResult result = delete.delete(FruitDeleteCommand.builder().actor(actor)
-        .connection(connection).reference(FruitReference.of(uid)).build());
-    return currentRequest.response(result.getFruit().thenApply(res -> res.map(this::toApiModel)));
+    return currentRequest.resolve(interaction -> {
+      FruitDeleteResult result = delete.delete(
+          FruitDeleteCommand.builder().reference(FruitReference.of(uid)).build(interaction));
+      return result.getFruit().thenApply(res -> res.map(this::toApiModel));
+    });
   }
 
   /**
@@ -110,19 +108,19 @@ public class FruitController implements FruitApi {
   @Override
   public Response fruitApiList(final String uid, final List<String> uids, final String search,
       final Integer limit, final String sinceUid) {
-    FruitFilter.FruitFilterBuilder filter = FruitFilter.builder();
-    FruitCursor.FruitCursorBuilder cursor = FruitCursor.builder();
-    cursor = cursor.limit(limit);
-    cursor = cursor.sinceUid(sinceUid);
-    filter = filter.uid(uid);
-    filter = filter.uids(uids);
-    filter = filter.search(search);
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    FruitListResult result = list.list(FruitListQuery.builder().actor(actor).connection(connection)
-        .filter(filter.build()).cursor(cursor.build()).build());
-    return currentRequest.response(result.getFruits()
-        .thenApply(fruits -> new FruitList().content(toApiModel(fruits)).next(next(fruits))));
+    return currentRequest.resolve(interaction -> {
+      FruitFilter.FruitFilterBuilder filter = FruitFilter.builder();
+      FruitCursor.FruitCursorBuilder cursor = FruitCursor.builder();
+      cursor = cursor.limit(limit);
+      cursor = cursor.sinceUid(sinceUid);
+      filter = filter.uid(uid);
+      filter = filter.uids(uids);
+      filter = filter.search(search);
+      FruitListResult result = list.list(FruitListQuery.builder().filter(filter.build())
+          .cursor(cursor.build()).build(interaction));
+      return result.getFruits()
+          .thenApply(fruits -> new FruitList().content(toApiModel(fruits)).next(next(fruits)));
+    });
   }
 
   /**
@@ -132,11 +130,11 @@ public class FruitController implements FruitApi {
    */
   @Override
   public Response fruitApiRetrieve(final String uid) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    FruitRetrieveResult result = retrieve.retrieve(FruitRetrieveQuery.builder().actor(actor)
-        .connection(connection).reference(FruitReference.of(uid)).build());
-    return currentRequest.response(result.getFruit().thenApply(res -> res.map(this::toApiModel)));
+    return currentRequest.resolve(interaction -> {
+      FruitRetrieveResult result = retrieve.retrieve(
+          FruitRetrieveQuery.builder().reference(FruitReference.of(uid)).build(interaction));
+      return result.getFruit().thenApply(res -> res.map(this::toApiModel));
+    });
   }
 
   /**
@@ -147,12 +145,12 @@ public class FruitController implements FruitApi {
    */
   @Override
   public Response fruitApiUpdate(final String uid, final Fruit fruit) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    FruitDto dto = toDomainModel(fruit);
-    FruitUpdateResult result = update.update(FruitUpdateCommand.builder().actor(actor)
-        .connection(connection).dto(dto).reference(FruitReference.of(uid)).build());
-    return currentRequest.response(result.getFruit().thenApply(res -> res.map(this::toApiModel)));
+    return currentRequest.resolve(interaction -> {
+      FruitDto dto = toDomainModel(fruit);
+      FruitUpdateResult result = update.update(FruitUpdateCommand.builder().dto(dto)
+          .reference(FruitReference.of(uid)).build(interaction));
+      return result.getFruit().thenApply(res -> res.map(this::toApiModel));
+    });
   }
 
   /**

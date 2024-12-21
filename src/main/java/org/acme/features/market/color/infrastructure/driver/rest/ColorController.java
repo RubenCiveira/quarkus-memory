@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.acme.common.rest.CurrentRequest;
-import org.acme.common.security.Actor;
-import org.acme.common.security.Connection;
 import org.acme.features.market.color.application.interaction.ColorDto;
 import org.acme.features.market.color.application.interaction.command.ColorCreateCommand;
 import org.acme.features.market.color.application.interaction.command.ColorDeleteCommand;
@@ -79,12 +77,12 @@ public class ColorController implements ColorApi {
    */
   @Override
   public Response colorApiCreate(Color color) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    ColorDto dto = toDomainModel(color);
-    ColorCreateResult result = create
-        .create(ColorCreateCommand.builder().actor(actor).connection(connection).dto(dto).build());
-    return currentRequest.response(result.getColor().thenApply(res -> res.map(this::toApiModel)));
+    return currentRequest.resolve(interaction -> {
+      ColorDto dto = toDomainModel(color);
+      ColorCreateResult result =
+          create.create(ColorCreateCommand.builder().dto(dto).build(interaction));
+      return result.getColor().thenApply(res -> res.map(this::toApiModel));
+    });
   }
 
   /**
@@ -94,11 +92,11 @@ public class ColorController implements ColorApi {
    */
   @Override
   public Response colorApiDelete(final String uid) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    ColorDeleteResult result = delete.delete(ColorDeleteCommand.builder().actor(actor)
-        .connection(connection).reference(ColorReference.of(uid)).build());
-    return currentRequest.response(result.getColor().thenApply(res -> res.map(this::toApiModel)));
+    return currentRequest.resolve(interaction -> {
+      ColorDeleteResult result = delete.delete(
+          ColorDeleteCommand.builder().reference(ColorReference.of(uid)).build(interaction));
+      return result.getColor().thenApply(res -> res.map(this::toApiModel));
+    });
   }
 
   /**
@@ -114,22 +112,22 @@ public class ColorController implements ColorApi {
   @Override
   public Response colorApiList(final String uid, final List<String> uids, final String search,
       final String merchant, final Integer limit, final String sinceUid) {
-    ColorFilter.ColorFilterBuilder filter = ColorFilter.builder();
-    ColorCursor.ColorCursorBuilder cursor = ColorCursor.builder();
-    cursor = cursor.limit(limit);
-    cursor = cursor.sinceUid(sinceUid);
-    filter = filter.uid(uid);
-    filter = filter.uids(uids);
-    filter = filter.search(search);
-    if (null != merchant) {
-      filter = filter.merchant(MerchantReference.of(merchant));
-    }
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    ColorListResult result = list.list(ColorListQuery.builder().actor(actor).connection(connection)
-        .filter(filter.build()).cursor(cursor.build()).build());
-    return currentRequest.response(result.getColors()
-        .thenApply(colors -> new ColorList().content(toApiModel(colors)).next(next(colors))));
+    return currentRequest.resolve(interaction -> {
+      ColorFilter.ColorFilterBuilder filter = ColorFilter.builder();
+      ColorCursor.ColorCursorBuilder cursor = ColorCursor.builder();
+      cursor = cursor.limit(limit);
+      cursor = cursor.sinceUid(sinceUid);
+      filter = filter.uid(uid);
+      filter = filter.uids(uids);
+      filter = filter.search(search);
+      if (null != merchant) {
+        filter = filter.merchant(MerchantReference.of(merchant));
+      }
+      ColorListResult result = list.list(ColorListQuery.builder().filter(filter.build())
+          .cursor(cursor.build()).build(interaction));
+      return result.getColors()
+          .thenApply(colors -> new ColorList().content(toApiModel(colors)).next(next(colors)));
+    });
   }
 
   /**
@@ -139,11 +137,11 @@ public class ColorController implements ColorApi {
    */
   @Override
   public Response colorApiRetrieve(final String uid) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    ColorRetrieveResult result = retrieve.retrieve(ColorRetrieveQuery.builder().actor(actor)
-        .connection(connection).reference(ColorReference.of(uid)).build());
-    return currentRequest.response(result.getColor().thenApply(res -> res.map(this::toApiModel)));
+    return currentRequest.resolve(interaction -> {
+      ColorRetrieveResult result = retrieve.retrieve(
+          ColorRetrieveQuery.builder().reference(ColorReference.of(uid)).build(interaction));
+      return result.getColor().thenApply(res -> res.map(this::toApiModel));
+    });
   }
 
   /**
@@ -154,12 +152,12 @@ public class ColorController implements ColorApi {
    */
   @Override
   public Response colorApiUpdate(final String uid, final Color color) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    ColorDto dto = toDomainModel(color);
-    ColorUpdateResult result = update.update(ColorUpdateCommand.builder().actor(actor)
-        .connection(connection).dto(dto).reference(ColorReference.of(uid)).build());
-    return currentRequest.response(result.getColor().thenApply(res -> res.map(this::toApiModel)));
+    return currentRequest.resolve(interaction -> {
+      ColorDto dto = toDomainModel(color);
+      ColorUpdateResult result = update.update(ColorUpdateCommand.builder().dto(dto)
+          .reference(ColorReference.of(uid)).build(interaction));
+      return result.getColor().thenApply(res -> res.map(this::toApiModel));
+    });
   }
 
   /**

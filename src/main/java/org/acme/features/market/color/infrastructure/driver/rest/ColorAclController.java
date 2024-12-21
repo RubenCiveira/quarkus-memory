@@ -5,8 +5,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.acme.common.action.Interaction;
 import org.acme.common.rest.CurrentRequest;
-import org.acme.common.security.Actor;
-import org.acme.common.security.Connection;
 import org.acme.features.market.color.application.interaction.query.ColorAllowQuery;
 import org.acme.features.market.color.application.interaction.query.ColorEntityAllowQuery;
 import org.acme.features.market.color.application.usecase.CreateColorUsecase;
@@ -76,19 +74,18 @@ public class ColorAclController implements ColorAclApi {
    */
   @Override
   public Response colorApiContextualAcl(final String uid) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    ColorEntityAllowQuery query =
-        ColorEntityAllowQuery.builder().reference(ColorReference.of(uid)).build(actor, connection);
-    ColorSpecificAcl response = new ColorSpecificAcl();
-    response.setAllows(new ColorAclSpecificAllows());
-    response.setFields(new ColorAclFields());
-    return currentRequest
-        .response(CompletableFuture
-            .allOf(fixedFields(response.getFields(), query),
-                hiddenFields(response.getFields(), query), updateAllows(response, query),
-                deleteAllows(response, query), retrieveAllows(response, query))
-            .thenApply(noop -> response));
+    return currentRequest.resolve(interaction -> {
+      ColorEntityAllowQuery query =
+          ColorEntityAllowQuery.builder().reference(ColorReference.of(uid)).build(interaction);
+      ColorSpecificAcl response = new ColorSpecificAcl();
+      response.setAllows(new ColorAclSpecificAllows());
+      response.setFields(new ColorAclFields());
+      return CompletableFuture
+          .allOf(fixedFields(response.getFields(), query),
+              hiddenFields(response.getFields(), query), updateAllows(response, query),
+              deleteAllows(response, query), retrieveAllows(response, query))
+          .thenApply(noop -> response);
+    });
   }
 
   /**
@@ -97,20 +94,19 @@ public class ColorAclController implements ColorAclApi {
    */
   @Override
   public Response colorApiGenericAcl() {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    ColorAllowQuery query = ColorAllowQuery.builder().build(actor, connection);
-    ColorEntityAllowQuery entityQuery = ColorEntityAllowQuery.builder().build(actor, connection);
-    ColorGenericAcl response = new ColorGenericAcl();
-    response.setAllows(new ColorAclGenericAllows());
-    response.setFields(new ColorAclFields());
-    return currentRequest
-        .response(CompletableFuture
-            .allOf(fixedFields(response.getFields(), query),
-                hiddenFields(response.getFields(), query), listAllows(response, query),
-                createAllows(response, query), updateAllows(response, entityQuery),
-                deleteAllows(response, entityQuery), retrieveAllows(response, entityQuery))
-            .thenApply(noop -> response));
+    return currentRequest.resolve(interaction -> {
+      ColorAllowQuery query = ColorAllowQuery.builder().build(interaction);
+      ColorEntityAllowQuery entityQuery = ColorEntityAllowQuery.builder().build(interaction);
+      ColorGenericAcl response = new ColorGenericAcl();
+      response.setAllows(new ColorAclGenericAllows());
+      response.setFields(new ColorAclFields());
+      return CompletableFuture
+          .allOf(fixedFields(response.getFields(), query),
+              hiddenFields(response.getFields(), query), listAllows(response, query),
+              createAllows(response, query), updateAllows(response, entityQuery),
+              deleteAllows(response, entityQuery), retrieveAllows(response, entityQuery))
+          .thenApply(noop -> response);
+    });
   }
 
   /**

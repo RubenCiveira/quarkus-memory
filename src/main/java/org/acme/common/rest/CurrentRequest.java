@@ -6,7 +6,9 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 
+import org.acme.common.action.Interaction;
 import org.acme.common.security.Actor;
 import org.acme.common.security.Connection;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -26,21 +28,31 @@ public class CurrentRequest {
   private final JsonWebToken jwt;
   private final UriInfo request;
 
-  public Actor getActor() {
-    if( security.isAnonymous() ) {
+  private Actor getActor() {
+    if (security.isAnonymous()) {
       System.err.println("Usuario anonimo");
     } else {
-      System.err.println( "Principal: " + security.getPrincipal().getName() );
-      System.err.println( "Roles: " + security.getRoles() );
+      System.err.println("Principal: " + security.getPrincipal().getName());
+      System.err.println("Roles: " + security.getRoles());
     }
     return Actor.builder().build();
   }
 
-  public Connection getConnection() {
+  private Connection getConnection() {
     return Connection.builder().request(request.getPath()).build();
   }
 
-  public <T> Response response(CompletionStage<T> future) {
+  // FIXME: crear un método "resolve" que reciba como entrada una lambda de Interacion => response
+  // lo que permite recuperar actor y conexión de forma asincrona y esperar para invocar cuando
+  // este resueltos
+  public <T> Response resolve(Function<Interaction, CompletionStage<T>> callback) {
+    Actor actor = getActor();
+    Connection conn = getConnection();
+    Interaction inter = new Interaction(Interaction.builder().actor(actor).connection(conn)) {};
+    return response(callback.apply(inter));
+  }
+
+  private <T> Response response(CompletionStage<T> future) {
     try {
       T response = future.toCompletableFuture().get(1, TimeUnit.SECONDS);
       if (response instanceof Optional<?> opt) {

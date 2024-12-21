@@ -5,8 +5,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.acme.common.action.Interaction;
 import org.acme.common.rest.CurrentRequest;
-import org.acme.common.security.Actor;
-import org.acme.common.security.Connection;
 import org.acme.features.market.place.application.interaction.query.PlaceAllowQuery;
 import org.acme.features.market.place.application.interaction.query.PlaceEntityAllowQuery;
 import org.acme.features.market.place.application.usecase.CreatePlaceUsecase;
@@ -82,19 +80,18 @@ public class PlaceAclController implements PlaceAclApi {
    */
   @Override
   public Response placeApiContextualAcl(final String uid) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    PlaceEntityAllowQuery query =
-        PlaceEntityAllowQuery.builder().reference(PlaceReference.of(uid)).build(actor, connection);
-    PlaceSpecificAcl response = new PlaceSpecificAcl();
-    response.setAllows(new PlaceAclSpecificAllows());
-    response.setFields(new PlaceAclFields());
-    return currentRequest
-        .response(CompletableFuture
-            .allOf(fixedFields(response.getFields(), query),
-                hiddenFields(response.getFields(), query), updateAllows(response, query),
-                deleteAllows(response, query), retrieveAllows(response, query))
-            .thenApply(noop -> response));
+    return currentRequest.resolve(interaction -> {
+      PlaceEntityAllowQuery query =
+          PlaceEntityAllowQuery.builder().reference(PlaceReference.of(uid)).build(interaction);
+      PlaceSpecificAcl response = new PlaceSpecificAcl();
+      response.setAllows(new PlaceAclSpecificAllows());
+      response.setFields(new PlaceAclFields());
+      return CompletableFuture
+          .allOf(fixedFields(response.getFields(), query),
+              hiddenFields(response.getFields(), query), updateAllows(response, query),
+              deleteAllows(response, query), retrieveAllows(response, query))
+          .thenApply(noop -> response);
+    });
   }
 
   /**
@@ -103,19 +100,18 @@ public class PlaceAclController implements PlaceAclApi {
    */
   @Override
   public Response placeApiGenericAcl() {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    PlaceAllowQuery query = PlaceAllowQuery.builder().build(actor, connection);
-    PlaceEntityAllowQuery entityQuery = PlaceEntityAllowQuery.builder().build(actor, connection);
-    PlaceGenericAcl response = new PlaceGenericAcl();
-    response.setAllows(new PlaceAclGenericAllows());
-    response.setFields(new PlaceAclFields());
-    return currentRequest.response(CompletableFuture
-        .allOf(fixedFields(response.getFields(), query), hiddenFields(response.getFields(), query),
-            listAllows(response, query), createAllows(response, query),
-            updateAllows(response, entityQuery), deleteAllows(response, entityQuery),
-            retrieveAllows(response, entityQuery), uploadPhotoAllows(response, query))
-        .thenApply(noop -> response));
+    return currentRequest.resolve(interaction -> {
+      PlaceAllowQuery query = PlaceAllowQuery.builder().build(interaction);
+      PlaceEntityAllowQuery entityQuery = PlaceEntityAllowQuery.builder().build(interaction);
+      PlaceGenericAcl response = new PlaceGenericAcl();
+      response.setAllows(new PlaceAclGenericAllows());
+      response.setFields(new PlaceAclFields());
+      return CompletableFuture.allOf(fixedFields(response.getFields(), query),
+          hiddenFields(response.getFields(), query), listAllows(response, query),
+          createAllows(response, query), updateAllows(response, entityQuery),
+          deleteAllows(response, entityQuery), retrieveAllows(response, entityQuery),
+          uploadPhotoAllows(response, query)).thenApply(noop -> response);
+    });
   }
 
   /**

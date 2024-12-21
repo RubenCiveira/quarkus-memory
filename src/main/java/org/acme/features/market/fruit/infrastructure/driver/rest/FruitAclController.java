@@ -5,8 +5,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.acme.common.action.Interaction;
 import org.acme.common.rest.CurrentRequest;
-import org.acme.common.security.Actor;
-import org.acme.common.security.Connection;
 import org.acme.features.market.fruit.application.interaction.query.FruitAllowQuery;
 import org.acme.features.market.fruit.application.interaction.query.FruitEntityAllowQuery;
 import org.acme.features.market.fruit.application.usecase.CreateFruitUsecase;
@@ -76,19 +74,18 @@ public class FruitAclController implements FruitAclApi {
    */
   @Override
   public Response fruitApiContextualAcl(final String uid) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    FruitEntityAllowQuery query =
-        FruitEntityAllowQuery.builder().reference(FruitReference.of(uid)).build(actor, connection);
-    FruitSpecificAcl response = new FruitSpecificAcl();
-    response.setAllows(new FruitAclSpecificAllows());
-    response.setFields(new FruitAclFields());
-    return currentRequest
-        .response(CompletableFuture
-            .allOf(fixedFields(response.getFields(), query),
-                hiddenFields(response.getFields(), query), updateAllows(response, query),
-                deleteAllows(response, query), retrieveAllows(response, query))
-            .thenApply(noop -> response));
+    return currentRequest.resolve(interaction -> {
+      FruitEntityAllowQuery query =
+          FruitEntityAllowQuery.builder().reference(FruitReference.of(uid)).build(interaction);
+      FruitSpecificAcl response = new FruitSpecificAcl();
+      response.setAllows(new FruitAclSpecificAllows());
+      response.setFields(new FruitAclFields());
+      return CompletableFuture
+          .allOf(fixedFields(response.getFields(), query),
+              hiddenFields(response.getFields(), query), updateAllows(response, query),
+              deleteAllows(response, query), retrieveAllows(response, query))
+          .thenApply(noop -> response);
+    });
   }
 
   /**
@@ -97,20 +94,19 @@ public class FruitAclController implements FruitAclApi {
    */
   @Override
   public Response fruitApiGenericAcl() {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    FruitAllowQuery query = FruitAllowQuery.builder().build(actor, connection);
-    FruitEntityAllowQuery entityQuery = FruitEntityAllowQuery.builder().build(actor, connection);
-    FruitGenericAcl response = new FruitGenericAcl();
-    response.setAllows(new FruitAclGenericAllows());
-    response.setFields(new FruitAclFields());
-    return currentRequest
-        .response(CompletableFuture
-            .allOf(fixedFields(response.getFields(), query),
-                hiddenFields(response.getFields(), query), listAllows(response, query),
-                createAllows(response, query), updateAllows(response, entityQuery),
-                deleteAllows(response, entityQuery), retrieveAllows(response, entityQuery))
-            .thenApply(noop -> response));
+    return currentRequest.resolve(interaction -> {
+      FruitAllowQuery query = FruitAllowQuery.builder().build(interaction);
+      FruitEntityAllowQuery entityQuery = FruitEntityAllowQuery.builder().build(interaction);
+      FruitGenericAcl response = new FruitGenericAcl();
+      response.setAllows(new FruitAclGenericAllows());
+      response.setFields(new FruitAclFields());
+      return CompletableFuture
+          .allOf(fixedFields(response.getFields(), query),
+              hiddenFields(response.getFields(), query), listAllows(response, query),
+              createAllows(response, query), updateAllows(response, entityQuery),
+              deleteAllows(response, entityQuery), retrieveAllows(response, entityQuery))
+          .thenApply(noop -> response);
+    });
   }
 
   /**

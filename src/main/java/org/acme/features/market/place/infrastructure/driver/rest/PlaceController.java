@@ -3,13 +3,8 @@ package org.acme.features.market.place.infrastructure.driver.rest;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.acme.common.rest.CurrentRequest;
-import org.acme.common.security.Actor;
-import org.acme.common.security.Connection;
 import org.acme.common.store.BinaryContent;
 import org.acme.features.market.merchant.domain.model.MerchantReference;
 import org.acme.features.market.place.application.interaction.PlaceDto;
@@ -102,12 +97,12 @@ public class PlaceController implements PlaceApi {
    */
   @Override
   public Response placeApiCreate(Place place) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    PlaceDto dto = toDomainModel(place);
-    PlaceCreateResult result = create
-        .create(PlaceCreateCommand.builder().actor(actor).connection(connection).dto(dto).build());
-    return currentRequest.response(result.getPlace().thenApply(res -> res.map(this::toApiModel)));
+    return currentRequest.resolve(interaction -> {
+      PlaceDto dto = toDomainModel(place);
+      PlaceCreateResult result =
+          create.create(PlaceCreateCommand.builder().dto(dto).build(interaction));
+      return result.getPlace().thenApply(res -> res.map(this::toApiModel));
+    });
   }
 
   /**
@@ -117,11 +112,11 @@ public class PlaceController implements PlaceApi {
    */
   @Override
   public Response placeApiDelete(final String uid) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    PlaceDeleteResult result = delete.delete(PlaceDeleteCommand.builder().actor(actor)
-        .connection(connection).reference(PlaceReference.of(uid)).build());
-    return currentRequest.response(result.getPlace().thenApply(res -> res.map(this::toApiModel)));
+    return currentRequest.resolve(interaction -> {
+      PlaceDeleteResult result = delete.delete(
+          PlaceDeleteCommand.builder().reference(PlaceReference.of(uid)).build(interaction));
+      return result.getPlace().thenApply(res -> res.map(this::toApiModel));
+    });
   }
 
   /**
@@ -137,22 +132,22 @@ public class PlaceController implements PlaceApi {
   @Override
   public Response placeApiList(final String uid, final List<String> uids, final String search,
       final String merchant, final Integer limit, final String sinceUid) {
-    PlaceFilter.PlaceFilterBuilder filter = PlaceFilter.builder();
-    PlaceCursor.PlaceCursorBuilder cursor = PlaceCursor.builder();
-    cursor = cursor.limit(limit);
-    cursor = cursor.sinceUid(sinceUid);
-    filter = filter.uid(uid);
-    filter = filter.uids(uids);
-    filter = filter.search(search);
-    if (null != merchant) {
-      filter = filter.merchant(MerchantReference.of(merchant));
-    }
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    PlaceListResult result = list.list(PlaceListQuery.builder().actor(actor).connection(connection)
-        .filter(filter.build()).cursor(cursor.build()).build());
-    return currentRequest.response(result.getPlaces()
-        .thenApply(places -> new PlaceList().content(toApiModel(places)).next(next(places))));
+    return currentRequest.resolve(interaction -> {
+      PlaceFilter.PlaceFilterBuilder filter = PlaceFilter.builder();
+      PlaceCursor.PlaceCursorBuilder cursor = PlaceCursor.builder();
+      cursor = cursor.limit(limit);
+      cursor = cursor.sinceUid(sinceUid);
+      filter = filter.uid(uid);
+      filter = filter.uids(uids);
+      filter = filter.search(search);
+      if (null != merchant) {
+        filter = filter.merchant(MerchantReference.of(merchant));
+      }
+      PlaceListResult result = list.list(PlaceListQuery.builder().filter(filter.build())
+          .cursor(cursor.build()).build(interaction));
+      return result.getPlaces()
+          .thenApply(places -> new PlaceList().content(toApiModel(places)).next(next(places)));
+    });
   }
 
   /**
@@ -162,11 +157,11 @@ public class PlaceController implements PlaceApi {
    */
   @Override
   public Response placeApiRetrieve(final String uid) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    PlaceRetrieveResult result = retrieve.retrieve(PlaceRetrieveQuery.builder().actor(actor)
-        .connection(connection).reference(PlaceReference.of(uid)).build());
-    return currentRequest.response(result.getPlace().thenApply(res -> res.map(this::toApiModel)));
+    return currentRequest.resolve(interaction -> {
+      PlaceRetrieveResult result = retrieve.retrieve(
+          PlaceRetrieveQuery.builder().reference(PlaceReference.of(uid)).build(interaction));
+      return result.getPlace().thenApply(res -> res.map(this::toApiModel));
+    });
   }
 
   /**
@@ -176,18 +171,12 @@ public class PlaceController implements PlaceApi {
    */
   @Override
   public Response placeApiRetrievePhoto(final String uid) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    PlaceRetrieveUploadPhotoQuery query = PlaceRetrieveUploadPhotoQuery.builder()
-        .reference(PlaceReference.of(uid)).build(actor, connection);
-    PlaceRetrieveUploadPhotoResult result = retrievePhotoUploadUsecase.read(query);
-    try {
-      return Response.ok(result.getPhoto().thenApply(op -> op.map(BinaryContent::getInputStream))
-          .toCompletableFuture().get(1, TimeUnit.SECONDS)).build();
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      e.printStackTrace();
-      return Response.serverError().build();
-    }
+    return currentRequest.resolve(interaction -> {
+      PlaceRetrieveUploadPhotoQuery query = PlaceRetrieveUploadPhotoQuery.builder()
+          .reference(PlaceReference.of(uid)).build(interaction);
+      PlaceRetrieveUploadPhotoResult result = retrievePhotoUploadUsecase.read(query);
+      return result.getPhoto().thenApply(op -> op.map(BinaryContent::getInputStream));
+    });
   }
 
   /**
@@ -197,18 +186,12 @@ public class PlaceController implements PlaceApi {
    */
   @Override
   public Response placeApiRetrieveTempUploadPhoto(final String temp) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    PlacePhotoTemporalUploadReadQuery query =
-        PlacePhotoTemporalUploadReadQuery.builder().key(temp).build(actor, connection);
-    PlacePhotoTemporalUploadReadResult result = tempPhotoUploadUsecase.read(query);
-    try {
-      return Response.ok(result.getBinary().thenApply(op -> op.map(BinaryContent::getInputStream))
-          .toCompletableFuture().get(1, TimeUnit.SECONDS)).build();
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      e.printStackTrace();
-      return Response.serverError().build();
-    }
+    return currentRequest.resolve(interaction -> {
+      PlacePhotoTemporalUploadReadQuery query =
+          PlacePhotoTemporalUploadReadQuery.builder().key(temp).build(interaction);
+      PlacePhotoTemporalUploadReadResult result = tempPhotoUploadUsecase.read(query);
+      return result.getBinary().thenApply(op -> op.map(BinaryContent::getInputStream));
+    });
   }
 
   /**
@@ -219,12 +202,12 @@ public class PlaceController implements PlaceApi {
    */
   @Override
   public Response placeApiUpdate(final String uid, final Place place) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    PlaceDto dto = toDomainModel(place);
-    PlaceUpdateResult result = update.update(PlaceUpdateCommand.builder().actor(actor)
-        .connection(connection).dto(dto).reference(PlaceReference.of(uid)).build());
-    return currentRequest.response(result.getPlace().thenApply(res -> res.map(this::toApiModel)));
+    return currentRequest.resolve(interaction -> {
+      PlaceDto dto = toDomainModel(place);
+      PlaceUpdateResult result = update.update(PlaceUpdateCommand.builder().dto(dto)
+          .reference(PlaceReference.of(uid)).build(interaction));
+      return result.getPlace().thenApply(res -> res.map(this::toApiModel));
+    });
   }
 
   /**
@@ -234,19 +217,14 @@ public class PlaceController implements PlaceApi {
    */
   @Override
   public Response placeApiUploadTempUploadPhoto(final InputStream file) {
-    Actor actor = currentRequest.getActor();
-    Connection connection = currentRequest.getConnection();
-    PlacePhotoTemporalUploadCommand command = PlacePhotoTemporalUploadCommand.builder()
-        .binary(BinaryContent.builder().name("photo").contentType("")
-            .lastModification(System.currentTimeMillis()).inputStream(file).build())
-        .build(actor, connection);
-    PlacePhotoTemporalUploadResult result = tempPhotoUploadUsecase.upload(command);
-    try {
-      return Response.ok(result.getKey().toCompletableFuture().get(1, TimeUnit.SECONDS)).build();
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      e.printStackTrace();
-      return Response.serverError().build();
-    }
+    return currentRequest.resolve(interaction -> {
+      PlacePhotoTemporalUploadCommand command = PlacePhotoTemporalUploadCommand.builder()
+          .binary(BinaryContent.builder().name("photo").contentType("")
+              .lastModification(System.currentTimeMillis()).inputStream(file).build())
+          .build(interaction);
+      PlacePhotoTemporalUploadResult result = tempPhotoUploadUsecase.upload(command);
+      return result.getKey();
+    });
   }
 
   /**
