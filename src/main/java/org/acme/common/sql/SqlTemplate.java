@@ -82,7 +82,7 @@ public class SqlTemplate implements AutoCloseable {
     }
   }
 
-  public Connection currentConnection() {
+  /* default */ Connection currentConnection() {
     return connection;
   }
 

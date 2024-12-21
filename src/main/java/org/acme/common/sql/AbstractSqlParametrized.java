@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,10 +17,39 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<T>> {
+  private static class ChildRequest<R> {
+    public final int batch;
+    public final String name;
+    // El campo del padre que extramos para la query
+    public final String bind;
+    // El campo del hijo que apunta al padre para asociarlo
+    public final String ref;
+    public final String query;
+    public final SqlConverter<R> converter;
+    // Calculated
+    public final List<String> params = new ArrayList<>();
+    // Calculated
+    public final Map<String, CompletableFuture<List<R>>> futures = new LinkedHashMap<>();
+    public final Map<String, CompletableFuture<List<R>>> childData = new LinkedHashMap<>();
+
+
+    public ChildRequest(int batch, String name, String bind, String ref, String query,
+        SqlConverter<R> converter) {
+      this.batch = batch;
+      this.name = name;
+      this.bind = bind;
+      this.ref = ref;
+      this.query = query;
+      this.converter = converter;
+    }
+  }
+
   private final Map<String, SqlParameterValue> parameters = new LinkedHashMap<>();
   private final Map<String, Integer> arrays = new LinkedHashMap<>();
+  private final List<ChildRequest<?>> childs = new ArrayList<>();
 
   private final Connection connection;
 
@@ -44,14 +74,44 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
     }
   }
 
+  // consulta hija
+  protected <S> void child(int batch, String name, String sql, String parentBind, String childRef,
+      SqlConverter<S> converter) {
+    // select * from childs where bind in (?)
+    childs.add(new ChildRequest<>(batch, name, parentBind, childRef, sql, converter));
+  }
+
   protected <R> CompletionStage<SqlResult<R>> executeQuery(String sql, SqlConverter<R> converter) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
     Function<String, List<R>> execute = (query) -> {
+      for (ChildRequest child : childs) {
+        child.futures.clear();
+        child.childData.clear();
+      }
       try (PreparedStatement prepareStatement = prepareStatement(query);
           ResultSet executeQuery = prepareStatement.executeQuery()) {
         List<R> data = new ArrayList<>();
-        while (executeQuery.next()) {
-          converter.convert(executeQuery).ifPresent(data::add);
-        }
+        // Si tengo listas hijas => tengo que ir por ellas.
+          while (executeQuery.next()) {
+            // foreach child
+            Map<String, CompletionStage<List<?>>> childData = new HashMap<>();
+            for (ChildRequest child : childs) {
+              String of = executeQuery.getString(child.bind);
+              child.params.add(of);
+              CompletionStage<List<?>> future = new CompletableFuture<>();
+              child.futures.put(of, future);
+              child.childData.put(of, new ArrayList<>());
+              childData.put(child.name, future);
+            }
+            SqlResultSet row = SqlResultSet.builder().set(executeQuery).childs(childData).build();
+            converter.convert(row).ifPresent(data::add);
+          }
+          for (ChildRequest child : childs) {
+            List<List<String>> partitionList = partitionList( child.params, child.batch );
+            for (List<String> list: partitionList) {
+              resolveChilds(child, list);
+            }
+          }
         return data;
       } catch (SQLException ex) {
         throw UncheckedSqlException.exception(connection, ex);
@@ -79,6 +139,38 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
       }
     });
   }
+  
+  private List<List<String>> partitionList(List<String> list, int windowSize) {
+    return IntStream.range(0, (list.size() + windowSize - 1) / windowSize)
+            .mapToObj(i -> list.subList(i * windowSize, Math.min((i + 1) * windowSize, list.size())))
+            .toList();
+  }
+  
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private void resolveChilds(ChildRequest child, List<String> offset) throws SQLException {
+    Map<String, Integer> childParams = new LinkedHashMap<>();
+    childParams.put(child.ref, 1);
+    String theSql = formatSql(child.query, childParams, Map.of(child.ref, offset.size()));
+    try (PreparedStatement childps =
+        connection.prepareStatement(theSql)) {
+      // Replace childs params
+      applyParameters(childParams, childps, Map.of(child.ref, 
+          SqlListParameterValue.of( (String[])offset.toArray(new String[0]) )));
+      try (ResultSet childRes = childps.executeQuery()) {
+        while (childRes.next()) {
+          Optional<Object> ref =
+              child.converter.convert(SqlResultSet.builder().set(childRes).build());
+          if (ref.isPresent() ) {
+            String parentRef = childRes.getString(child.ref);
+            ((List) child.childData.get(parentRef)).add(ref.get());
+          }
+        }
+      }
+      offset.forEach(key -> {
+        ((CompletableFuture)child.futures.get(key)).complete( child.childData.get(key) );
+      });
+    }
+  }
 
   private PreparedStatement prepareStatement(String sql) throws SQLException {
     Map<String, Integer> parameterIndexMap = new LinkedHashMap<>();
@@ -89,10 +181,14 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
   }
 
   private String formatSql(String sql, Map<String, Integer> parameterIndexMap) throws SQLException {
+    return formatSql(sql, parameterIndexMap, arrays);
+    
+  }
+  private String formatSql(String sql, Map<String, Integer> parameterIndexMap, Map<String, Integer> larrays) throws SQLException {
     sql = parseSql(escapeIdentifiers(sql), parameterIndexMap);
     // aquellos que sean listas: toca expandirlos.
     List<Integer> listSizes = new ArrayList<>();
-    arrays.forEach((name, value) -> {
+    larrays.forEach((name, value) -> {
       if (!parameterIndexMap.containsKey(name)) {
         throw new IllegalArgumentException("No param " + name + " on the sentence");
       }
@@ -139,7 +235,7 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
 
   private String replaceInPlaceholders(String sql, List<Integer> paramSizes) {
     // Patrón para localizar IN (?)
-    Pattern pattern = Pattern.compile("(?<!')\\bIN\\s*\\(\\s*\\?\\s*\\)(?!')");
+    Pattern pattern = Pattern.compile("(?<!')\\b[Ii][Nn]\\s*\\(\\s*\\?\\s*\\)(?!')");
     Matcher matcher = pattern.matcher(sql);
 
     StringBuffer result = new StringBuffer();
@@ -189,7 +285,12 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
 
   private void applyParameters(Map<String, Integer> parameterIndexMap,
       PreparedStatement preparedStatement) throws SQLException {
-    for (Entry<String, SqlParameterValue> entry : parameters.entrySet()) {
+    applyParameters(parameterIndexMap, preparedStatement, parameters);
+  }
+
+  private void applyParameters(Map<String, Integer> parameterIndexMap,
+      PreparedStatement preparedStatement, Map<String, SqlParameterValue> lparameters) throws SQLException {
+    for (Entry<String, SqlParameterValue> entry : lparameters.entrySet()) {
       String key = entry.getKey();
       SqlParameterValue value = entry.getValue();
       if (!parameterIndexMap.containsKey(key)) {

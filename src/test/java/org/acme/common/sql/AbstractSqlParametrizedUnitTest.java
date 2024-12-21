@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 class AbstractSqlParametrizedUnitTest {
@@ -77,7 +78,7 @@ class AbstractSqlParametrizedUnitTest {
   @Test
   void testExecuteQueryOne() throws SQLException, InterruptedException, ExecutionException {
     when(resultSet.next()).thenReturn(true, false);
-    when(converter.convert(resultSet)).thenReturn(Optional.of("Result"));
+    when(converter.convert(Mockito.any())).thenReturn(Optional.of("Result"));
 
     SqlResult<String> result = testSql.with("_age", SqlParameterValue.of(22))
         .executeQuery("SELECT * FROM table where age = :_age", converter).toCompletableFuture()
@@ -94,7 +95,8 @@ class AbstractSqlParametrizedUnitTest {
   @Test
   void testExecuteQueryAll() throws SQLException, InterruptedException, ExecutionException {
     when(resultSet.next()).thenReturn(true, true, false);
-    when(converter.convert(resultSet)).thenReturn(Optional.of("Result1"), Optional.of("Result2"));
+    when(converter.convert(Mockito.any())).thenReturn(Optional.of("Result1"),
+        Optional.of("Result2"));
 
     SqlResult<String> result = testSql.with("name", SqlParameterValue.of("green"))
         .executeQuery("SELECT * FROM table where name = :name and :", converter)

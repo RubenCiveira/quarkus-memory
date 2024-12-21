@@ -1,12 +1,13 @@
 package org.acme.features.market.merchant.infrastructure.repository;
 
+import java.time.OffsetDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
-
 import javax.sql.DataSource;
-
 import org.acme.common.action.Slide;
 import org.acme.common.exception.ConstraintException;
 import org.acme.common.sql.OptimistLockException;
@@ -20,7 +21,6 @@ import org.acme.common.sql.SqlTemplate;
 import org.acme.features.market.merchant.domain.gateway.MerchantCursor;
 import org.acme.features.market.merchant.domain.gateway.MerchantFilter;
 import org.acme.features.market.merchant.domain.model.Merchant;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -87,8 +87,15 @@ public class MerchantRepository {
    * @param filter
    * @return
    */
-  public SqlSchematicQuery<Merchant> filteredQuery(SqlTemplate template, MerchantFilter filter) {
+  private SqlSchematicQuery<Merchant> filteredQuery(SqlTemplate template, MerchantFilter filter) {
     SqlSchematicQuery<Merchant> sq = template.createSqlSchematicQuery("merchant");
+    SqlConverter<Map<String,Object>> placesConverter = res -> {
+      Map<String, Object> map = new HashMap<>();
+      map.put("name", res.getString("name") );
+      map.put("date", res.getTime("opening_date"));
+      return Optional.of( map );
+    };
+    sq.child(20, "places", "select * from place where merchant in ( :merchant )", "uid", "merchant", placesConverter);
     sq.select("uid", "name", "enabled", "key", "version");
     filter.getUid().ifPresent(uid -> sq.where("uid", SqlOperator.EQ, SqlParameterValue.of(uid)));
     filter.getSearch().ifPresent(
@@ -161,6 +168,13 @@ public class MerchantRepository {
    */
   private SqlConverter<Merchant> converter() {
     return (row) -> {
+      System.err.println("=====");
+      System.err.println( row.getChilds("places") );
+      System.err.println("=====");
+      row.getChilds("places").thenAccept( list -> {
+        System.err.println("La lista con los hijos esta completa.");
+        System.err.println( list );
+      });
       try {
         return Optional.of(Merchant.builder().uidValue(row.getString(1)).nameValue(row.getString(2))
             .enabledValue(row.getBoolean(3)).keyValue(row.getString(4)).versionValue(row.getInt(5))

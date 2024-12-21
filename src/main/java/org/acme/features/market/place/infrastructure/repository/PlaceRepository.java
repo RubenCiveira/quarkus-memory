@@ -170,7 +170,7 @@ public class PlaceRepository {
         return Optional.of(Place.builder().uidValue(row.getString(1)).nameValue(row.getString(2))
             .merchantReferenceValue(row.getString(3)).photoValue(row.getString(4))
             .openingDateValue(OffsetDateTime
-                .ofInstant(Instant.ofEpochMilli(row.getTime(5).getTime()), ZoneId.systemDefault()))
+                .ofInstant(Instant.ofEpochMilli(row.getTimestamp(5).getTime()), ZoneId.systemDefault()))
             .versionValue(row.getInt(6)).build());
       } catch (ConstraintException ce) {
         log.error("Unable to map data for {}", row.getString(1), ce);
