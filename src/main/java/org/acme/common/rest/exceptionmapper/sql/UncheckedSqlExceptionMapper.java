@@ -22,6 +22,6 @@ public class UncheckedSqlExceptionMapper implements ExceptionMapper<UncheckedSql
     }
     Map<String, String> error = new HashMap<>();
     error.put("reason", exception.getMessage());
-    return Response.status(404).entity(error).build();
+    return Response.status(500).entity(error).build();
   }
 }

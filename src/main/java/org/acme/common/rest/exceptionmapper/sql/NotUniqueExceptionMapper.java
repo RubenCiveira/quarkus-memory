@@ -22,6 +22,6 @@ public class NotUniqueExceptionMapper implements ExceptionMapper<NotUniqueExcept
     }
     Map<String, String> error = new HashMap<>();
     error.put("reason", exception.getMessage());
-    return Response.status(404).entity(error).build();
+    return Response.status(422).entity(error).build();
   }
 }
