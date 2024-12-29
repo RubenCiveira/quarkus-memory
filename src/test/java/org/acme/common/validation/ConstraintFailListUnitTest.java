@@ -18,7 +18,7 @@ class ConstraintFailListUnitTest {
     Assertions.assertTrue(wa1.includeViolation(ConstraintFail.class));
     Assertions.assertFalse(wa1.includeViolation(Mio.class));
 
-    List<ConstraintFail> list =
+    List<? extends AbstractFail> list =
         new ConstraintFailList("c1", "d1", "s1", "problem").getFails().toList();
     Assertions.assertEquals(1, list.size());
     Assertions.assertEquals("problem", list.get(0).getWrongValues().get(0).getErrorMessage());

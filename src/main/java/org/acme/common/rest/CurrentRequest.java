@@ -28,6 +28,10 @@ public class CurrentRequest {
   private final JsonWebToken jwt;
   private final UriInfo request;
 
+  public boolean isAnonymous() {
+    return security.isAnonymous();
+  }
+  
   private Actor getActor() {
     if (security.isAnonymous()) {
       System.err.println("Usuario anonimo");
@@ -61,7 +65,15 @@ public class CurrentRequest {
       } else {
         return Response.ok(response).build();
       }
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
+    } catch (ExecutionException e) {
+      Throwable th = e.getCause();
+      if( th instanceof RuntimeException re) {
+        throw re;
+      } else {
+        e.printStackTrace();
+        return Response.serverError().build();
+      }
+    } catch (InterruptedException | TimeoutException e) {
       e.printStackTrace();
       return Response.serverError().build();
     }
