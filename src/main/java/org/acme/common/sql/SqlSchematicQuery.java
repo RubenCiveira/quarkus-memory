@@ -25,13 +25,13 @@ public final class SqlSchematicQuery<T> extends AbstractSqlQuery<T, SqlSchematic
     super(template);
     this.query = new SchematicQuery("SELECT", table, this);
   }
-  
+
   @Override
   public <S> void child(int batch, String name, String sql, String parentBind, String childRef,
       SqlConverter<S> converter) {
     super.child(batch, name, sql, parentBind, childRef, converter);
   }
-  
+
   @Override
   public CompletionStage<SqlResult<T>> query(SqlConverter<T> converter) {
     return executeQuery(this.query.buildQuery(), converter);

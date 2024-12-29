@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+
 import lombok.Builder;
 import lombok.NonNull;
 
@@ -31,9 +32,10 @@ public class SqlResultSet {
   private final ResultSet set;
   @Builder.Default
   private Map<String, CompletionStage<List<?>>> childs = new HashMap<>();
-  
+
   public <S> CompletionStage<List<?>> getChilds(String name) {
-    return childs.containsKey(name) ? childs.get(name) : CompletableFuture.completedFuture(List.of());
+    return childs.containsKey(name) ? childs.get(name)
+        : CompletableFuture.completedFuture(List.of());
   }
 
   public String getString(int columnIndex) throws SQLException {
@@ -243,7 +245,7 @@ public class SqlResultSet {
   public Date getDate(String columnLabel, Calendar cal) throws SQLException {
     return set.getDate(columnLabel, cal);
   }
-  
+
   public Time getTime(int columnIndex, Calendar cal) throws SQLException {
     return set.getTime(columnIndex, cal);
   }
