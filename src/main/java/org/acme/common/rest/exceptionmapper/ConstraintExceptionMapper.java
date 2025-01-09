@@ -2,7 +2,9 @@
 package org.acme.common.rest.exceptionmapper;
 
 import java.util.Locale;
+
 import org.acme.common.exception.ConstraintException;
+
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
@@ -25,7 +27,6 @@ public class ConstraintExceptionMapper implements ExceptionMapper<ConstraintExce
     }
     Locale locale = headers.getAcceptableLanguages().get(0);
     return Response.status(422)
-        .entity(exception.getFails().map(fail -> fail.localize(locale, true)).toList())
-        .build();
+        .entity(exception.getFails().map(fail -> fail.localize(locale, true)).toList()).build();
   }
 }

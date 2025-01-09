@@ -3,12 +3,13 @@ package org.acme.common.rest.exceptionmapper.sql;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.acme.common.sql.OptimistLockException;
+
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
 import lombok.extern.slf4j.Slf4j;
-
-import org.acme.common.sql.OptimistLockException;
 
 @Slf4j
 @Provider

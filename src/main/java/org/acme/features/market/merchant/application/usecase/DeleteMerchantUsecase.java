@@ -12,7 +12,6 @@ import org.acme.features.market.merchant.application.interaction.query.MerchantE
 import org.acme.features.market.merchant.application.interaction.result.MerchantDeleteResult;
 import org.acme.features.market.merchant.application.usecase.service.MerchantsVisibilityService;
 import org.acme.features.market.merchant.domain.Merchants;
-import org.acme.features.market.merchant.domain.gateway.MerchantFilter;
 import org.acme.features.market.merchant.domain.gateway.MerchantWriteRepositoryGateway;
 import org.acme.features.market.merchant.domain.model.Merchant;
 
@@ -70,12 +69,8 @@ public class DeleteMerchantUsecase {
       if (!detail.isAllowed()) {
         throw new NotAllowedException(detail.getDescription());
       }
-      MerchantFilter filter =
-          MerchantFilter.builder().uid(command.getReference().getUidValue()).build();
-      return visibility.visibleFilter(command, filter)
-          .thenCompose(visibleFilter -> gateway
-              .retrieve(command.getReference().getUidValue(), Optional.of(visibleFilter))
-              .thenCompose(this::deleteIfIsPresent));
+      return visibility.retrieveVisible(command, command.getReference().getUidValue())
+          .thenCompose(this::deleteIfIsPresent);
     });
     return MerchantDeleteResult.builder().command(command)
         .merchant(updated.thenCompose(entity -> mapEntity(command, entity))).build();
@@ -124,7 +119,8 @@ public class DeleteMerchantUsecase {
    */
   private CompletionStage<Optional<MerchantDto>> mapEntity(final MerchantDeleteCommand command,
       final Optional<Merchant> opmerchant) {
-    return opmerchant.map(merchant -> visibility.hide(command, merchant).thenApply(Optional::of))
+    return opmerchant
+        .map(merchant -> visibility.copyWithHidden(command, merchant).thenApply(Optional::of))
         .orElseGet(() -> CompletableFuture.completedFuture(Optional.empty()));
   }
 }

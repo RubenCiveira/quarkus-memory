@@ -1,6 +1,7 @@
 package org.acme.features.market.fruit.infrastructure.driver.rest;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.acme.common.rest.CurrentRequest;
 import org.acme.features.market.fruit.application.interaction.FruitDto;
@@ -22,6 +23,9 @@ import org.acme.features.market.fruit.application.usecase.UpdateFruitUsecase;
 import org.acme.features.market.fruit.domain.gateway.FruitCursor;
 import org.acme.features.market.fruit.domain.gateway.FruitFilter;
 import org.acme.features.market.fruit.domain.model.FruitReference;
+import org.acme.features.market.fruit.domain.model.valueobject.FruitNameVO;
+import org.acme.features.market.fruit.domain.model.valueobject.FruitUidVO;
+import org.acme.features.market.fruit.domain.model.valueobject.FruitVersionVO;
 import org.acme.generated.openapi.api.FruitApi;
 import org.acme.generated.openapi.model.Fruit;
 import org.acme.generated.openapi.model.FruitList;
@@ -164,7 +168,7 @@ public class FruitController implements FruitApi {
     } else {
       FruitListNextOffset next = new FruitListNextOffset();
       FruitDto last = list.get(list.size() - 1);
-      next.setSinceUid(last.getUid());
+      next.setSinceUid(last.getUid().getValue());
       return next;
     }
   }
@@ -185,9 +189,10 @@ public class FruitController implements FruitApi {
    */
   private Fruit toApiModel(FruitDto dto) {
     Fruit fruit = new Fruit();
-    fruit.setUid(dto.getUid());
-    fruit.setName(dto.getName());
-    fruit.setVersion(dto.getVersion());
+    fruit.setUid(Optional.ofNullable(dto.getUid()).map(FruitUidVO::getValue).orElse(null));
+    fruit.setName(Optional.ofNullable(dto.getName()).map(FruitNameVO::getValue).orElse(null));
+    fruit.setVersion(
+        Optional.ofNullable(dto.getVersion()).flatMap(FruitVersionVO::getValue).orElse(null));
     return fruit;
   }
 
@@ -197,7 +202,10 @@ public class FruitController implements FruitApi {
    * @return
    */
   private FruitDto toDomainModel(Fruit fruit) {
-    return FruitDto.builder().uid(fruit.getUid()).name(fruit.getName()).version(fruit.getVersion())
-        .build();
+    FruitDto.FruitDtoBuilder builder = FruitDto.builder();
+    builder = builder.uid(FruitUidVO.from(fruit.getUid()));
+    builder = builder.name(FruitNameVO.from(fruit.getName()));
+    builder = builder.version(FruitVersionVO.from(fruit.getVersion()));;
+    return builder.build();
   }
 }

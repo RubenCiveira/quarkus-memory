@@ -3,7 +3,9 @@ package org.acme.common.rest.exceptionmapper.sql;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import org.acme.common.sql.NotExistentReferenceException;
+
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
@@ -11,7 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Provider
-public class NotExistentReferenceExceptionMapper implements ExceptionMapper<NotExistentReferenceException> {
+public class NotExistentReferenceExceptionMapper
+    implements ExceptionMapper<NotExistentReferenceException> {
 
   @Override
   public Response toResponse(NotExistentReferenceException exception) {

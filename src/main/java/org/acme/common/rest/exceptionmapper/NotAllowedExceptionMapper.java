@@ -3,8 +3,10 @@ package org.acme.common.rest.exceptionmapper;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import org.acme.common.exception.NotAllowedException;
 import org.acme.common.rest.CurrentRequest;
+
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
@@ -21,8 +23,7 @@ public class NotAllowedExceptionMapper implements ExceptionMapper<NotAllowedExce
   @Override
   public Response toResponse(NotAllowedException exception) {
     if (log.isDebugEnabled()) {
-      log.warn("not allowed",
-          exception);
+      log.warn("not allowed", exception);
     } else if (log.isWarnEnabled()) {
       log.warn("not allowed");
     }

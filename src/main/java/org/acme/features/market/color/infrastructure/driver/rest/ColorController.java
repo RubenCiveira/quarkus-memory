@@ -23,6 +23,10 @@ import org.acme.features.market.color.application.usecase.UpdateColorUsecase;
 import org.acme.features.market.color.domain.gateway.ColorCursor;
 import org.acme.features.market.color.domain.gateway.ColorFilter;
 import org.acme.features.market.color.domain.model.ColorReference;
+import org.acme.features.market.color.domain.model.valueobject.ColorMerchantVO;
+import org.acme.features.market.color.domain.model.valueobject.ColorNameVO;
+import org.acme.features.market.color.domain.model.valueobject.ColorUidVO;
+import org.acme.features.market.color.domain.model.valueobject.ColorVersionVO;
 import org.acme.features.market.merchant.domain.model.MerchantReference;
 import org.acme.generated.openapi.api.ColorApi;
 import org.acme.generated.openapi.model.Color;
@@ -171,7 +175,7 @@ public class ColorController implements ColorApi {
     } else {
       ColorListNextOffset next = new ColorListNextOffset();
       ColorDto last = list.get(list.size() - 1);
-      next.setSinceUid(last.getUid());
+      next.setSinceUid(last.getUid().getValue());
       return next;
     }
   }
@@ -192,10 +196,12 @@ public class ColorController implements ColorApi {
    */
   private Color toApiModel(ColorDto dto) {
     Color color = new Color();
-    color.setUid(dto.getUid());
-    color.setName(dto.getName());
-    color.setMerchant(new MerchantRef().$ref(dto.getMerchant()));
-    color.setVersion(dto.getVersion());
+    color.setUid(Optional.ofNullable(dto.getUid()).map(ColorUidVO::getValue).orElse(null));
+    color.setName(Optional.ofNullable(dto.getName()).map(ColorNameVO::getValue).orElse(null));
+    color.setMerchant(new MerchantRef().$ref(Optional.ofNullable(dto.getMerchant())
+        .flatMap(ColorMerchantVO::getReferenceValue).orElse(null)));
+    color.setVersion(
+        Optional.ofNullable(dto.getVersion()).flatMap(ColorVersionVO::getValue).orElse(null));
     return color;
   }
 
@@ -205,8 +211,12 @@ public class ColorController implements ColorApi {
    * @return
    */
   private ColorDto toDomainModel(Color color) {
-    return ColorDto.builder().uid(color.getUid()).name(color.getName())
-        .merchant(Optional.ofNullable(color.getMerchant()).map(MerchantRef::get$Ref).orElse(null))
-        .version(color.getVersion()).build();
+    ColorDto.ColorDtoBuilder builder = ColorDto.builder();
+    builder = builder.uid(ColorUidVO.from(color.getUid()));
+    builder = builder.name(ColorNameVO.from(color.getName()));
+    builder = builder.merchant(ColorMerchantVO.fromReference(
+        Optional.ofNullable(color.getMerchant()).map(MerchantRef::get$Ref).orElse(null)));
+    builder = builder.version(ColorVersionVO.from(color.getVersion()));;
+    return builder.build();
   }
 }

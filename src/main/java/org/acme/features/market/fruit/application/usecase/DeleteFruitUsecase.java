@@ -12,7 +12,6 @@ import org.acme.features.market.fruit.application.interaction.query.FruitEntityA
 import org.acme.features.market.fruit.application.interaction.result.FruitDeleteResult;
 import org.acme.features.market.fruit.application.usecase.service.FruitsVisibilityService;
 import org.acme.features.market.fruit.domain.Fruits;
-import org.acme.features.market.fruit.domain.gateway.FruitFilter;
 import org.acme.features.market.fruit.domain.gateway.FruitWriteRepositoryGateway;
 import org.acme.features.market.fruit.domain.model.Fruit;
 
@@ -70,11 +69,8 @@ public class DeleteFruitUsecase {
       if (!detail.isAllowed()) {
         throw new NotAllowedException(detail.getDescription());
       }
-      FruitFilter filter = FruitFilter.builder().uid(command.getReference().getUidValue()).build();
-      return visibility.visibleFilter(command, filter)
-          .thenCompose(visibleFilter -> gateway
-              .retrieve(command.getReference().getUidValue(), Optional.of(visibleFilter))
-              .thenCompose(this::deleteIfIsPresent));
+      return visibility.retrieveVisible(command, command.getReference().getUidValue())
+          .thenCompose(this::deleteIfIsPresent);
     });
     return FruitDeleteResult.builder().command(command)
         .fruit(updated.thenCompose(entity -> mapEntity(command, entity))).build();
@@ -123,7 +119,7 @@ public class DeleteFruitUsecase {
    */
   private CompletionStage<Optional<FruitDto>> mapEntity(final FruitDeleteCommand command,
       final Optional<Fruit> opfruit) {
-    return opfruit.map(fruit -> visibility.hide(command, fruit).thenApply(Optional::of))
+    return opfruit.map(fruit -> visibility.copyWithHidden(command, fruit).thenApply(Optional::of))
         .orElseGet(() -> CompletableFuture.completedFuture(Optional.empty()));
   }
 }

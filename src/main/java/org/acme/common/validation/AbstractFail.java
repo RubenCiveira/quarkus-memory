@@ -6,8 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
 import org.acme.common.locale.YamlLocaleMessages;
 import org.acme.common.validation.AbstractFail.LocalizedFail.LocalizedFailBuilder;
+
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import lombok.Builder;
 import lombok.Getter;
@@ -66,7 +68,7 @@ public abstract class AbstractFail {
     wrongValues = List.of(WrongValue.builder().field(field).wrongValue(wrongValue)
         .errorMessage(errorMessage).build());
   }
-  
+
   public AbstractFail(String code, Exception source) {
     this.code = code;
     this.violation = source.getMessage();

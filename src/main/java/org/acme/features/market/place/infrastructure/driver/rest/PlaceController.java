@@ -34,6 +34,12 @@ import org.acme.features.market.place.application.usecase.UpdatePlaceUsecase;
 import org.acme.features.market.place.domain.gateway.PlaceCursor;
 import org.acme.features.market.place.domain.gateway.PlaceFilter;
 import org.acme.features.market.place.domain.model.PlaceReference;
+import org.acme.features.market.place.domain.model.valueobject.PlaceMerchantVO;
+import org.acme.features.market.place.domain.model.valueobject.PlaceNameVO;
+import org.acme.features.market.place.domain.model.valueobject.PlaceOpeningDateVO;
+import org.acme.features.market.place.domain.model.valueobject.PlacePhotoVO;
+import org.acme.features.market.place.domain.model.valueobject.PlaceUidVO;
+import org.acme.features.market.place.domain.model.valueobject.PlaceVersionVO;
 import org.acme.generated.openapi.api.PlaceApi;
 import org.acme.generated.openapi.model.MerchantRef;
 import org.acme.generated.openapi.model.Place;
@@ -223,7 +229,8 @@ public class PlaceController implements PlaceApi {
               .lastModification(System.currentTimeMillis()).inputStream(file).build())
           .build(interaction);
       PlacePhotoTemporalUploadResult result = tempPhotoUploadUsecase.upload(command);
-      return result.getKey();
+      return result.getKey().thenApply(
+          key -> currentRequest.getPublicHost() + "/api/market/places/-/temp-photo?temp=" + key);
     });
   }
 
@@ -238,7 +245,7 @@ public class PlaceController implements PlaceApi {
     } else {
       PlaceListNextOffset next = new PlaceListNextOffset();
       PlaceDto last = list.get(list.size() - 1);
-      next.setSinceUid(last.getUid());
+      next.setSinceUid(last.getUid().getValue());
       return next;
     }
   }
@@ -259,12 +266,19 @@ public class PlaceController implements PlaceApi {
    */
   private Place toApiModel(PlaceDto dto) {
     Place place = new Place();
-    place.setUid(dto.getUid());
-    place.setName(dto.getName());
-    place.setMerchant(new MerchantRef().$ref(dto.getMerchant()));
-    place.setPhoto(dto.getPhoto());
-    place.setOpeningDate(dto.getOpeningDate());
-    place.setVersion(dto.getVersion());
+    place.setUid(Optional.ofNullable(dto.getUid()).map(PlaceUidVO::getValue).orElse(null));
+    place.setName(Optional.ofNullable(dto.getName()).map(PlaceNameVO::getValue).orElse(null));
+    place.setMerchant(new MerchantRef().$ref(Optional.ofNullable(dto.getMerchant())
+        .map(PlaceMerchantVO::getReferenceValue).orElse(null)));
+    String photo = Optional.ofNullable(dto.getPhoto()).flatMap(PlacePhotoVO::getValue).orElse(null);
+    if (null != photo) {
+      place.setPhoto(currentRequest.getPublicHost() + "/api/market/places/"
+          + dto.getUid().getValue() + "/photo");
+    }
+    place.setOpeningDate(Optional.ofNullable(dto.getOpeningDate())
+        .flatMap(PlaceOpeningDateVO::getValue).orElse(null));
+    place.setVersion(
+        Optional.ofNullable(dto.getVersion()).flatMap(PlaceVersionVO::getValue).orElse(null));
     return place;
   }
 
@@ -274,9 +288,24 @@ public class PlaceController implements PlaceApi {
    * @return
    */
   private PlaceDto toDomainModel(Place place) {
-    return PlaceDto.builder().uid(place.getUid()).name(place.getName())
-        .merchant(Optional.ofNullable(place.getMerchant()).map(MerchantRef::get$Ref).orElse(null))
-        .photo(place.getPhoto()).openingDate(place.getOpeningDate()).version(place.getVersion())
-        .build();
+    PlaceDto.PlaceDtoBuilder builder = PlaceDto.builder();
+    builder = builder.uid(PlaceUidVO.from(place.getUid()));
+    builder = builder.name(PlaceNameVO.from(place.getName()));
+    builder = builder.merchant(PlaceMerchantVO.fromReference(
+        Optional.ofNullable(place.getMerchant()).map(MerchantRef::get$Ref).orElse(null)));
+    if (place.getPhoto() != null) {
+      String url = place.getPhoto();
+      if (place.getPhoto()
+          .startsWith(currentRequest.getPublicHost() + "/api/market/places/-/temp-photo?temp=")) {
+        builder = builder.photo(PlacePhotoVO.fromTemporal(url.substring(
+            (currentRequest.getPublicHost() + "/api/market/places/-/temp-photo?temp=").length())));
+      } else if (!(url.equals(
+          currentRequest.getPublicHost() + "/api/market/places/" + place.getUid() + "/photo"))) {
+        builder = builder.photo(PlacePhotoVO.from(place.getPhoto()));
+      }
+    }
+    builder = builder.openingDate(PlaceOpeningDateVO.from(place.getOpeningDate()));
+    builder = builder.version(PlaceVersionVO.from(place.getVersion()));;
+    return builder.build();
   }
 }

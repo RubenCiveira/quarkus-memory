@@ -12,7 +12,6 @@ import org.acme.features.market.place.application.interaction.query.PlaceEntityA
 import org.acme.features.market.place.application.interaction.result.PlaceDeleteResult;
 import org.acme.features.market.place.application.usecase.service.PlacesVisibilityService;
 import org.acme.features.market.place.domain.Places;
-import org.acme.features.market.place.domain.gateway.PlaceFilter;
 import org.acme.features.market.place.domain.gateway.PlaceWriteRepositoryGateway;
 import org.acme.features.market.place.domain.model.Place;
 
@@ -70,11 +69,8 @@ public class DeletePlaceUsecase {
       if (!detail.isAllowed()) {
         throw new NotAllowedException(detail.getDescription());
       }
-      PlaceFilter filter = PlaceFilter.builder().uid(command.getReference().getUidValue()).build();
-      return visibility.visibleFilter(command, filter)
-          .thenCompose(visibleFilter -> gateway
-              .retrieve(command.getReference().getUidValue(), Optional.of(visibleFilter))
-              .thenCompose(this::deleteIfIsPresent));
+      return visibility.retrieveVisible(command, command.getReference().getUidValue())
+          .thenCompose(this::deleteIfIsPresent);
     });
     return PlaceDeleteResult.builder().command(command)
         .place(updated.thenCompose(entity -> mapEntity(command, entity))).build();
@@ -123,7 +119,7 @@ public class DeletePlaceUsecase {
    */
   private CompletionStage<Optional<PlaceDto>> mapEntity(final PlaceDeleteCommand command,
       final Optional<Place> opplace) {
-    return opplace.map(place -> visibility.hide(command, place).thenApply(Optional::of))
+    return opplace.map(place -> visibility.copyWithHidden(command, place).thenApply(Optional::of))
         .orElseGet(() -> CompletableFuture.completedFuture(Optional.empty()));
   }
 }

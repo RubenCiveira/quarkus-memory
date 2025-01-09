@@ -2,6 +2,7 @@
 package org.acme.common.exception;
 
 import java.util.stream.Stream;
+
 import org.acme.common.validation.AbstractFail;
 import org.acme.common.validation.AbstractFailList;
 import org.acme.common.validation.ConstraintFail;

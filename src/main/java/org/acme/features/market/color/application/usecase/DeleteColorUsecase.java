@@ -12,7 +12,6 @@ import org.acme.features.market.color.application.interaction.query.ColorEntityA
 import org.acme.features.market.color.application.interaction.result.ColorDeleteResult;
 import org.acme.features.market.color.application.usecase.service.ColorsVisibilityService;
 import org.acme.features.market.color.domain.Colors;
-import org.acme.features.market.color.domain.gateway.ColorFilter;
 import org.acme.features.market.color.domain.gateway.ColorWriteRepositoryGateway;
 import org.acme.features.market.color.domain.model.Color;
 
@@ -70,11 +69,8 @@ public class DeleteColorUsecase {
       if (!detail.isAllowed()) {
         throw new NotAllowedException(detail.getDescription());
       }
-      ColorFilter filter = ColorFilter.builder().uid(command.getReference().getUidValue()).build();
-      return visibility.visibleFilter(command, filter)
-          .thenCompose(visibleFilter -> gateway
-              .retrieve(command.getReference().getUidValue(), Optional.of(visibleFilter))
-              .thenCompose(this::deleteIfIsPresent));
+      return visibility.retrieveVisible(command, command.getReference().getUidValue())
+          .thenCompose(this::deleteIfIsPresent);
     });
     return ColorDeleteResult.builder().command(command)
         .color(updated.thenCompose(entity -> mapEntity(command, entity))).build();
@@ -123,7 +119,7 @@ public class DeleteColorUsecase {
    */
   private CompletionStage<Optional<ColorDto>> mapEntity(final ColorDeleteCommand command,
       final Optional<Color> opcolor) {
-    return opcolor.map(color -> visibility.hide(command, color).thenApply(Optional::of))
+    return opcolor.map(color -> visibility.copyWithHidden(command, color).thenApply(Optional::of))
         .orElseGet(() -> CompletableFuture.completedFuture(Optional.empty()));
   }
 }

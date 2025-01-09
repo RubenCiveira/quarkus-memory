@@ -10,13 +10,15 @@ import org.acme.features.market.color.application.interaction.query.ColorAllowQu
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.With;
 
-@Data
+@Getter
 @Builder(toBuilder = true)
 @With
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@Data
 public class ColorCreateAllow {
 
   /**

@@ -6,6 +6,7 @@ import java.util.concurrent.CompletionStage;
 import org.acme.common.action.Interaction;
 import org.acme.features.market.merchant.domain.model.Merchant;
 
+import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -16,6 +17,7 @@ import lombok.experimental.SuperBuilder;
 @ToString
 @SuperBuilder(toBuilder = true)
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
+@Data
 public class MerchantVisibleContent extends Interaction {
 
   /**

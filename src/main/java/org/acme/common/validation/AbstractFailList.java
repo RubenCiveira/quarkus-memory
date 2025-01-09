@@ -10,13 +10,13 @@ public class AbstractFailList {
   public AbstractFailList() {
     this(new ArrayList<>());
   }
-  
+
   public AbstractFailList(AbstractFail fail) {
     this(new ArrayList<>(List.of(fail)));
   }
 
   public AbstractFailList(List<? extends AbstractFail> fails) {
-    this.fails = new ArrayList<>( fails );
+    this.fails = new ArrayList<>(fails);
   }
 
   public Stream<? extends AbstractFail> getFails() {

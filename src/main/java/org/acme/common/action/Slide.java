@@ -17,7 +17,7 @@ public abstract class Slide<T> {
 
   public abstract CompletionStage<List<T>> get();
 
-  public CompletionStage<List<T>> filterUnitLimit(
+  public CompletionStage<List<T>> filterAndFillAgain(
       Function<List<T>, CompletionStage<List<T>>> consumer) {
     return get().thenCompose(initial -> {
       int readed = initial.size();

@@ -21,5 +21,5 @@ public class ConstraintException extends AbstractFailsException {
   public ConstraintException(String code, String field, Object wrongValue) {
     super(new ConstraintFail(code, field, wrongValue));
   }
-  
+
 }

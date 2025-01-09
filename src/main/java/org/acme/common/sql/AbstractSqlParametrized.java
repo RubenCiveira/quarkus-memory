@@ -88,6 +88,8 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
         child.futures.clear();
         child.childData.clear();
       }
+      System.err.println(getClass() + ": execute Query" + sql);
+      System.err.println("\t" + parameters);
       try (PreparedStatement prepareStatement = prepareStatement(query);
           ResultSet executeQuery = prepareStatement.executeQuery()) {
         List<R> data = new ArrayList<>();

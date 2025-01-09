@@ -1,6 +1,7 @@
 package org.acme.common.security;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import lombok.Builder;
@@ -13,6 +14,7 @@ public class Actor {
   private final String tenant;
   private final boolean autenticated;
   private final List<String> roles;
+  private final Map<String, String> claims;
 
   public Optional<String> getTenant() {
     return Optional.ofNullable(tenant);
@@ -26,7 +28,20 @@ public class Actor {
     return autenticated;
   }
 
+  public String getClaim(String name) {
+    return claims.get(name);
+  }
+
+  public boolean hasRole(String role) {
+    return roles.contains(role);
+  }
+
   public boolean hasAnyRole(String... strings) {
-    return true;
+    for (String string : strings) {
+      if (hasRole(string)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -67,5 +67,5 @@ public interface FileStore {
    * 
    * @param path El path del fichero a borrar
    */
-  CompletionStage<RepositoryLink> deleteFile(String key);
+  CompletionStage<Boolean> deleteFile(String key);
 }

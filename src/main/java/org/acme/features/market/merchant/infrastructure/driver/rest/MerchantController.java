@@ -3,6 +3,7 @@ package org.acme.features.market.merchant.infrastructure.driver.rest;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.acme.common.rest.CurrentRequest;
 import org.acme.features.market.merchant.application.interaction.MerchantDto;
@@ -31,6 +32,11 @@ import org.acme.features.market.merchant.domain.gateway.MerchantCursor;
 import org.acme.features.market.merchant.domain.gateway.MerchantFilter;
 import org.acme.features.market.merchant.domain.gateway.MerchantOrder;
 import org.acme.features.market.merchant.domain.model.MerchantReference;
+import org.acme.features.market.merchant.domain.model.valueobject.MerchantEnabledVO;
+import org.acme.features.market.merchant.domain.model.valueobject.MerchantKeyVO;
+import org.acme.features.market.merchant.domain.model.valueobject.MerchantNameVO;
+import org.acme.features.market.merchant.domain.model.valueobject.MerchantUidVO;
+import org.acme.features.market.merchant.domain.model.valueobject.MerchantVersionVO;
 import org.acme.generated.openapi.api.MerchantApi;
 import org.acme.generated.openapi.model.Merchant;
 import org.acme.generated.openapi.model.MerchantList;
@@ -235,7 +241,7 @@ public class MerchantController implements MerchantApi {
     } else {
       MerchantListNextOffset next = new MerchantListNextOffset();
       MerchantDto last = list.get(list.size() - 1);
-      next.setSinceUid(last.getUid());
+      next.setSinceUid(last.getUid().getValue());
       return next;
     }
   }
@@ -256,11 +262,14 @@ public class MerchantController implements MerchantApi {
    */
   private Merchant toApiModel(MerchantDto dto) {
     Merchant merchant = new Merchant();
-    merchant.setUid(dto.getUid());
-    merchant.setName(dto.getName());
-    merchant.setEnabled(dto.getEnabled());
-    merchant.setKey(dto.getKey());
-    merchant.setVersion(dto.getVersion());
+    merchant.setUid(Optional.ofNullable(dto.getUid()).map(MerchantUidVO::getValue).orElse(null));
+    merchant.setName(Optional.ofNullable(dto.getName()).map(MerchantNameVO::getValue).orElse(null));
+    merchant.setEnabled(
+        Optional.ofNullable(dto.getEnabled()).map(MerchantEnabledVO::getValue).orElse(null));
+    merchant
+        .setKey(Optional.ofNullable(dto.getKey()).flatMap(MerchantKeyVO::getValue).orElse(null));
+    merchant.setVersion(
+        Optional.ofNullable(dto.getVersion()).flatMap(MerchantVersionVO::getValue).orElse(null));
     return merchant;
   }
 
@@ -270,8 +279,12 @@ public class MerchantController implements MerchantApi {
    * @return
    */
   private MerchantDto toDomainModel(Merchant merchant) {
-    return MerchantDto.builder().uid(merchant.getUid()).name(merchant.getName())
-        .enabled(merchant.getEnabled()).key(merchant.getKey()).version(merchant.getVersion())
-        .build();
+    MerchantDto.MerchantDtoBuilder builder = MerchantDto.builder();
+    builder = builder.uid(MerchantUidVO.from(merchant.getUid()));
+    builder = builder.name(MerchantNameVO.from(merchant.getName()));
+    builder = builder.enabled(MerchantEnabledVO.from(merchant.getEnabled()));
+    builder = builder.key(MerchantKeyVO.from(merchant.getKey()));
+    builder = builder.version(MerchantVersionVO.from(merchant.getVersion()));;
+    return builder.build();
   }
 }
