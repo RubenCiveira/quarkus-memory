@@ -176,7 +176,7 @@ public class FruitRepository {
    */
   private SqlSchematicQuery<Fruit> filteredQuery(SqlTemplate template, FruitFilter filter) {
     SqlSchematicQuery<Fruit> sq = template.createSqlSchematicQuery("fruit");
-    sq.select("uid", "name", "version");
+    sq.select("fruit.uid", "fruit.name", "fruit.version");
     filter.getUid().ifPresent(uid -> sq.where("uid", SqlOperator.EQ, SqlParameterValue.of(uid)));
     if (!filter.getUids().isEmpty()) {
       sq.where("uid", SqlOperator.IN, SqlListParameterValue.strings(filter.getUids()));

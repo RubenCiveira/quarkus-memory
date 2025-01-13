@@ -109,7 +109,7 @@ public class FileStoreImpl implements FileStore {
   }
 
   @Override
-  public CompletionStage<RepositoryLink> deleteFile(final String path) {
+  public CompletionStage<Boolean> deleteFile(final String path) {
     try (Connection connection = datasource.getConnection()) {
       try (PreparedStatement prepareStatement =
           connection.prepareStatement("DELETE from _filestorer where code = ?")) {
@@ -117,7 +117,7 @@ public class FileStoreImpl implements FileStore {
         if (prepareStatement.executeUpdate() != 1) {
           throw new IOException("Imposible borrar para " + path);
         }
-        return CompletableFuture.completedFuture(RepositoryLink.builder().key(path).build());
+        return CompletableFuture.completedFuture(true);
       }
     } catch (IOException | SQLException e) {
       throw new IllegalArgumentException(e);
@@ -149,6 +149,7 @@ public class FileStoreImpl implements FileStore {
           } else {
             dataSource = Optional.empty();
           }
+          System.out.println("READ " + dataSource);
           return CompletableFuture.completedFuture(dataSource);
         }
       }
@@ -191,7 +192,6 @@ public class FileStoreImpl implements FileStore {
         updateStatement.setString(3, source.getName());
         updateStatement.setString(4, source.getContentType());
         updateStatement.setTimestamp(5, new Timestamp(System.currentTimeMillis()));
-        System.out.println(source.getInputStream());
         updateStatement.setBinaryStream(6, source.getInputStream());
         if (updateStatement.executeUpdate() != 1) {
           throw new IOException("Imposible insertar para " + path);

@@ -178,7 +178,7 @@ public class ColorRepository {
    */
   private SqlSchematicQuery<Color> filteredQuery(SqlTemplate template, ColorFilter filter) {
     SqlSchematicQuery<Color> sq = template.createSqlSchematicQuery("color");
-    sq.select("uid", "name", "merchant", "version");
+    sq.select("color.uid", "color.name", "color.merchant", "color.version");
     filter.getUid().ifPresent(uid -> sq.where("uid", SqlOperator.EQ, SqlParameterValue.of(uid)));
     if (!filter.getUids().isEmpty()) {
       sq.where("uid", SqlOperator.IN, SqlListParameterValue.strings(filter.getUids()));

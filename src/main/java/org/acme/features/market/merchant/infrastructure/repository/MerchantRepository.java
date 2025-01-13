@@ -180,7 +180,8 @@ public class MerchantRepository {
    */
   private SqlSchematicQuery<Merchant> filteredQuery(SqlTemplate template, MerchantFilter filter) {
     SqlSchematicQuery<Merchant> sq = template.createSqlSchematicQuery("merchant");
-    sq.select("uid", "name", "enabled", "key", "version");
+    sq.select("merchant.uid", "merchant.name", "merchant.enabled", "merchant.key",
+        "merchant.version");
     filter.getUid().ifPresent(uid -> sq.where("uid", SqlOperator.EQ, SqlParameterValue.of(uid)));
     if (!filter.getUids().isEmpty()) {
       sq.where("uid", SqlOperator.IN, SqlListParameterValue.strings(filter.getUids()));
@@ -189,8 +190,8 @@ public class MerchantRepository {
         search -> sq.where("name", SqlOperator.LIKE, SqlParameterValue.of("%" + search + "%")));
     filter.getEnabled()
         .ifPresent(enabled -> sq.where("enabled", SqlOperator.EQ, SqlParameterValue.of(enabled)));
-    filter.getMerchantAccesible().ifPresent(merchantAccesible -> sq.where("merchantAccesible",
-        SqlOperator.EQ, SqlParameterValue.of(merchantAccesible)));
+    filter.getMerchantAccesible().ifPresent(merchantAccesible -> sq.where("uid", SqlOperator.EQ,
+        SqlParameterValue.of(merchantAccesible)));
     return sq;
   }
 

@@ -187,7 +187,8 @@ public class PlaceRepository {
    */
   private SqlSchematicQuery<Place> filteredQuery(SqlTemplate template, PlaceFilter filter) {
     SqlSchematicQuery<Place> sq = template.createSqlSchematicQuery("place");
-    sq.select("uid", "name", "merchant", "photo", "opening_date", "version");
+    sq.select("place.uid", "place.name", "place.merchant", "place.photo", "place.opening_date",
+        "place.version");
     filter.getUid().ifPresent(uid -> sq.where("uid", SqlOperator.EQ, SqlParameterValue.of(uid)));
     if (!filter.getUids().isEmpty()) {
       sq.where("uid", SqlOperator.IN, SqlListParameterValue.strings(filter.getUids()));

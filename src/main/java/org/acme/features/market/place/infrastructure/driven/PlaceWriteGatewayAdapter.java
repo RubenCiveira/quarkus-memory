@@ -17,10 +17,8 @@ import org.acme.features.market.place.infrastructure.repository.PlaceRepository;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Named;
-import jakarta.transaction.Transactional;
 
 @RequestScoped
-@Transactional
 public class PlaceWriteGatewayAdapter implements PlaceWriteRepositoryGateway {
 
   /**

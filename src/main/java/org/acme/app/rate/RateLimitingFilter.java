@@ -19,7 +19,7 @@ public class RateLimitingFilter implements ContainerRequestFilter, ContainerResp
 
   public RateLimitingFilter() {
     this.bucket = Bucket.builder()
-        .addLimit(limit -> limit.capacity(20).refillGreedy(10, Duration.ofMinutes(1))).build();
+        .addLimit(limit -> limit.capacity(200).refillGreedy(100, Duration.ofMinutes(1))).build();
   }
 
   @Override

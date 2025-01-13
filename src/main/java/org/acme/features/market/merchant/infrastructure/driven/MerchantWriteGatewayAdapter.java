@@ -17,10 +17,8 @@ import org.acme.features.market.merchant.infrastructure.repository.MerchantRepos
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Named;
-import jakarta.transaction.Transactional;
 
 @RequestScoped
-@Transactional
 public class MerchantWriteGatewayAdapter implements MerchantWriteRepositoryGateway {
 
   /**

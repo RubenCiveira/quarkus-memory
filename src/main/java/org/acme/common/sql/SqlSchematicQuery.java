@@ -67,4 +67,9 @@ public final class SqlSchematicQuery<T> extends AbstractSqlQuery<T, SqlSchematic
     this.query.where(partial);
     return this;
   }
+
+  public SqlSchematicQuery<T> join(String table, String as, String currentOn, String remoteOn) {
+    query.join(table, as, currentOn, remoteOn);
+    return this;
+  }
 }
