@@ -28,4 +28,5 @@ public class ConstraintFailList extends AbstractFailList {
   public void add(ConstraintFail fail) {
     super.add(fail);
   }
+
 }

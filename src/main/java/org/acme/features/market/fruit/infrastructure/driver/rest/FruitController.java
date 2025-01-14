@@ -4,22 +4,22 @@ import java.util.List;
 import java.util.Optional;
 
 import org.acme.common.rest.CurrentRequest;
-import org.acme.features.market.fruit.application.interaction.FruitDto;
-import org.acme.features.market.fruit.application.interaction.command.FruitCreateCommand;
-import org.acme.features.market.fruit.application.interaction.command.FruitDeleteCommand;
-import org.acme.features.market.fruit.application.interaction.command.FruitUpdateCommand;
-import org.acme.features.market.fruit.application.interaction.query.FruitListQuery;
-import org.acme.features.market.fruit.application.interaction.query.FruitRetrieveQuery;
-import org.acme.features.market.fruit.application.interaction.result.FruitCreateResult;
-import org.acme.features.market.fruit.application.interaction.result.FruitDeleteResult;
-import org.acme.features.market.fruit.application.interaction.result.FruitListResult;
-import org.acme.features.market.fruit.application.interaction.result.FruitRetrieveResult;
-import org.acme.features.market.fruit.application.interaction.result.FruitUpdateResult;
-import org.acme.features.market.fruit.application.usecase.CreateFruitUsecase;
-import org.acme.features.market.fruit.application.usecase.DeleteFruitUsecase;
-import org.acme.features.market.fruit.application.usecase.ListFruitUsecase;
-import org.acme.features.market.fruit.application.usecase.RetrieveFruitUsecase;
-import org.acme.features.market.fruit.application.usecase.UpdateFruitUsecase;
+import org.acme.features.market.fruit.application.FruitDto;
+import org.acme.features.market.fruit.application.usecase.create.CreateFruitUsecase;
+import org.acme.features.market.fruit.application.usecase.create.FruitCreateCommand;
+import org.acme.features.market.fruit.application.usecase.create.FruitCreateResult;
+import org.acme.features.market.fruit.application.usecase.delete.DeleteFruitUsecase;
+import org.acme.features.market.fruit.application.usecase.delete.FruitDeleteCommand;
+import org.acme.features.market.fruit.application.usecase.delete.FruitDeleteResult;
+import org.acme.features.market.fruit.application.usecase.list.FruitListQuery;
+import org.acme.features.market.fruit.application.usecase.list.FruitListResult;
+import org.acme.features.market.fruit.application.usecase.list.ListFruitUsecase;
+import org.acme.features.market.fruit.application.usecase.retrieve.FruitRetrieveQuery;
+import org.acme.features.market.fruit.application.usecase.retrieve.FruitRetrieveResult;
+import org.acme.features.market.fruit.application.usecase.retrieve.RetrieveFruitUsecase;
+import org.acme.features.market.fruit.application.usecase.update.FruitUpdateCommand;
+import org.acme.features.market.fruit.application.usecase.update.FruitUpdateResult;
+import org.acme.features.market.fruit.application.usecase.update.UpdateFruitUsecase;
 import org.acme.features.market.fruit.domain.gateway.FruitCursor;
 import org.acme.features.market.fruit.domain.gateway.FruitFilter;
 import org.acme.features.market.fruit.domain.model.FruitReference;
@@ -203,9 +203,15 @@ public class FruitController implements FruitApi {
    */
   private FruitDto toDomainModel(Fruit fruit) {
     FruitDto.FruitDtoBuilder builder = FruitDto.builder();
-    builder = builder.uid(FruitUidVO.from(fruit.getUid()));
-    builder = builder.name(FruitNameVO.from(fruit.getName()));
-    builder = builder.version(FruitVersionVO.from(fruit.getVersion()));;
+    if (null != fruit.getUid()) {
+      builder = builder.uid(FruitUidVO.from(fruit.getUid()));
+    }
+    if (null != fruit.getName()) {
+      builder = builder.name(FruitNameVO.from(fruit.getName()));
+    }
+    if (null != fruit.getVersion()) {
+      builder = builder.version(FruitVersionVO.from(fruit.getVersion()));
+    } ;
     return builder.build();
   }
 }

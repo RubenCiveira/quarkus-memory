@@ -1,6 +1,7 @@
 package org.acme.features.market.place.infrastructure.driven;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.acme.common.store.BinaryContent;
@@ -28,15 +29,16 @@ public class PlacePhotoUploadGatewayAdapter implements PlacePhotoUploadGateway {
    * @return
    */
   @Override
-  public CompletionStage<String> commitPhoto(final Place key, final Optional<Place> orignal) {
-    String theNew = key.getPhotoValue().orElseThrow();
+  public CompletionStage<Optional<String>> commitPhoto(final Place key,
+      final Optional<Place> orignal) {
+    String theNew = key.getPhotoValue().orElse(null);
     String theOld = orignal.flatMap(Place::getPhotoValue).orElse(null);
-    CompletionStage<String> stage = store.commitContent(theNew).thenApply(RepositoryLink::getKey);
-    if (null != theOld && !theNew.equals(theOld)) {
-      return store.deleteFile(theOld).thenCompose(_del -> stage);
-    } else {
-      return stage;
-    }
+    CompletionStage<Optional<String>> stage =
+        null == theNew ? CompletableFuture.completedStage(Optional.empty())
+            : store.commitContent(theNew).thenApply(RepositoryLink::getKey).thenApply(Optional::of);
+    return (null != theOld && !theNew.equals(theOld))
+        ? store.deleteFile(theOld).thenCompose(_del -> stage)
+        : stage;
   }
 
   /**
@@ -45,9 +47,10 @@ public class PlacePhotoUploadGatewayAdapter implements PlacePhotoUploadGateway {
    * @return
    */
   @Override
-  public CompletionStage<Boolean> deletePhoto(final Place key) {
-    String theKey = key.getPhotoValue().orElseThrow();
-    return store.deleteFile(theKey);
+  public CompletionStage<Optional<Boolean>> deletePhoto(final Place key) {
+    String theKey = key.getPhotoValue().orElse(null);
+    return null == theKey ? CompletableFuture.completedStage(Optional.empty())
+        : store.deleteFile(theKey).thenApply(Optional::of);
   }
 
   /**

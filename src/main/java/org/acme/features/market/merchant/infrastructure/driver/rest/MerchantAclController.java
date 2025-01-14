@@ -5,17 +5,14 @@ import java.util.concurrent.CompletableFuture;
 
 import org.acme.common.action.Interaction;
 import org.acme.common.rest.CurrentRequest;
-import org.acme.features.market.merchant.application.interaction.query.MerchantAllowQuery;
-import org.acme.features.market.merchant.application.interaction.query.MerchantEntityAllowQuery;
-import org.acme.features.market.merchant.application.usecase.CreateMerchantUsecase;
-import org.acme.features.market.merchant.application.usecase.DeleteMerchantUsecase;
-import org.acme.features.market.merchant.application.usecase.DisableMerchantUsecase;
-import org.acme.features.market.merchant.application.usecase.EnableMerchantUsecase;
-import org.acme.features.market.merchant.application.usecase.ListMerchantUsecase;
-import org.acme.features.market.merchant.application.usecase.RetrieveMerchantUsecase;
-import org.acme.features.market.merchant.application.usecase.UpdateMerchantUsecase;
-import org.acme.features.market.merchant.application.usecase.service.MerchantsVisibilityService;
-import org.acme.features.market.merchant.domain.model.MerchantReference;
+import org.acme.features.market.merchant.application.service.MerchantsVisibilityService;
+import org.acme.features.market.merchant.application.usecase.create.CreateMerchantUsecase;
+import org.acme.features.market.merchant.application.usecase.delete.DeleteMerchantUsecase;
+import org.acme.features.market.merchant.application.usecase.disable.DisableMerchantUsecase;
+import org.acme.features.market.merchant.application.usecase.enable.EnableMerchantUsecase;
+import org.acme.features.market.merchant.application.usecase.list.ListMerchantUsecase;
+import org.acme.features.market.merchant.application.usecase.retrieve.RetrieveMerchantUsecase;
+import org.acme.features.market.merchant.application.usecase.update.UpdateMerchantUsecase;
 import org.acme.generated.openapi.api.MerchantAclApi;
 import org.acme.generated.openapi.model.CommonAllow;
 import org.acme.generated.openapi.model.MerchantAclFields;
@@ -81,16 +78,14 @@ public class MerchantAclController implements MerchantAclApi {
   @Override
   public Response merchantApiContextualAcl(final String uid) {
     return currentRequest.resolve(interaction -> {
-      MerchantEntityAllowQuery query = MerchantEntityAllowQuery.builder()
-          .reference(MerchantReference.of(uid)).build(interaction);
       MerchantSpecificAcl response = new MerchantSpecificAcl();
       response.setAllows(new MerchantAclSpecificAllows());
       response.setFields(new MerchantAclFields());
       return CompletableFuture
-          .allOf(fixedFields(response.getFields(), query),
-              hiddenFields(response.getFields(), query), updateAllows(response, query),
-              deleteAllows(response, query), retrieveAllows(response, query),
-              enableAllows(response, query), disableAllows(response, query))
+          .allOf(fixedFields(response.getFields(), interaction),
+              hiddenFields(response.getFields(), interaction), updateAllows(response, interaction),
+              deleteAllows(response, interaction), retrieveAllows(response, interaction),
+              enableAllows(response, interaction), disableAllows(response, interaction))
           .thenApply(noop -> response);
     });
   }
@@ -102,17 +97,15 @@ public class MerchantAclController implements MerchantAclApi {
   @Override
   public Response merchantApiGenericAcl() {
     return currentRequest.resolve(interaction -> {
-      MerchantAllowQuery query = MerchantAllowQuery.builder().build(interaction);
-      MerchantEntityAllowQuery entityQuery = MerchantEntityAllowQuery.builder().build(interaction);
       MerchantGenericAcl response = new MerchantGenericAcl();
       response.setAllows(new MerchantAclGenericAllows());
       response.setFields(new MerchantAclFields());
       return CompletableFuture
-          .allOf(fixedFields(response.getFields(), query),
-              hiddenFields(response.getFields(), query), listAllows(response, query),
-              createAllows(response, query), updateAllows(response, entityQuery),
-              deleteAllows(response, entityQuery), retrieveAllows(response, entityQuery),
-              enableAllows(response, entityQuery), disableAllows(response, entityQuery))
+          .allOf(fixedFields(response.getFields(), interaction),
+              hiddenFields(response.getFields(), interaction), listAllows(response, interaction),
+              createAllows(response, interaction), updateAllows(response, interaction),
+              deleteAllows(response, interaction), retrieveAllows(response, interaction),
+              enableAllows(response, interaction), disableAllows(response, interaction))
           .thenApply(noop -> response);
     });
   }
@@ -124,7 +117,7 @@ public class MerchantAclController implements MerchantAclApi {
    * @return
    */
   private CompletableFuture<Void> createAllows(final MerchantGenericAcl response,
-      final MerchantAllowQuery query) {
+      final Interaction query) {
     return create.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setCreate(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -138,7 +131,7 @@ public class MerchantAclController implements MerchantAclApi {
    * @return
    */
   private CompletableFuture<Void> deleteAllows(final MerchantGenericAcl response,
-      final MerchantEntityAllowQuery query) {
+      final Interaction query) {
     return delete.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setDelete(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -152,7 +145,7 @@ public class MerchantAclController implements MerchantAclApi {
    * @return
    */
   private CompletableFuture<Void> deleteAllows(final MerchantSpecificAcl response,
-      final MerchantEntityAllowQuery query) {
+      final Interaction query) {
     return delete.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setDelete(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -166,7 +159,7 @@ public class MerchantAclController implements MerchantAclApi {
    * @return
    */
   private CompletableFuture<Void> disableAllows(final MerchantGenericAcl response,
-      final MerchantEntityAllowQuery query) {
+      final Interaction query) {
     return disable.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setDisable(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -180,7 +173,7 @@ public class MerchantAclController implements MerchantAclApi {
    * @return
    */
   private CompletableFuture<Void> disableAllows(final MerchantSpecificAcl response,
-      final MerchantEntityAllowQuery query) {
+      final Interaction query) {
     return disable.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setDisable(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -194,7 +187,7 @@ public class MerchantAclController implements MerchantAclApi {
    * @return
    */
   private CompletableFuture<Void> enableAllows(final MerchantGenericAcl response,
-      final MerchantEntityAllowQuery query) {
+      final Interaction query) {
     return enable.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setEnable(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -208,7 +201,7 @@ public class MerchantAclController implements MerchantAclApi {
    * @return
    */
   private CompletableFuture<Void> enableAllows(final MerchantSpecificAcl response,
-      final MerchantEntityAllowQuery query) {
+      final Interaction query) {
     return enable.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setEnable(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -248,7 +241,7 @@ public class MerchantAclController implements MerchantAclApi {
    * @return
    */
   private CompletableFuture<Void> listAllows(final MerchantGenericAcl response,
-      final MerchantAllowQuery query) {
+      final Interaction query) {
     return list.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows()
             .setList(new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -262,7 +255,7 @@ public class MerchantAclController implements MerchantAclApi {
    * @return
    */
   private CompletableFuture<Void> retrieveAllows(final MerchantGenericAcl response,
-      final MerchantEntityAllowQuery query) {
+      final Interaction query) {
     return retrieve.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setRetrieve(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -276,7 +269,7 @@ public class MerchantAclController implements MerchantAclApi {
    * @return
    */
   private CompletableFuture<Void> retrieveAllows(final MerchantSpecificAcl response,
-      final MerchantEntityAllowQuery query) {
+      final Interaction query) {
     return retrieve.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setRetrieve(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -290,7 +283,7 @@ public class MerchantAclController implements MerchantAclApi {
    * @return
    */
   private CompletableFuture<Void> updateAllows(final MerchantGenericAcl response,
-      final MerchantEntityAllowQuery query) {
+      final Interaction query) {
     return update.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setUpdate(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -304,7 +297,7 @@ public class MerchantAclController implements MerchantAclApi {
    * @return
    */
   private CompletableFuture<Void> updateAllows(final MerchantSpecificAcl response,
-      final MerchantEntityAllowQuery query) {
+      final Interaction query) {
     return update.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setUpdate(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))

@@ -7,30 +7,30 @@ import java.util.Optional;
 import org.acme.common.rest.CurrentRequest;
 import org.acme.common.store.BinaryContent;
 import org.acme.features.market.merchant.domain.model.MerchantReference;
-import org.acme.features.market.place.application.interaction.PlaceDto;
-import org.acme.features.market.place.application.interaction.command.PlaceCreateCommand;
-import org.acme.features.market.place.application.interaction.command.PlaceDeleteCommand;
-import org.acme.features.market.place.application.interaction.command.PlacePhotoTemporalUploadCommand;
-import org.acme.features.market.place.application.interaction.command.PlaceUpdateCommand;
-import org.acme.features.market.place.application.interaction.query.PlaceListQuery;
-import org.acme.features.market.place.application.interaction.query.PlacePhotoTemporalUploadReadQuery;
-import org.acme.features.market.place.application.interaction.query.PlaceRetrieveQuery;
-import org.acme.features.market.place.application.interaction.query.PlaceRetrieveUploadPhotoQuery;
-import org.acme.features.market.place.application.interaction.result.PlaceCreateResult;
-import org.acme.features.market.place.application.interaction.result.PlaceDeleteResult;
-import org.acme.features.market.place.application.interaction.result.PlaceListResult;
-import org.acme.features.market.place.application.interaction.result.PlacePhotoTemporalUploadReadResult;
-import org.acme.features.market.place.application.interaction.result.PlacePhotoTemporalUploadResult;
-import org.acme.features.market.place.application.interaction.result.PlaceRetrieveResult;
-import org.acme.features.market.place.application.interaction.result.PlaceRetrieveUploadPhotoResult;
-import org.acme.features.market.place.application.interaction.result.PlaceUpdateResult;
-import org.acme.features.market.place.application.usecase.CreatePlaceUsecase;
-import org.acme.features.market.place.application.usecase.DeletePlaceUsecase;
-import org.acme.features.market.place.application.usecase.ListPlaceUsecase;
-import org.acme.features.market.place.application.usecase.PhotoTemporalUploadUsecase;
-import org.acme.features.market.place.application.usecase.RetrievePhotoUploadUsecase;
-import org.acme.features.market.place.application.usecase.RetrievePlaceUsecase;
-import org.acme.features.market.place.application.usecase.UpdatePlaceUsecase;
+import org.acme.features.market.place.application.PlaceDto;
+import org.acme.features.market.place.application.usecase.create.CreatePlaceUsecase;
+import org.acme.features.market.place.application.usecase.create.PlaceCreateCommand;
+import org.acme.features.market.place.application.usecase.create.PlaceCreateResult;
+import org.acme.features.market.place.application.usecase.delete.DeletePlaceUsecase;
+import org.acme.features.market.place.application.usecase.delete.PlaceDeleteCommand;
+import org.acme.features.market.place.application.usecase.delete.PlaceDeleteResult;
+import org.acme.features.market.place.application.usecase.list.ListPlaceUsecase;
+import org.acme.features.market.place.application.usecase.list.PlaceListQuery;
+import org.acme.features.market.place.application.usecase.list.PlaceListResult;
+import org.acme.features.market.place.application.usecase.photo.retrieve.PlaceRetrieveUploadPhotoQuery;
+import org.acme.features.market.place.application.usecase.photo.retrieve.PlaceRetrieveUploadPhotoResult;
+import org.acme.features.market.place.application.usecase.photo.retrieve.RetrievePhotoUploadUsecase;
+import org.acme.features.market.place.application.usecase.photo.upload.PhotoTemporalUploadUsecase;
+import org.acme.features.market.place.application.usecase.photo.upload.PlacePhotoTemporalUploadCommand;
+import org.acme.features.market.place.application.usecase.photo.upload.PlacePhotoTemporalUploadReadQuery;
+import org.acme.features.market.place.application.usecase.photo.upload.PlacePhotoTemporalUploadReadResult;
+import org.acme.features.market.place.application.usecase.photo.upload.PlacePhotoTemporalUploadResult;
+import org.acme.features.market.place.application.usecase.retrieve.PlaceRetrieveQuery;
+import org.acme.features.market.place.application.usecase.retrieve.PlaceRetrieveResult;
+import org.acme.features.market.place.application.usecase.retrieve.RetrievePlaceUsecase;
+import org.acme.features.market.place.application.usecase.update.PlaceUpdateCommand;
+import org.acme.features.market.place.application.usecase.update.PlaceUpdateResult;
+import org.acme.features.market.place.application.usecase.update.UpdatePlaceUsecase;
 import org.acme.features.market.place.domain.gateway.PlaceCursor;
 import org.acme.features.market.place.domain.gateway.PlaceFilter;
 import org.acme.features.market.place.domain.model.PlaceReference;
@@ -289,10 +289,16 @@ public class PlaceController implements PlaceApi {
    */
   private PlaceDto toDomainModel(Place place) {
     PlaceDto.PlaceDtoBuilder builder = PlaceDto.builder();
-    builder = builder.uid(PlaceUidVO.from(place.getUid()));
-    builder = builder.name(PlaceNameVO.from(place.getName()));
-    builder = builder.merchant(PlaceMerchantVO.fromReference(
-        Optional.ofNullable(place.getMerchant()).map(MerchantRef::get$Ref).orElse(null)));
+    if (null != place.getUid()) {
+      builder = builder.uid(PlaceUidVO.from(place.getUid()));
+    }
+    if (null != place.getName()) {
+      builder = builder.name(PlaceNameVO.from(place.getName()));
+    }
+    if (null != place.getMerchant()) {
+      builder = builder.merchant(PlaceMerchantVO.fromReference(
+          Optional.ofNullable(place.getMerchant()).map(MerchantRef::get$Ref).orElse(null)));
+    }
     if (place.getPhoto() != null) {
       String url = place.getPhoto();
       if (place.getPhoto()
@@ -304,8 +310,12 @@ public class PlaceController implements PlaceApi {
         builder = builder.photo(PlacePhotoVO.from(place.getPhoto()));
       }
     }
-    builder = builder.openingDate(PlaceOpeningDateVO.from(place.getOpeningDate()));
-    builder = builder.version(PlaceVersionVO.from(place.getVersion()));;
+    if (null != place.getOpeningDate()) {
+      builder = builder.openingDate(PlaceOpeningDateVO.from(place.getOpeningDate()));
+    }
+    if (null != place.getVersion()) {
+      builder = builder.version(PlaceVersionVO.from(place.getVersion()));
+    } ;
     return builder.build();
   }
 }

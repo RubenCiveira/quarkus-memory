@@ -5,16 +5,13 @@ import java.util.concurrent.CompletableFuture;
 
 import org.acme.common.action.Interaction;
 import org.acme.common.rest.CurrentRequest;
-import org.acme.features.market.place.application.interaction.query.PlaceAllowQuery;
-import org.acme.features.market.place.application.interaction.query.PlaceEntityAllowQuery;
-import org.acme.features.market.place.application.usecase.CreatePlaceUsecase;
-import org.acme.features.market.place.application.usecase.DeletePlaceUsecase;
-import org.acme.features.market.place.application.usecase.ListPlaceUsecase;
-import org.acme.features.market.place.application.usecase.PhotoTemporalUploadUsecase;
-import org.acme.features.market.place.application.usecase.RetrievePlaceUsecase;
-import org.acme.features.market.place.application.usecase.UpdatePlaceUsecase;
-import org.acme.features.market.place.application.usecase.service.PlacesVisibilityService;
-import org.acme.features.market.place.domain.model.PlaceReference;
+import org.acme.features.market.place.application.service.PlacesVisibilityService;
+import org.acme.features.market.place.application.usecase.create.CreatePlaceUsecase;
+import org.acme.features.market.place.application.usecase.delete.DeletePlaceUsecase;
+import org.acme.features.market.place.application.usecase.list.ListPlaceUsecase;
+import org.acme.features.market.place.application.usecase.photo.upload.PhotoTemporalUploadUsecase;
+import org.acme.features.market.place.application.usecase.retrieve.RetrievePlaceUsecase;
+import org.acme.features.market.place.application.usecase.update.UpdatePlaceUsecase;
 import org.acme.generated.openapi.api.PlaceAclApi;
 import org.acme.generated.openapi.model.CommonAllow;
 import org.acme.generated.openapi.model.PlaceAclFields;
@@ -81,15 +78,13 @@ public class PlaceAclController implements PlaceAclApi {
   @Override
   public Response placeApiContextualAcl(final String uid) {
     return currentRequest.resolve(interaction -> {
-      PlaceEntityAllowQuery query =
-          PlaceEntityAllowQuery.builder().reference(PlaceReference.of(uid)).build(interaction);
       PlaceSpecificAcl response = new PlaceSpecificAcl();
       response.setAllows(new PlaceAclSpecificAllows());
       response.setFields(new PlaceAclFields());
       return CompletableFuture
-          .allOf(fixedFields(response.getFields(), query),
-              hiddenFields(response.getFields(), query), updateAllows(response, query),
-              deleteAllows(response, query), retrieveAllows(response, query))
+          .allOf(fixedFields(response.getFields(), interaction),
+              hiddenFields(response.getFields(), interaction), updateAllows(response, interaction),
+              deleteAllows(response, interaction), retrieveAllows(response, interaction))
           .thenApply(noop -> response);
     });
   }
@@ -101,16 +96,14 @@ public class PlaceAclController implements PlaceAclApi {
   @Override
   public Response placeApiGenericAcl() {
     return currentRequest.resolve(interaction -> {
-      PlaceAllowQuery query = PlaceAllowQuery.builder().build(interaction);
-      PlaceEntityAllowQuery entityQuery = PlaceEntityAllowQuery.builder().build(interaction);
       PlaceGenericAcl response = new PlaceGenericAcl();
       response.setAllows(new PlaceAclGenericAllows());
       response.setFields(new PlaceAclFields());
-      return CompletableFuture.allOf(fixedFields(response.getFields(), query),
-          hiddenFields(response.getFields(), query), listAllows(response, query),
-          createAllows(response, query), updateAllows(response, entityQuery),
-          deleteAllows(response, entityQuery), retrieveAllows(response, entityQuery),
-          uploadPhotoAllows(response, query)).thenApply(noop -> response);
+      return CompletableFuture.allOf(fixedFields(response.getFields(), interaction),
+          hiddenFields(response.getFields(), interaction), listAllows(response, interaction),
+          createAllows(response, interaction), updateAllows(response, interaction),
+          deleteAllows(response, interaction), retrieveAllows(response, interaction),
+          uploadPhotoAllows(response, interaction)).thenApply(noop -> response);
     });
   }
 
@@ -121,7 +114,7 @@ public class PlaceAclController implements PlaceAclApi {
    * @return
    */
   private CompletableFuture<Void> createAllows(final PlaceGenericAcl response,
-      final PlaceAllowQuery query) {
+      final Interaction query) {
     return create.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setCreate(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -135,7 +128,7 @@ public class PlaceAclController implements PlaceAclApi {
    * @return
    */
   private CompletableFuture<Void> deleteAllows(final PlaceGenericAcl response,
-      final PlaceEntityAllowQuery query) {
+      final Interaction query) {
     return delete.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setDelete(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -149,7 +142,7 @@ public class PlaceAclController implements PlaceAclApi {
    * @return
    */
   private CompletableFuture<Void> deleteAllows(final PlaceSpecificAcl response,
-      final PlaceEntityAllowQuery query) {
+      final Interaction query) {
     return delete.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setDelete(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -189,7 +182,7 @@ public class PlaceAclController implements PlaceAclApi {
    * @return
    */
   private CompletableFuture<Void> listAllows(final PlaceGenericAcl response,
-      final PlaceAllowQuery query) {
+      final Interaction query) {
     return list.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows()
             .setList(new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -203,7 +196,7 @@ public class PlaceAclController implements PlaceAclApi {
    * @return
    */
   private CompletableFuture<Void> retrieveAllows(final PlaceGenericAcl response,
-      final PlaceEntityAllowQuery query) {
+      final Interaction query) {
     return retrieve.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setRetrieve(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -217,7 +210,7 @@ public class PlaceAclController implements PlaceAclApi {
    * @return
    */
   private CompletableFuture<Void> retrieveAllows(final PlaceSpecificAcl response,
-      final PlaceEntityAllowQuery query) {
+      final Interaction query) {
     return retrieve.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setRetrieve(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -231,7 +224,7 @@ public class PlaceAclController implements PlaceAclApi {
    * @return
    */
   private CompletableFuture<Void> updateAllows(final PlaceGenericAcl response,
-      final PlaceEntityAllowQuery query) {
+      final Interaction query) {
     return update.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setUpdate(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -245,7 +238,7 @@ public class PlaceAclController implements PlaceAclApi {
    * @return
    */
   private CompletableFuture<Void> updateAllows(final PlaceSpecificAcl response,
-      final PlaceEntityAllowQuery query) {
+      final Interaction query) {
     return update.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setUpdate(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -259,7 +252,7 @@ public class PlaceAclController implements PlaceAclApi {
    * @return
    */
   private CompletableFuture<Void> uploadPhotoAllows(final PlaceGenericAcl response,
-      final PlaceAllowQuery query) {
+      final Interaction query) {
     return uploadPhoto.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setUploadPhoto(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))

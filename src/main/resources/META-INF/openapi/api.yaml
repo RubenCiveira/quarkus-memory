@@ -23,6 +23,10 @@ servers:
 security:
   - BearerAuth: [] # Aplica el esquema de seguridad por defecto a toda la API
 tags:
+  - name: area
+    description: area
+  - name: area-acl
+    description: Access control for area
   - name: color
     description: color
   - name: color-acl
@@ -41,6 +45,183 @@ tags:
     description: Access control for place
 
 paths:
+  /api/market/areas:
+    get:
+      tags:
+        - area
+      summary: List of area
+      operationId: area-api-list
+      parameters:
+        - name: uid
+          in: query
+          description: Filter by one existent id
+          required: false
+          schema:
+            type: string
+        - name: uids
+          in: query
+          description: Filter by a list of ids
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+        - name: search
+          in: query
+          description: Textual search
+          required: false
+          schema:
+            type: string
+        - name: place
+          in: query
+          description: place
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: The maximun number of results
+          required: false
+          schema:
+            type: integer
+        - name: since-uid
+          in: query
+          description: The maximun number of results
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AreaList'
+    post:
+      tags:
+        - area
+      summary: Create a new area
+      operationId: area-api-create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Area'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Area'
+  /api/market/areas/{uid}:
+    get:
+      tags:
+        - area
+      summary: Retrive on  area by their uid
+      operationId: area-api-retrieve
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Area'
+        '404':
+          description: The item dont exists
+    put:
+      tags:
+        - area
+      summary: Update a area by their uid
+      operationId: area-api-update
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Area'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Area'
+        '404':
+          description: The item dont exists
+    delete:
+      tags:
+        - area
+      summary: Delete a  area by their uid
+      operationId: area-api-delete
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Area'
+        '404':
+          description: The item dont exists
+  /api/me/acl/market/areas:
+    get:
+      tags:
+        - area-acl
+      summary: Check for allow permissions for the current user on area
+      operationId: area-api-generic-acl
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AreaGenericAcl'
+  /api/me/acl/market/areas/{uid}:
+    get:
+      tags:
+        - area-acl
+      summary: Check for allow permissions for the current user on area by their uid
+      operationId: area-api-contextual-acl
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AreaSpecificAcl'
+        '404':
+          description: The item dont exists
   /api/market/colors:
     get:
       tags:
@@ -869,6 +1050,108 @@ components:
       scheme: bearer
       bearerFormat: JWT # Opcional, para indicar que es un JWT
   schemas:
+    PlaceRef:
+      type: object
+      properties:
+        $ref:
+          type: string
+      required:
+        - uid
+        - name
+        - place
+    Area:
+      type: object
+      properties:
+        uid:
+          type: string
+        name:
+          type: string
+        place:
+          $ref: '#/components/schemas/PlaceRef'
+        version:
+          type: integer
+          format: int32
+    AreaList:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Area'
+        next:
+          $ref: '#/components/schemas/AreaListNextOffset'
+    AreaListNextOffset:
+      type: object
+      properties:
+        since-uid:
+          type: string
+    CommonAllow:
+      type: object
+      properties:
+        allowed:
+          type: boolean
+        reason:
+          type: string
+    AreaGenericAcl:
+      type: object
+      properties:
+        allows:
+          $ref: '#/components/schemas/AreaAclGenericAllows'
+        fields:
+          $ref: '#/components/schemas/AreaAclFields'
+    AreaSpecificAcl:
+      type: object
+      properties:
+        allows:
+          $ref: '#/components/schemas/AreaAclSpecificAllows'
+        fields:
+          $ref: '#/components/schemas/AreaAclFields'
+    AreaAclGenericAllows:
+      type: object
+      properties:
+        retrieve:
+          $ref: '#/components/schemas/CommonAllow'
+        create:
+          $ref: '#/components/schemas/CommonAllow'
+        update:
+          $ref: '#/components/schemas/CommonAllow'
+        delete:
+          $ref: '#/components/schemas/CommonAllow'
+        list:
+          $ref: '#/components/schemas/CommonAllow'
+      required:
+        - retrieve
+        - create
+        - update
+        - delete
+        - list
+    AreaAclSpecificAllows:
+      type: object
+      properties:
+        retrieve:
+          $ref: '#/components/schemas/CommonAllow'
+        create:
+          $ref: '#/components/schemas/CommonAllow'
+        update:
+          $ref: '#/components/schemas/CommonAllow'
+        delete:
+          $ref: '#/components/schemas/CommonAllow'
+      required:
+        - retrieve
+        - create
+        - update
+        - delete
+    AreaAclFields:
+      type: object
+      properties:
+        noEditables:
+          type: array
+          items:
+            type: string
+        noVisibles:
+          type: array
+          items:
+            type: string
     MerchantRef:
       type: object
       properties:
@@ -902,13 +1185,6 @@ components:
       type: object
       properties:
         since-uid:
-          type: string
-    CommonAllow:
-      type: object
-      properties:
-        allowed:
-          type: boolean
-        reason:
           type: string
     ColorGenericAcl:
       type: object

@@ -5,15 +5,12 @@ import java.util.concurrent.CompletableFuture;
 
 import org.acme.common.action.Interaction;
 import org.acme.common.rest.CurrentRequest;
-import org.acme.features.market.color.application.interaction.query.ColorAllowQuery;
-import org.acme.features.market.color.application.interaction.query.ColorEntityAllowQuery;
-import org.acme.features.market.color.application.usecase.CreateColorUsecase;
-import org.acme.features.market.color.application.usecase.DeleteColorUsecase;
-import org.acme.features.market.color.application.usecase.ListColorUsecase;
-import org.acme.features.market.color.application.usecase.RetrieveColorUsecase;
-import org.acme.features.market.color.application.usecase.UpdateColorUsecase;
-import org.acme.features.market.color.application.usecase.service.ColorsVisibilityService;
-import org.acme.features.market.color.domain.model.ColorReference;
+import org.acme.features.market.color.application.service.ColorsVisibilityService;
+import org.acme.features.market.color.application.usecase.create.CreateColorUsecase;
+import org.acme.features.market.color.application.usecase.delete.DeleteColorUsecase;
+import org.acme.features.market.color.application.usecase.list.ListColorUsecase;
+import org.acme.features.market.color.application.usecase.retrieve.RetrieveColorUsecase;
+import org.acme.features.market.color.application.usecase.update.UpdateColorUsecase;
 import org.acme.generated.openapi.api.ColorAclApi;
 import org.acme.generated.openapi.model.ColorAclFields;
 import org.acme.generated.openapi.model.ColorAclGenericAllows;
@@ -75,15 +72,13 @@ public class ColorAclController implements ColorAclApi {
   @Override
   public Response colorApiContextualAcl(final String uid) {
     return currentRequest.resolve(interaction -> {
-      ColorEntityAllowQuery query =
-          ColorEntityAllowQuery.builder().reference(ColorReference.of(uid)).build(interaction);
       ColorSpecificAcl response = new ColorSpecificAcl();
       response.setAllows(new ColorAclSpecificAllows());
       response.setFields(new ColorAclFields());
       return CompletableFuture
-          .allOf(fixedFields(response.getFields(), query),
-              hiddenFields(response.getFields(), query), updateAllows(response, query),
-              deleteAllows(response, query), retrieveAllows(response, query))
+          .allOf(fixedFields(response.getFields(), interaction),
+              hiddenFields(response.getFields(), interaction), updateAllows(response, interaction),
+              deleteAllows(response, interaction), retrieveAllows(response, interaction))
           .thenApply(noop -> response);
     });
   }
@@ -95,16 +90,14 @@ public class ColorAclController implements ColorAclApi {
   @Override
   public Response colorApiGenericAcl() {
     return currentRequest.resolve(interaction -> {
-      ColorAllowQuery query = ColorAllowQuery.builder().build(interaction);
-      ColorEntityAllowQuery entityQuery = ColorEntityAllowQuery.builder().build(interaction);
       ColorGenericAcl response = new ColorGenericAcl();
       response.setAllows(new ColorAclGenericAllows());
       response.setFields(new ColorAclFields());
       return CompletableFuture
-          .allOf(fixedFields(response.getFields(), query),
-              hiddenFields(response.getFields(), query), listAllows(response, query),
-              createAllows(response, query), updateAllows(response, entityQuery),
-              deleteAllows(response, entityQuery), retrieveAllows(response, entityQuery))
+          .allOf(fixedFields(response.getFields(), interaction),
+              hiddenFields(response.getFields(), interaction), listAllows(response, interaction),
+              createAllows(response, interaction), updateAllows(response, interaction),
+              deleteAllows(response, interaction), retrieveAllows(response, interaction))
           .thenApply(noop -> response);
     });
   }
@@ -116,7 +109,7 @@ public class ColorAclController implements ColorAclApi {
    * @return
    */
   private CompletableFuture<Void> createAllows(final ColorGenericAcl response,
-      final ColorAllowQuery query) {
+      final Interaction query) {
     return create.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setCreate(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -130,7 +123,7 @@ public class ColorAclController implements ColorAclApi {
    * @return
    */
   private CompletableFuture<Void> deleteAllows(final ColorGenericAcl response,
-      final ColorEntityAllowQuery query) {
+      final Interaction query) {
     return delete.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setDelete(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -144,7 +137,7 @@ public class ColorAclController implements ColorAclApi {
    * @return
    */
   private CompletableFuture<Void> deleteAllows(final ColorSpecificAcl response,
-      final ColorEntityAllowQuery query) {
+      final Interaction query) {
     return delete.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setDelete(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -184,7 +177,7 @@ public class ColorAclController implements ColorAclApi {
    * @return
    */
   private CompletableFuture<Void> listAllows(final ColorGenericAcl response,
-      final ColorAllowQuery query) {
+      final Interaction query) {
     return list.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows()
             .setList(new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -198,7 +191,7 @@ public class ColorAclController implements ColorAclApi {
    * @return
    */
   private CompletableFuture<Void> retrieveAllows(final ColorGenericAcl response,
-      final ColorEntityAllowQuery query) {
+      final Interaction query) {
     return retrieve.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setRetrieve(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -212,7 +205,7 @@ public class ColorAclController implements ColorAclApi {
    * @return
    */
   private CompletableFuture<Void> retrieveAllows(final ColorSpecificAcl response,
-      final ColorEntityAllowQuery query) {
+      final Interaction query) {
     return retrieve.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setRetrieve(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -226,7 +219,7 @@ public class ColorAclController implements ColorAclApi {
    * @return
    */
   private CompletableFuture<Void> updateAllows(final ColorGenericAcl response,
-      final ColorEntityAllowQuery query) {
+      final Interaction query) {
     return update.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setUpdate(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -240,7 +233,7 @@ public class ColorAclController implements ColorAclApi {
    * @return
    */
   private CompletableFuture<Void> updateAllows(final ColorSpecificAcl response,
-      final ColorEntityAllowQuery query) {
+      final Interaction query) {
     return update.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setUpdate(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))

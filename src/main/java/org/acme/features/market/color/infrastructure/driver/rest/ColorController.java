@@ -4,22 +4,22 @@ import java.util.List;
 import java.util.Optional;
 
 import org.acme.common.rest.CurrentRequest;
-import org.acme.features.market.color.application.interaction.ColorDto;
-import org.acme.features.market.color.application.interaction.command.ColorCreateCommand;
-import org.acme.features.market.color.application.interaction.command.ColorDeleteCommand;
-import org.acme.features.market.color.application.interaction.command.ColorUpdateCommand;
-import org.acme.features.market.color.application.interaction.query.ColorListQuery;
-import org.acme.features.market.color.application.interaction.query.ColorRetrieveQuery;
-import org.acme.features.market.color.application.interaction.result.ColorCreateResult;
-import org.acme.features.market.color.application.interaction.result.ColorDeleteResult;
-import org.acme.features.market.color.application.interaction.result.ColorListResult;
-import org.acme.features.market.color.application.interaction.result.ColorRetrieveResult;
-import org.acme.features.market.color.application.interaction.result.ColorUpdateResult;
-import org.acme.features.market.color.application.usecase.CreateColorUsecase;
-import org.acme.features.market.color.application.usecase.DeleteColorUsecase;
-import org.acme.features.market.color.application.usecase.ListColorUsecase;
-import org.acme.features.market.color.application.usecase.RetrieveColorUsecase;
-import org.acme.features.market.color.application.usecase.UpdateColorUsecase;
+import org.acme.features.market.color.application.ColorDto;
+import org.acme.features.market.color.application.usecase.create.ColorCreateCommand;
+import org.acme.features.market.color.application.usecase.create.ColorCreateResult;
+import org.acme.features.market.color.application.usecase.create.CreateColorUsecase;
+import org.acme.features.market.color.application.usecase.delete.ColorDeleteCommand;
+import org.acme.features.market.color.application.usecase.delete.ColorDeleteResult;
+import org.acme.features.market.color.application.usecase.delete.DeleteColorUsecase;
+import org.acme.features.market.color.application.usecase.list.ColorListQuery;
+import org.acme.features.market.color.application.usecase.list.ColorListResult;
+import org.acme.features.market.color.application.usecase.list.ListColorUsecase;
+import org.acme.features.market.color.application.usecase.retrieve.ColorRetrieveQuery;
+import org.acme.features.market.color.application.usecase.retrieve.ColorRetrieveResult;
+import org.acme.features.market.color.application.usecase.retrieve.RetrieveColorUsecase;
+import org.acme.features.market.color.application.usecase.update.ColorUpdateCommand;
+import org.acme.features.market.color.application.usecase.update.ColorUpdateResult;
+import org.acme.features.market.color.application.usecase.update.UpdateColorUsecase;
 import org.acme.features.market.color.domain.gateway.ColorCursor;
 import org.acme.features.market.color.domain.gateway.ColorFilter;
 import org.acme.features.market.color.domain.model.ColorReference;
@@ -212,11 +212,19 @@ public class ColorController implements ColorApi {
    */
   private ColorDto toDomainModel(Color color) {
     ColorDto.ColorDtoBuilder builder = ColorDto.builder();
-    builder = builder.uid(ColorUidVO.from(color.getUid()));
-    builder = builder.name(ColorNameVO.from(color.getName()));
-    builder = builder.merchant(ColorMerchantVO.fromReference(
-        Optional.ofNullable(color.getMerchant()).map(MerchantRef::get$Ref).orElse(null)));
-    builder = builder.version(ColorVersionVO.from(color.getVersion()));;
+    if (null != color.getUid()) {
+      builder = builder.uid(ColorUidVO.from(color.getUid()));
+    }
+    if (null != color.getName()) {
+      builder = builder.name(ColorNameVO.from(color.getName()));
+    }
+    if (null != color.getMerchant()) {
+      builder = builder.merchant(ColorMerchantVO.fromReference(
+          Optional.ofNullable(color.getMerchant()).map(MerchantRef::get$Ref).orElse(null)));
+    }
+    if (null != color.getVersion()) {
+      builder = builder.version(ColorVersionVO.from(color.getVersion()));
+    } ;
     return builder.build();
   }
 }

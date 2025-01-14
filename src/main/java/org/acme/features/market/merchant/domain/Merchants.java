@@ -139,8 +139,8 @@ public class Merchants {
         ruledBuilder = entry.getValue().apply(ruledBuilder, original);
       }
     }
-    return ruledBuilder
-        .thenCompose(resultBuilder -> rules.applyCurrent(type, resultBuilder.build(), original));
+    return ruledBuilder.thenCompose(
+        resultBuilder -> rules.applyCurrent(type, resultBuilder.buildValid(), original));
   }
 
   /**

@@ -115,11 +115,11 @@ public class FileStoreImpl implements FileStore {
           connection.prepareStatement("DELETE from _filestorer where code = ?")) {
         prepareStatement.setString(1, code(path));
         if (prepareStatement.executeUpdate() != 1) {
-          throw new IOException("Imposible borrar para " + path);
+          log.warn("Imposible borrar para " + path);
         }
         return CompletableFuture.completedFuture(true);
       }
-    } catch (IOException | SQLException e) {
+    } catch (SQLException e) {
       throw new IllegalArgumentException(e);
     }
 

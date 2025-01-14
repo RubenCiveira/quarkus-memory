@@ -2,6 +2,7 @@
 package org.acme.common.exception;
 
 import java.util.List;
+
 import org.acme.common.validation.AbstractFail;
 import org.acme.common.validation.ConstraintFail;
 import org.acme.common.validation.ConstraintFailList;

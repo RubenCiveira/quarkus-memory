@@ -1,11 +1,12 @@
 package org.acme.features.market.place.infrastructure.driven;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
-
 import javax.sql.DataSource;
-
 import org.acme.common.action.Slide;
 import org.acme.features.market.place.domain.gateway.PlaceCursor;
 import org.acme.features.market.place.domain.gateway.PlaceFilter;
@@ -13,7 +14,6 @@ import org.acme.features.market.place.domain.gateway.PlaceWriteRepositoryGateway
 import org.acme.features.market.place.domain.model.Place;
 import org.acme.features.market.place.domain.model.PlaceRef;
 import org.acme.features.market.place.infrastructure.repository.PlaceRepository;
-
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Named;
@@ -65,8 +65,13 @@ public class PlaceWriteGatewayAdapter implements PlaceWriteRepositoryGateway {
   @Override
   public CompletionStage<Optional<Place>> create(Place entity,
       Function<Place, CompletionStage<Boolean>> verifier) {
-    return placePhotoUploadGatewayAdapter.commitPhoto(entity, Optional.empty())
-        .thenCompose(_res -> repository.create(entity, verifier));
+    List<CompletableFuture<?>> requisites = new ArrayList<>();
+    entity.getPhotoValue().ifPresent( _photo -> 
+      requisites.add(placePhotoUploadGatewayAdapter.commitPhoto(entity, Optional.empty()).toCompletableFuture() )
+    );
+    return requisites.isEmpty() 
+        ? repository.create(entity, verifier)
+        : CompletableFuture.allOf( requisites.toArray(new CompletableFuture[0]) ).thenCompose(_res -> repository.create(entity, verifier));
   }
 
   /**
@@ -133,7 +138,10 @@ public class PlaceWriteGatewayAdapter implements PlaceWriteRepositoryGateway {
   public CompletionStage<Place> update(PlaceRef reference, Place entity) {
     return enrich(reference)
         .thenCompose(
-            stored -> placePhotoUploadGatewayAdapter.commitPhoto(entity, Optional.of(stored)))
+            stored -> { 
+              
+              return placePhotoUploadGatewayAdapter.commitPhoto(entity, Optional.of(stored)); 
+            })
         .thenCompose(_res -> repository.update(entity));
   }
 }

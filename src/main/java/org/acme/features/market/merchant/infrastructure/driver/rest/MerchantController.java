@@ -6,28 +6,28 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.acme.common.rest.CurrentRequest;
-import org.acme.features.market.merchant.application.interaction.MerchantDto;
-import org.acme.features.market.merchant.application.interaction.command.MerchantCreateCommand;
-import org.acme.features.market.merchant.application.interaction.command.MerchantDeleteCommand;
-import org.acme.features.market.merchant.application.interaction.command.MerchantDisableCommand;
-import org.acme.features.market.merchant.application.interaction.command.MerchantEnableCommand;
-import org.acme.features.market.merchant.application.interaction.command.MerchantUpdateCommand;
-import org.acme.features.market.merchant.application.interaction.query.MerchantListQuery;
-import org.acme.features.market.merchant.application.interaction.query.MerchantRetrieveQuery;
-import org.acme.features.market.merchant.application.interaction.result.MerchantCreateResult;
-import org.acme.features.market.merchant.application.interaction.result.MerchantDeleteResult;
-import org.acme.features.market.merchant.application.interaction.result.MerchantDisableResult;
-import org.acme.features.market.merchant.application.interaction.result.MerchantEnableResult;
-import org.acme.features.market.merchant.application.interaction.result.MerchantListResult;
-import org.acme.features.market.merchant.application.interaction.result.MerchantRetrieveResult;
-import org.acme.features.market.merchant.application.interaction.result.MerchantUpdateResult;
-import org.acme.features.market.merchant.application.usecase.CreateMerchantUsecase;
-import org.acme.features.market.merchant.application.usecase.DeleteMerchantUsecase;
-import org.acme.features.market.merchant.application.usecase.DisableMerchantUsecase;
-import org.acme.features.market.merchant.application.usecase.EnableMerchantUsecase;
-import org.acme.features.market.merchant.application.usecase.ListMerchantUsecase;
-import org.acme.features.market.merchant.application.usecase.RetrieveMerchantUsecase;
-import org.acme.features.market.merchant.application.usecase.UpdateMerchantUsecase;
+import org.acme.features.market.merchant.application.MerchantDto;
+import org.acme.features.market.merchant.application.usecase.create.CreateMerchantUsecase;
+import org.acme.features.market.merchant.application.usecase.create.MerchantCreateCommand;
+import org.acme.features.market.merchant.application.usecase.create.MerchantCreateResult;
+import org.acme.features.market.merchant.application.usecase.delete.DeleteMerchantUsecase;
+import org.acme.features.market.merchant.application.usecase.delete.MerchantDeleteCommand;
+import org.acme.features.market.merchant.application.usecase.delete.MerchantDeleteResult;
+import org.acme.features.market.merchant.application.usecase.disable.DisableMerchantUsecase;
+import org.acme.features.market.merchant.application.usecase.disable.MerchantDisableCommand;
+import org.acme.features.market.merchant.application.usecase.disable.MerchantDisableResult;
+import org.acme.features.market.merchant.application.usecase.enable.EnableMerchantUsecase;
+import org.acme.features.market.merchant.application.usecase.enable.MerchantEnableCommand;
+import org.acme.features.market.merchant.application.usecase.enable.MerchantEnableResult;
+import org.acme.features.market.merchant.application.usecase.list.ListMerchantUsecase;
+import org.acme.features.market.merchant.application.usecase.list.MerchantListQuery;
+import org.acme.features.market.merchant.application.usecase.list.MerchantListResult;
+import org.acme.features.market.merchant.application.usecase.retrieve.MerchantRetrieveQuery;
+import org.acme.features.market.merchant.application.usecase.retrieve.MerchantRetrieveResult;
+import org.acme.features.market.merchant.application.usecase.retrieve.RetrieveMerchantUsecase;
+import org.acme.features.market.merchant.application.usecase.update.MerchantUpdateCommand;
+import org.acme.features.market.merchant.application.usecase.update.MerchantUpdateResult;
+import org.acme.features.market.merchant.application.usecase.update.UpdateMerchantUsecase;
 import org.acme.features.market.merchant.domain.gateway.MerchantCursor;
 import org.acme.features.market.merchant.domain.gateway.MerchantFilter;
 import org.acme.features.market.merchant.domain.gateway.MerchantOrder;
@@ -280,11 +280,21 @@ public class MerchantController implements MerchantApi {
    */
   private MerchantDto toDomainModel(Merchant merchant) {
     MerchantDto.MerchantDtoBuilder builder = MerchantDto.builder();
-    builder = builder.uid(MerchantUidVO.from(merchant.getUid()));
-    builder = builder.name(MerchantNameVO.from(merchant.getName()));
-    builder = builder.enabled(MerchantEnabledVO.from(merchant.getEnabled()));
-    builder = builder.key(MerchantKeyVO.from(merchant.getKey()));
-    builder = builder.version(MerchantVersionVO.from(merchant.getVersion()));;
+    if (null != merchant.getUid()) {
+      builder = builder.uid(MerchantUidVO.from(merchant.getUid()));
+    }
+    if (null != merchant.getName()) {
+      builder = builder.name(MerchantNameVO.from(merchant.getName()));
+    }
+    if (null != merchant.getEnabled()) {
+      builder = builder.enabled(MerchantEnabledVO.from(merchant.getEnabled()));
+    }
+    if (null != merchant.getKey()) {
+      builder = builder.key(MerchantKeyVO.from(merchant.getKey()));
+    }
+    if (null != merchant.getVersion()) {
+      builder = builder.version(MerchantVersionVO.from(merchant.getVersion()));
+    } ;
     return builder.build();
   }
 }

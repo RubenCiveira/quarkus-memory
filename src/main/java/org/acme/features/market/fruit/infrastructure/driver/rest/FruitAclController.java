@@ -5,15 +5,12 @@ import java.util.concurrent.CompletableFuture;
 
 import org.acme.common.action.Interaction;
 import org.acme.common.rest.CurrentRequest;
-import org.acme.features.market.fruit.application.interaction.query.FruitAllowQuery;
-import org.acme.features.market.fruit.application.interaction.query.FruitEntityAllowQuery;
-import org.acme.features.market.fruit.application.usecase.CreateFruitUsecase;
-import org.acme.features.market.fruit.application.usecase.DeleteFruitUsecase;
-import org.acme.features.market.fruit.application.usecase.ListFruitUsecase;
-import org.acme.features.market.fruit.application.usecase.RetrieveFruitUsecase;
-import org.acme.features.market.fruit.application.usecase.UpdateFruitUsecase;
-import org.acme.features.market.fruit.application.usecase.service.FruitsVisibilityService;
-import org.acme.features.market.fruit.domain.model.FruitReference;
+import org.acme.features.market.fruit.application.service.FruitsVisibilityService;
+import org.acme.features.market.fruit.application.usecase.create.CreateFruitUsecase;
+import org.acme.features.market.fruit.application.usecase.delete.DeleteFruitUsecase;
+import org.acme.features.market.fruit.application.usecase.list.ListFruitUsecase;
+import org.acme.features.market.fruit.application.usecase.retrieve.RetrieveFruitUsecase;
+import org.acme.features.market.fruit.application.usecase.update.UpdateFruitUsecase;
 import org.acme.generated.openapi.api.FruitAclApi;
 import org.acme.generated.openapi.model.CommonAllow;
 import org.acme.generated.openapi.model.FruitAclFields;
@@ -75,15 +72,13 @@ public class FruitAclController implements FruitAclApi {
   @Override
   public Response fruitApiContextualAcl(final String uid) {
     return currentRequest.resolve(interaction -> {
-      FruitEntityAllowQuery query =
-          FruitEntityAllowQuery.builder().reference(FruitReference.of(uid)).build(interaction);
       FruitSpecificAcl response = new FruitSpecificAcl();
       response.setAllows(new FruitAclSpecificAllows());
       response.setFields(new FruitAclFields());
       return CompletableFuture
-          .allOf(fixedFields(response.getFields(), query),
-              hiddenFields(response.getFields(), query), updateAllows(response, query),
-              deleteAllows(response, query), retrieveAllows(response, query))
+          .allOf(fixedFields(response.getFields(), interaction),
+              hiddenFields(response.getFields(), interaction), updateAllows(response, interaction),
+              deleteAllows(response, interaction), retrieveAllows(response, interaction))
           .thenApply(noop -> response);
     });
   }
@@ -95,16 +90,14 @@ public class FruitAclController implements FruitAclApi {
   @Override
   public Response fruitApiGenericAcl() {
     return currentRequest.resolve(interaction -> {
-      FruitAllowQuery query = FruitAllowQuery.builder().build(interaction);
-      FruitEntityAllowQuery entityQuery = FruitEntityAllowQuery.builder().build(interaction);
       FruitGenericAcl response = new FruitGenericAcl();
       response.setAllows(new FruitAclGenericAllows());
       response.setFields(new FruitAclFields());
       return CompletableFuture
-          .allOf(fixedFields(response.getFields(), query),
-              hiddenFields(response.getFields(), query), listAllows(response, query),
-              createAllows(response, query), updateAllows(response, entityQuery),
-              deleteAllows(response, entityQuery), retrieveAllows(response, entityQuery))
+          .allOf(fixedFields(response.getFields(), interaction),
+              hiddenFields(response.getFields(), interaction), listAllows(response, interaction),
+              createAllows(response, interaction), updateAllows(response, interaction),
+              deleteAllows(response, interaction), retrieveAllows(response, interaction))
           .thenApply(noop -> response);
     });
   }
@@ -116,7 +109,7 @@ public class FruitAclController implements FruitAclApi {
    * @return
    */
   private CompletableFuture<Void> createAllows(final FruitGenericAcl response,
-      final FruitAllowQuery query) {
+      final Interaction query) {
     return create.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setCreate(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -130,7 +123,7 @@ public class FruitAclController implements FruitAclApi {
    * @return
    */
   private CompletableFuture<Void> deleteAllows(final FruitGenericAcl response,
-      final FruitEntityAllowQuery query) {
+      final Interaction query) {
     return delete.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setDelete(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -144,7 +137,7 @@ public class FruitAclController implements FruitAclApi {
    * @return
    */
   private CompletableFuture<Void> deleteAllows(final FruitSpecificAcl response,
-      final FruitEntityAllowQuery query) {
+      final Interaction query) {
     return delete.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setDelete(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -184,7 +177,7 @@ public class FruitAclController implements FruitAclApi {
    * @return
    */
   private CompletableFuture<Void> listAllows(final FruitGenericAcl response,
-      final FruitAllowQuery query) {
+      final Interaction query) {
     return list.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows()
             .setList(new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -198,7 +191,7 @@ public class FruitAclController implements FruitAclApi {
    * @return
    */
   private CompletableFuture<Void> retrieveAllows(final FruitGenericAcl response,
-      final FruitEntityAllowQuery query) {
+      final Interaction query) {
     return retrieve.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setRetrieve(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -212,7 +205,7 @@ public class FruitAclController implements FruitAclApi {
    * @return
    */
   private CompletableFuture<Void> retrieveAllows(final FruitSpecificAcl response,
-      final FruitEntityAllowQuery query) {
+      final Interaction query) {
     return retrieve.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setRetrieve(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -226,7 +219,7 @@ public class FruitAclController implements FruitAclApi {
    * @return
    */
   private CompletableFuture<Void> updateAllows(final FruitGenericAcl response,
-      final FruitEntityAllowQuery query) {
+      final Interaction query) {
     return update.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setUpdate(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
@@ -240,7 +233,7 @@ public class FruitAclController implements FruitAclApi {
    * @return
    */
   private CompletableFuture<Void> updateAllows(final FruitSpecificAcl response,
-      final FruitEntityAllowQuery query) {
+      final Interaction query) {
     return update.allow(query).getDetail()
         .thenAccept(detail -> response.getAllows().setUpdate(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
