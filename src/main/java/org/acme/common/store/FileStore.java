@@ -55,6 +55,17 @@ public interface FileStore {
   CompletionStage<RepositoryLink> commitContent(String key);
 
   /**
+   * Coge un fichero temoral del repositorio y lo guarda de manera definitiva.
+   * 
+   * Los ficheros guardados de manera definitiva no se borran del repositorio, salvo que se indique
+   * de forma explicita).
+   * 
+   * @param path La ruta al fichero temporal
+   * @return La ruta del fichero en el almacen definitivo
+   */
+  CompletionStage<RepositoryLink> commitReplace(String key, RepositoryLink link);
+
+  /**
    * Fichero
    * 
    * @param key

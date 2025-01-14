@@ -33,8 +33,7 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    */
   public FruitWriteGatewayAdapter(final DataSource readSource,
       @Named("write-channel") final Instance<DataSource> writeSource) {
-    this.repository =
-        new FruitRepository(writeSource.isResolvable() ? writeSource.get() : readSource);
+    this.repository = new FruitRepository(readSource);
   }
 
   /**

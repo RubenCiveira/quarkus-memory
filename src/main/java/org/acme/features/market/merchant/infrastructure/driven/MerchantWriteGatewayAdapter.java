@@ -33,8 +33,7 @@ public class MerchantWriteGatewayAdapter implements MerchantWriteRepositoryGatew
    */
   public MerchantWriteGatewayAdapter(final DataSource readSource,
       @Named("write-channel") final Instance<DataSource> writeSource) {
-    this.repository =
-        new MerchantRepository(writeSource.isResolvable() ? writeSource.get() : readSource);
+    this.repository = new MerchantRepository(readSource);
   }
 
   /**

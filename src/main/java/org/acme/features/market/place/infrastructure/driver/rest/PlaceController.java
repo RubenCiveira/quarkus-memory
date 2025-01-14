@@ -47,6 +47,7 @@ import org.acme.generated.openapi.model.PlaceList;
 import org.acme.generated.openapi.model.PlaceListNextOffset;
 
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 
@@ -102,6 +103,7 @@ public class PlaceController implements PlaceApi {
    * @return
    */
   @Override
+  @Transactional
   public Response placeApiCreate(Place place) {
     return currentRequest.resolve(interaction -> {
       PlaceDto dto = toDomainModel(place);
@@ -117,6 +119,7 @@ public class PlaceController implements PlaceApi {
    * @return
    */
   @Override
+  @Transactional
   public Response placeApiDelete(final String uid) {
     return currentRequest.resolve(interaction -> {
       PlaceDeleteResult result = delete.delete(
@@ -207,6 +210,7 @@ public class PlaceController implements PlaceApi {
    * @return
    */
   @Override
+  @Transactional
   public Response placeApiUpdate(final String uid, final Place place) {
     return currentRequest.resolve(interaction -> {
       PlaceDto dto = toDomainModel(place);

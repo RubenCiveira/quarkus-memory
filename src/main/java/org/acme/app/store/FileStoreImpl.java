@@ -72,17 +72,20 @@ public class FileStoreImpl implements FileStore {
   }
 
   @Override
+  public CompletionStage<RepositoryLink> commitReplace(String path, RepositoryLink link) {
+    try (Connection connection = datasource.getConnection()) {
+      RepositoryLink key = runCommit(connection, path);
+      runDelete(connection, path);
+      return CompletableFuture.completedFuture(key);
+    } catch (SQLException e) {
+      throw new IllegalArgumentException(e);
+    }
+  }
+
+  @Override
   public CompletionStage<RepositoryLink> commitContent(final String path) {
     try (Connection connection = datasource.getConnection()) {
-      try (PreparedStatement updateStatement = connection
-          .prepareStatement("UPDATE _filestorer SET upload = ?, temp = 0 where code = ?")) {
-        updateStatement.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
-        updateStatement.setString(2, code(path));
-        if (updateStatement.executeUpdate() != 1) {
-          throw new IllegalArgumentException("Imposible insertar para " + path);
-        }
-        return CompletableFuture.completedFuture(RepositoryLink.builder().key(path).build());
-      }
+      return CompletableFuture.completedFuture(runCommit(connection, path));
     } catch (SQLException e) {
       throw new IllegalArgumentException(e);
     }
@@ -111,18 +114,10 @@ public class FileStoreImpl implements FileStore {
   @Override
   public CompletionStage<Boolean> deleteFile(final String path) {
     try (Connection connection = datasource.getConnection()) {
-      try (PreparedStatement prepareStatement =
-          connection.prepareStatement("DELETE from _filestorer where code = ?")) {
-        prepareStatement.setString(1, code(path));
-        if (prepareStatement.executeUpdate() != 1) {
-          log.warn("Imposible borrar para " + path);
-        }
-        return CompletableFuture.completedFuture(true);
-      }
+      return CompletableFuture.completedFuture(runDelete(connection, path));
     } catch (SQLException e) {
       throw new IllegalArgumentException(e);
     }
-
   }
 
   private CompletionStage<Optional<BinaryContent>> retrieve(final String path,
@@ -200,6 +195,29 @@ public class FileStoreImpl implements FileStore {
       }
     } catch (IOException | SQLException e) {
       throw new IllegalArgumentException(e);
+    }
+  }
+
+  private RepositoryLink runCommit(Connection connection, String path) throws SQLException {
+    try (PreparedStatement updateStatement =
+        connection.prepareStatement("UPDATE _filestorer SET upload = ?, temp = 0 where code = ?")) {
+      updateStatement.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+      updateStatement.setString(2, code(path));
+      if (updateStatement.executeUpdate() != 1) {
+        throw new IllegalArgumentException("Imposible insertar para " + path);
+      }
+      return RepositoryLink.builder().key(path).build();
+    }
+  }
+
+  private boolean runDelete(Connection connection, String path) throws SQLException {
+    try (PreparedStatement prepareStatement =
+        connection.prepareStatement("DELETE from _filestorer where code = ?")) {
+      prepareStatement.setString(1, code(path));
+      if (prepareStatement.executeUpdate() != 1) {
+        log.warn("Imposible borrar para " + path);
+      }
+      return true;
     }
   }
 }

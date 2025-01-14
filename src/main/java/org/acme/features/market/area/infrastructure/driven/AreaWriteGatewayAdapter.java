@@ -33,8 +33,7 @@ public class AreaWriteGatewayAdapter implements AreaWriteRepositoryGateway {
    */
   public AreaWriteGatewayAdapter(final DataSource readSource,
       @Named("write-channel") final Instance<DataSource> writeSource) {
-    this.repository =
-        new AreaRepository(writeSource.isResolvable() ? writeSource.get() : readSource);
+    this.repository = new AreaRepository(readSource);
   }
 
   /**

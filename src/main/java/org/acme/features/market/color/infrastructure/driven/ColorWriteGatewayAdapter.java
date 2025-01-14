@@ -33,8 +33,7 @@ public class ColorWriteGatewayAdapter implements ColorWriteRepositoryGateway {
    */
   public ColorWriteGatewayAdapter(final DataSource readSource,
       @Named("write-channel") final Instance<DataSource> writeSource) {
-    this.repository =
-        new ColorRepository(writeSource.isResolvable() ? writeSource.get() : readSource);
+    this.repository = new ColorRepository(readSource);
   }
 
   /**

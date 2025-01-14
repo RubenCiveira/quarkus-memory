@@ -35,6 +35,7 @@ import org.acme.generated.openapi.model.ColorListNextOffset;
 import org.acme.generated.openapi.model.MerchantRef;
 
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 
@@ -80,6 +81,7 @@ public class ColorController implements ColorApi {
    * @return
    */
   @Override
+  @Transactional
   public Response colorApiCreate(Color color) {
     return currentRequest.resolve(interaction -> {
       ColorDto dto = toDomainModel(color);
@@ -95,6 +97,7 @@ public class ColorController implements ColorApi {
    * @return
    */
   @Override
+  @Transactional
   public Response colorApiDelete(final String uid) {
     return currentRequest.resolve(interaction -> {
       ColorDeleteResult result = delete.delete(
@@ -155,6 +158,7 @@ public class ColorController implements ColorApi {
    * @return
    */
   @Override
+  @Transactional
   public Response colorApiUpdate(final String uid, final Color color) {
     return currentRequest.resolve(interaction -> {
       ColorDto dto = toDomainModel(color);

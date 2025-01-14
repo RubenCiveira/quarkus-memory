@@ -33,12 +33,19 @@ public class PlacePhotoUploadGatewayAdapter implements PlacePhotoUploadGateway {
       final Optional<Place> orignal) {
     String theNew = key.getPhotoValue().orElse(null);
     String theOld = orignal.flatMap(Place::getPhotoValue).orElse(null);
-    CompletionStage<Optional<String>> stage =
-        null == theNew ? CompletableFuture.completedStage(Optional.empty())
-            : store.commitContent(theNew).thenApply(RepositoryLink::getKey).thenApply(Optional::of);
-    return (null != theOld && !theNew.equals(theOld))
-        ? store.deleteFile(theOld).thenCompose(_del -> stage)
-        : stage;
+    boolean wasRemoved = theNew == null && theOld != null;
+    boolean wasAppend = theNew != null && theOld == null;
+    boolean wasModified = theOld != null && theNew != null && !theNew.equals(theOld);
+    if (wasAppend) {
+      return store.commitContent(theNew).thenApply(RepositoryLink::getKey).thenApply(Optional::of);
+    } else if (wasModified) {
+      return store.deleteFile(theOld).thenApply(_val -> Optional.empty());
+    } else if (wasRemoved) {
+      return store.commitReplace(theNew, RepositoryLink.builder().key(theOld).build())
+          .thenApply(RepositoryLink::getKey).thenApply(Optional::of);
+    } else {
+      return CompletableFuture.completedStage(Optional.empty());
+    }
   }
 
   /**

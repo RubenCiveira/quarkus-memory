@@ -43,6 +43,7 @@ import org.acme.generated.openapi.model.MerchantList;
 import org.acme.generated.openapi.model.MerchantListNextOffset;
 
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 
@@ -98,6 +99,7 @@ public class MerchantController implements MerchantApi {
    * @return
    */
   @Override
+  @Transactional
   public Response merchantApiCreate(Merchant merchant) {
     return currentRequest.resolve(interaction -> {
       MerchantDto dto = toDomainModel(merchant);
@@ -113,6 +115,7 @@ public class MerchantController implements MerchantApi {
    * @return
    */
   @Override
+  @Transactional
   public Response merchantApiDelete(final String uid) {
     return currentRequest.resolve(interaction -> {
       MerchantDeleteResult result = delete.delete(
@@ -127,6 +130,7 @@ public class MerchantController implements MerchantApi {
    * @return
    */
   @Override
+  @Transactional
   public Response merchantApiDisable(final String uid) {
     return currentRequest.resolve(interaction -> {
       MerchantDisableResult result = disable.disable(
@@ -141,6 +145,7 @@ public class MerchantController implements MerchantApi {
    * @return
    */
   @Override
+  @Transactional
   public Response merchantApiEnable(final String uid) {
     return currentRequest.resolve(interaction -> {
       MerchantEnableResult result = enable.enable(
@@ -204,6 +209,7 @@ public class MerchantController implements MerchantApi {
    * @return
    */
   @Override
+  @Transactional
   public Response merchantApiUpdate(final String uid, final Merchant merchant) {
     return currentRequest.resolve(interaction -> {
       MerchantDto dto = toDomainModel(merchant);

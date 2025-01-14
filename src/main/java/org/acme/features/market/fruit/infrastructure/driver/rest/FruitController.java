@@ -32,6 +32,7 @@ import org.acme.generated.openapi.model.FruitList;
 import org.acme.generated.openapi.model.FruitListNextOffset;
 
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 
@@ -77,6 +78,7 @@ public class FruitController implements FruitApi {
    * @return
    */
   @Override
+  @Transactional
   public Response fruitApiCreate(Fruit fruit) {
     return currentRequest.resolve(interaction -> {
       FruitDto dto = toDomainModel(fruit);
@@ -92,6 +94,7 @@ public class FruitController implements FruitApi {
    * @return
    */
   @Override
+  @Transactional
   public Response fruitApiDelete(final String uid) {
     return currentRequest.resolve(interaction -> {
       FruitDeleteResult result = delete.delete(
@@ -148,6 +151,7 @@ public class FruitController implements FruitApi {
    * @return
    */
   @Override
+  @Transactional
   public Response fruitApiUpdate(final String uid, final Fruit fruit) {
     return currentRequest.resolve(interaction -> {
       FruitDto dto = toDomainModel(fruit);

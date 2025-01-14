@@ -35,6 +35,7 @@ import org.acme.generated.openapi.model.AreaListNextOffset;
 import org.acme.generated.openapi.model.PlaceRef;
 
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 
@@ -80,6 +81,7 @@ public class AreaController implements AreaApi {
    * @return
    */
   @Override
+  @Transactional
   public Response areaApiCreate(Area area) {
     return currentRequest.resolve(interaction -> {
       AreaDto dto = toDomainModel(area);
@@ -95,6 +97,7 @@ public class AreaController implements AreaApi {
    * @return
    */
   @Override
+  @Transactional
   public Response areaApiDelete(final String uid) {
     return currentRequest.resolve(interaction -> {
       AreaDeleteResult result = delete
@@ -155,6 +158,7 @@ public class AreaController implements AreaApi {
    * @return
    */
   @Override
+  @Transactional
   public Response areaApiUpdate(final String uid, final Area area) {
     return currentRequest.resolve(interaction -> {
       AreaDto dto = toDomainModel(area);
