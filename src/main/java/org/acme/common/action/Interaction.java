@@ -12,11 +12,7 @@ import lombok.experimental.SuperBuilder;
 public class Interaction {
   public abstract static class InteractionBuilder<C extends Interaction, B extends InteractionBuilder<C, B>> {
     public C build(Interaction prev) {
-      return build(prev.getActor(), prev.getConnection());
-    }
-
-    public C build(Actor actor, Connection connection) {
-      return actor(actor).connection(connection).build();
+      return actor(prev.getActor()).connection(prev.getConnection()).build();
     }
   }
 
@@ -24,4 +20,5 @@ public class Interaction {
   private final Actor actor;
   @NonNull
   private final Connection connection;
+
 }

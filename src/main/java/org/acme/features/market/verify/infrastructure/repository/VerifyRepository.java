@@ -102,15 +102,14 @@ public class VerifyRepository {
    * @param cursor
    * @return
    */
-  public Slide<Verify> list(VerifyFilter filter, VerifyCursor cursor) {
+  public CompletionStage<Slide<Verify>> list(VerifyFilter filter, VerifyCursor cursor) {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       SqlSchematicQuery<Verify> sq = filteredQuery(template, filter);
       cursor.getSinceUid()
           .ifPresent(since -> sq.where("uid", SqlOperator.GT, SqlParameterValue.of(since)));
       sq.orderAsc("uid");
-      return new VerifySlice(cursor.getLimit(),
-          sq.query(converter()).thenApply(res -> res.limit(cursor.getLimit())), this::list, filter,
-          cursor);
+      return sq.query(converter()).thenApply(res -> new VerifySlice(cursor.getLimit(),
+          res.limit(cursor.getLimit()), this::list, filter, cursor));
     }
   }
 

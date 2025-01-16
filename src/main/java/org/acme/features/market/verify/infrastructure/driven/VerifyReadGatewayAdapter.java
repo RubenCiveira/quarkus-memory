@@ -59,7 +59,7 @@ public class VerifyReadGatewayAdapter implements VerifyReadRepositoryGateway {
    * @return
    */
   @Override
-  public Slide<Verify> list(VerifyFilter filter, VerifyCursor cursor) {
+  public CompletionStage<Slide<Verify>> list(VerifyFilter filter, VerifyCursor cursor) {
     return repository.list(filter, cursor);
   }
 

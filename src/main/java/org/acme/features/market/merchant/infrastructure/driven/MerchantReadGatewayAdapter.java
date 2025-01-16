@@ -59,7 +59,7 @@ public class MerchantReadGatewayAdapter implements MerchantReadRepositoryGateway
    * @return
    */
   @Override
-  public Slide<Merchant> list(MerchantFilter filter, MerchantCursor cursor) {
+  public CompletionStage<Slide<Merchant>> list(MerchantFilter filter, MerchantCursor cursor) {
     return repository.list(filter, cursor);
   }
 

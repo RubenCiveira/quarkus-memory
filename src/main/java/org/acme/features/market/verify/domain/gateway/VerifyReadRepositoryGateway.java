@@ -36,7 +36,7 @@ public interface VerifyReadRepositoryGateway {
    * @param cursor a cursor to order and skip
    * @return The slide with some values
    */
-  Slide<Verify> list(VerifyFilter filter, VerifyCursor cursor);
+  CompletionStage<Slide<Verify>> list(VerifyFilter filter, VerifyCursor cursor);
 
   /**
    * Retrieve one single value

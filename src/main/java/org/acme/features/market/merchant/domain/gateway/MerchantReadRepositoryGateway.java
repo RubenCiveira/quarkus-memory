@@ -36,7 +36,7 @@ public interface MerchantReadRepositoryGateway {
    * @param cursor a cursor to order and skip
    * @return The slide with some values
    */
-  Slide<Merchant> list(MerchantFilter filter, MerchantCursor cursor);
+  CompletionStage<Slide<Merchant>> list(MerchantFilter filter, MerchantCursor cursor);
 
   /**
    * Retrieve one single value

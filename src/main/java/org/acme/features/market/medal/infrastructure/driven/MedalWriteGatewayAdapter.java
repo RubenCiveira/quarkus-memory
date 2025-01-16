@@ -96,7 +96,7 @@ public class MedalWriteGatewayAdapter implements MedalWriteRepositoryGateway {
    * @return
    */
   @Override
-  public Slide<Medal> list(MedalFilter filter, MedalCursor cursor) {
+  public CompletionStage<Slide<Medal>> list(MedalFilter filter, MedalCursor cursor) {
     return repository.list(filter, cursor);
   }
 

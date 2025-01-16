@@ -13,23 +13,22 @@ public abstract class Slide<T> {
     this.limit = limit;
   }
 
-  public abstract Slide<T> next(int limit);
+  public abstract CompletionStage<Slide<T>> loadNext(int limit);
 
-  public abstract CompletionStage<List<T>> get();
+  public abstract List<T> getList();
 
   public CompletionStage<List<T>> filterAndFillAgain(
       Function<List<T>, CompletionStage<List<T>>> consumer) {
-    return get().thenCompose(initial -> {
-      int readed = initial.size();
-      boolean more = limit.map(l -> readed == l).orElse(false);
-      return consumer.apply(initial).thenCompose(filtered -> {
-        Integer theLimit = limit.orElse(null);
-        return CompletableFuture.completedFuture(filtered)
-            .thenCompose(result -> (limit.isPresent() && more)
-                ? fetchMorePages(this, filtered, consumer, theLimit,
-                    windowSize(initial, readed, theLimit))
-                : CompletableFuture.completedFuture(result));
-      });
+    List<T> initial = getList();
+    int readed = initial.size();
+    boolean more = limit.map(l -> readed == l).orElse(false);
+    return consumer.apply(initial).thenCompose(filtered -> {
+      Integer theLimit = limit.orElse(null);
+      return CompletableFuture.completedFuture(filtered)
+          .thenCompose(result -> (limit.isPresent() && more)
+              ? fetchMorePages(this, filtered, consumer, theLimit,
+                  windowSize(initial, readed, theLimit))
+              : CompletableFuture.completedFuture(result));
     });
   }
 
@@ -41,8 +40,8 @@ public abstract class Slide<T> {
 
   private CompletionStage<List<T>> fetchMorePages(Slide<T> current, List<T> result,
       Function<List<T>, CompletionStage<List<T>>> consumer, Integer limit, int window) {
-    Slide<T> slice = current.next(window);
-    return slice.get().thenCompose(next -> {
+    return current.loadNext(window).thenCompose(slice -> {
+      List<T> next = slice.getList();
       int readed = next.size();
       return consumer.apply(next).thenCompose(rest -> {
         append(result, rest, limit - result.size());

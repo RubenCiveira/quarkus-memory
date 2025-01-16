@@ -66,7 +66,7 @@ public interface AreaWriteRepositoryGateway {
    * @param cursor a cursor to order and skip
    * @return The slide with some values
    */
-  Slide<Area> list(AreaFilter filter, AreaCursor cursor);
+  CompletionStage<Slide<Area>> list(AreaFilter filter, AreaCursor cursor);
 
   /**
    * Retrieve one single value

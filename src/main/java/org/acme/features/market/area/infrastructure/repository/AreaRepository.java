@@ -102,15 +102,14 @@ public class AreaRepository {
    * @param cursor
    * @return
    */
-  public Slide<Area> list(AreaFilter filter, AreaCursor cursor) {
+  public CompletionStage<Slide<Area>> list(AreaFilter filter, AreaCursor cursor) {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       SqlSchematicQuery<Area> sq = filteredQuery(template, filter);
       cursor.getSinceUid()
           .ifPresent(since -> sq.where("uid", SqlOperator.GT, SqlParameterValue.of(since)));
       sq.orderAsc("uid");
-      return new AreaSlice(cursor.getLimit(),
-          sq.query(converter()).thenApply(res -> res.limit(cursor.getLimit())), this::list, filter,
-          cursor);
+      return sq.query(converter()).thenApply(res -> new AreaSlice(cursor.getLimit(),
+          res.limit(cursor.getLimit()), this::list, filter, cursor));
     }
   }
 

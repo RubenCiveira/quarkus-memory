@@ -66,7 +66,7 @@ public interface ColorWriteRepositoryGateway {
    * @param cursor a cursor to order and skip
    * @return The slide with some values
    */
-  Slide<Color> list(ColorFilter filter, ColorCursor cursor);
+  CompletionStage<Slide<Color>> list(ColorFilter filter, ColorCursor cursor);
 
   /**
    * Retrieve one single value

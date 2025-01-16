@@ -59,7 +59,7 @@ public class ColorReadGatewayAdapter implements ColorReadRepositoryGateway {
    * @return
    */
   @Override
-  public Slide<Color> list(ColorFilter filter, ColorCursor cursor) {
+  public CompletionStage<Slide<Color>> list(ColorFilter filter, ColorCursor cursor) {
     return repository.list(filter, cursor);
   }
 

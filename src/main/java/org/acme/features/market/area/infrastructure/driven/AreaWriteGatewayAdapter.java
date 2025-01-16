@@ -96,7 +96,7 @@ public class AreaWriteGatewayAdapter implements AreaWriteRepositoryGateway {
    * @return
    */
   @Override
-  public Slide<Area> list(AreaFilter filter, AreaCursor cursor) {
+  public CompletionStage<Slide<Area>> list(AreaFilter filter, AreaCursor cursor) {
     return repository.list(filter, cursor);
   }
 

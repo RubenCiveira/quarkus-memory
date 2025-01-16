@@ -36,7 +36,7 @@ public interface FruitReadRepositoryGateway {
    * @param cursor a cursor to order and skip
    * @return The slide with some values
    */
-  Slide<Fruit> list(FruitFilter filter, FruitCursor cursor);
+  CompletionStage<Slide<Fruit>> list(FruitFilter filter, FruitCursor cursor);
 
   /**
    * Retrieve one single value

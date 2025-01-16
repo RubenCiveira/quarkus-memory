@@ -115,7 +115,7 @@ public class PlaceAclController implements PlaceAclApi {
    */
   private CompletableFuture<Void> createAllows(final PlaceGenericAcl response,
       final Interaction query) {
-    return create.allow(query).getDetail()
+    return create.allow(query)
         .thenAccept(detail -> response.getAllows().setCreate(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
         .toCompletableFuture();
@@ -129,7 +129,7 @@ public class PlaceAclController implements PlaceAclApi {
    */
   private CompletableFuture<Void> deleteAllows(final PlaceGenericAcl response,
       final Interaction query) {
-    return delete.allow(query).getDetail()
+    return delete.allow(query)
         .thenAccept(detail -> response.getAllows().setDelete(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
         .toCompletableFuture();
@@ -143,7 +143,7 @@ public class PlaceAclController implements PlaceAclApi {
    */
   private CompletableFuture<Void> deleteAllows(final PlaceSpecificAcl response,
       final Interaction query) {
-    return delete.allow(query).getDetail()
+    return delete.allow(query)
         .thenAccept(detail -> response.getAllows().setDelete(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
         .toCompletableFuture();
@@ -183,7 +183,7 @@ public class PlaceAclController implements PlaceAclApi {
    */
   private CompletableFuture<Void> listAllows(final PlaceGenericAcl response,
       final Interaction query) {
-    return list.allow(query).getDetail()
+    return list.allow(query)
         .thenAccept(detail -> response.getAllows()
             .setList(new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
         .toCompletableFuture();
@@ -197,7 +197,7 @@ public class PlaceAclController implements PlaceAclApi {
    */
   private CompletableFuture<Void> retrieveAllows(final PlaceGenericAcl response,
       final Interaction query) {
-    return retrieve.allow(query).getDetail()
+    return retrieve.allow(query)
         .thenAccept(detail -> response.getAllows().setRetrieve(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
         .toCompletableFuture();
@@ -211,7 +211,7 @@ public class PlaceAclController implements PlaceAclApi {
    */
   private CompletableFuture<Void> retrieveAllows(final PlaceSpecificAcl response,
       final Interaction query) {
-    return retrieve.allow(query).getDetail()
+    return retrieve.allow(query)
         .thenAccept(detail -> response.getAllows().setRetrieve(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
         .toCompletableFuture();
@@ -225,7 +225,7 @@ public class PlaceAclController implements PlaceAclApi {
    */
   private CompletableFuture<Void> updateAllows(final PlaceGenericAcl response,
       final Interaction query) {
-    return update.allow(query).getDetail()
+    return update.allow(query)
         .thenAccept(detail -> response.getAllows().setUpdate(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
         .toCompletableFuture();
@@ -239,7 +239,7 @@ public class PlaceAclController implements PlaceAclApi {
    */
   private CompletableFuture<Void> updateAllows(final PlaceSpecificAcl response,
       final Interaction query) {
-    return update.allow(query).getDetail()
+    return update.allow(query)
         .thenAccept(detail -> response.getAllows().setUpdate(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
         .toCompletableFuture();
@@ -253,7 +253,7 @@ public class PlaceAclController implements PlaceAclApi {
    */
   private CompletableFuture<Void> uploadPhotoAllows(final PlaceGenericAcl response,
       final Interaction query) {
-    return uploadPhoto.allow(query).getDetail()
+    return uploadPhoto.allow(query)
         .thenAccept(detail -> response.getAllows().setUploadPhoto(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
         .toCompletableFuture();

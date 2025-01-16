@@ -96,7 +96,7 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public Slide<Fruit> list(FruitFilter filter, FruitCursor cursor) {
+  public CompletionStage<Slide<Fruit>> list(FruitFilter filter, FruitCursor cursor) {
     return repository.list(filter, cursor);
   }
 

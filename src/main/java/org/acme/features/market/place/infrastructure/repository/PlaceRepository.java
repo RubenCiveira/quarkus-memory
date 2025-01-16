@@ -105,15 +105,14 @@ public class PlaceRepository {
    * @param cursor
    * @return
    */
-  public Slide<Place> list(PlaceFilter filter, PlaceCursor cursor) {
+  public CompletionStage<Slide<Place>> list(PlaceFilter filter, PlaceCursor cursor) {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       SqlSchematicQuery<Place> sq = filteredQuery(template, filter);
       cursor.getSinceUid()
           .ifPresent(since -> sq.where("uid", SqlOperator.GT, SqlParameterValue.of(since)));
       sq.orderAsc("uid");
-      return new PlaceSlice(cursor.getLimit(),
-          sq.query(converter()).thenApply(res -> res.limit(cursor.getLimit())), this::list, filter,
-          cursor);
+      return sq.query(converter()).thenApply(res -> new PlaceSlice(cursor.getLimit(),
+          res.limit(cursor.getLimit()), this::list, filter, cursor));
     }
   }
 

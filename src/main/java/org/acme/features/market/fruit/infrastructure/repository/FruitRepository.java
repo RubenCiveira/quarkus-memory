@@ -102,15 +102,14 @@ public class FruitRepository {
    * @param cursor
    * @return
    */
-  public Slide<Fruit> list(FruitFilter filter, FruitCursor cursor) {
+  public CompletionStage<Slide<Fruit>> list(FruitFilter filter, FruitCursor cursor) {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       SqlSchematicQuery<Fruit> sq = filteredQuery(template, filter);
       cursor.getSinceUid()
           .ifPresent(since -> sq.where("uid", SqlOperator.GT, SqlParameterValue.of(since)));
       sq.orderAsc("uid");
-      return new FruitSlice(cursor.getLimit(),
-          sq.query(converter()).thenApply(res -> res.limit(cursor.getLimit())), this::list, filter,
-          cursor);
+      return sq.query(converter()).thenApply(res -> new FruitSlice(cursor.getLimit(),
+          res.limit(cursor.getLimit()), this::list, filter, cursor));
     }
   }
 

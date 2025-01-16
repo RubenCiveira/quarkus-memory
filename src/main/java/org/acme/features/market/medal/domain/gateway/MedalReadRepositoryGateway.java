@@ -36,7 +36,7 @@ public interface MedalReadRepositoryGateway {
    * @param cursor a cursor to order and skip
    * @return The slide with some values
    */
-  Slide<Medal> list(MedalFilter filter, MedalCursor cursor);
+  CompletionStage<Slide<Medal>> list(MedalFilter filter, MedalCursor cursor);
 
   /**
    * Retrieve one single value

@@ -102,15 +102,14 @@ public class MedalRepository {
    * @param cursor
    * @return
    */
-  public Slide<Medal> list(MedalFilter filter, MedalCursor cursor) {
+  public CompletionStage<Slide<Medal>> list(MedalFilter filter, MedalCursor cursor) {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       SqlSchematicQuery<Medal> sq = filteredQuery(template, filter);
       cursor.getSinceUid()
           .ifPresent(since -> sq.where("uid", SqlOperator.GT, SqlParameterValue.of(since)));
       sq.orderAsc("uid");
-      return new MedalSlice(cursor.getLimit(),
-          sq.query(converter()).thenApply(res -> res.limit(cursor.getLimit())), this::list, filter,
-          cursor);
+      return sq.query(converter()).thenApply(res -> new MedalSlice(cursor.getLimit(),
+          res.limit(cursor.getLimit()), this::list, filter, cursor));
     }
   }
 

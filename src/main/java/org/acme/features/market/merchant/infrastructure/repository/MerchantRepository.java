@@ -102,15 +102,14 @@ public class MerchantRepository {
    * @param cursor
    * @return
    */
-  public Slide<Merchant> list(MerchantFilter filter, MerchantCursor cursor) {
+  public CompletionStage<Slide<Merchant>> list(MerchantFilter filter, MerchantCursor cursor) {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       SqlSchematicQuery<Merchant> sq = filteredQuery(template, filter);
       cursor.getSinceUid()
           .ifPresent(since -> sq.where("uid", SqlOperator.GT, SqlParameterValue.of(since)));
       sq.orderAsc("uid");
-      return new MerchantSlice(cursor.getLimit(),
-          sq.query(converter()).thenApply(res -> res.limit(cursor.getLimit())), this::list, filter,
-          cursor);
+      return sq.query(converter()).thenApply(res -> new MerchantSlice(cursor.getLimit(),
+          res.limit(cursor.getLimit()), this::list, filter, cursor));
     }
   }
 

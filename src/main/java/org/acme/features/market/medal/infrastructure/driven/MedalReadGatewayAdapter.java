@@ -59,7 +59,7 @@ public class MedalReadGatewayAdapter implements MedalReadRepositoryGateway {
    * @return
    */
   @Override
-  public Slide<Medal> list(MedalFilter filter, MedalCursor cursor) {
+  public CompletionStage<Slide<Medal>> list(MedalFilter filter, MedalCursor cursor) {
     return repository.list(filter, cursor);
   }
 

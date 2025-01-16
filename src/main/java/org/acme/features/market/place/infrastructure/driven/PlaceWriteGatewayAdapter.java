@@ -107,7 +107,7 @@ public class PlaceWriteGatewayAdapter implements PlaceWriteRepositoryGateway {
    * @return
    */
   @Override
-  public Slide<Place> list(PlaceFilter filter, PlaceCursor cursor) {
+  public CompletionStage<Slide<Place>> list(PlaceFilter filter, PlaceCursor cursor) {
     return repository.list(filter, cursor);
   }
 

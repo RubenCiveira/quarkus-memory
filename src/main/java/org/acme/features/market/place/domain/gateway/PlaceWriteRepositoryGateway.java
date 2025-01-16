@@ -66,7 +66,7 @@ public interface PlaceWriteRepositoryGateway {
    * @param cursor a cursor to order and skip
    * @return The slide with some values
    */
-  Slide<Place> list(PlaceFilter filter, PlaceCursor cursor);
+  CompletionStage<Slide<Place>> list(PlaceFilter filter, PlaceCursor cursor);
 
   /**
    * Retrieve one single value

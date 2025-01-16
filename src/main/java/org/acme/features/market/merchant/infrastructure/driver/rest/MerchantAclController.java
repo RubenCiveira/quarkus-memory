@@ -118,7 +118,7 @@ public class MerchantAclController implements MerchantAclApi {
    */
   private CompletableFuture<Void> createAllows(final MerchantGenericAcl response,
       final Interaction query) {
-    return create.allow(query).getDetail()
+    return create.allow(query)
         .thenAccept(detail -> response.getAllows().setCreate(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
         .toCompletableFuture();
@@ -132,7 +132,7 @@ public class MerchantAclController implements MerchantAclApi {
    */
   private CompletableFuture<Void> deleteAllows(final MerchantGenericAcl response,
       final Interaction query) {
-    return delete.allow(query).getDetail()
+    return delete.allow(query)
         .thenAccept(detail -> response.getAllows().setDelete(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
         .toCompletableFuture();
@@ -146,7 +146,7 @@ public class MerchantAclController implements MerchantAclApi {
    */
   private CompletableFuture<Void> deleteAllows(final MerchantSpecificAcl response,
       final Interaction query) {
-    return delete.allow(query).getDetail()
+    return delete.allow(query)
         .thenAccept(detail -> response.getAllows().setDelete(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
         .toCompletableFuture();
@@ -160,7 +160,7 @@ public class MerchantAclController implements MerchantAclApi {
    */
   private CompletableFuture<Void> disableAllows(final MerchantGenericAcl response,
       final Interaction query) {
-    return disable.allow(query).getDetail()
+    return disable.allow(query)
         .thenAccept(detail -> response.getAllows().setDisable(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
         .toCompletableFuture();
@@ -174,7 +174,7 @@ public class MerchantAclController implements MerchantAclApi {
    */
   private CompletableFuture<Void> disableAllows(final MerchantSpecificAcl response,
       final Interaction query) {
-    return disable.allow(query).getDetail()
+    return disable.allow(query)
         .thenAccept(detail -> response.getAllows().setDisable(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
         .toCompletableFuture();
@@ -188,7 +188,7 @@ public class MerchantAclController implements MerchantAclApi {
    */
   private CompletableFuture<Void> enableAllows(final MerchantGenericAcl response,
       final Interaction query) {
-    return enable.allow(query).getDetail()
+    return enable.allow(query)
         .thenAccept(detail -> response.getAllows().setEnable(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
         .toCompletableFuture();
@@ -202,7 +202,7 @@ public class MerchantAclController implements MerchantAclApi {
    */
   private CompletableFuture<Void> enableAllows(final MerchantSpecificAcl response,
       final Interaction query) {
-    return enable.allow(query).getDetail()
+    return enable.allow(query)
         .thenAccept(detail -> response.getAllows().setEnable(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
         .toCompletableFuture();
@@ -242,7 +242,7 @@ public class MerchantAclController implements MerchantAclApi {
    */
   private CompletableFuture<Void> listAllows(final MerchantGenericAcl response,
       final Interaction query) {
-    return list.allow(query).getDetail()
+    return list.allow(query)
         .thenAccept(detail -> response.getAllows()
             .setList(new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
         .toCompletableFuture();
@@ -256,7 +256,7 @@ public class MerchantAclController implements MerchantAclApi {
    */
   private CompletableFuture<Void> retrieveAllows(final MerchantGenericAcl response,
       final Interaction query) {
-    return retrieve.allow(query).getDetail()
+    return retrieve.allow(query)
         .thenAccept(detail -> response.getAllows().setRetrieve(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
         .toCompletableFuture();
@@ -270,7 +270,7 @@ public class MerchantAclController implements MerchantAclApi {
    */
   private CompletableFuture<Void> retrieveAllows(final MerchantSpecificAcl response,
       final Interaction query) {
-    return retrieve.allow(query).getDetail()
+    return retrieve.allow(query)
         .thenAccept(detail -> response.getAllows().setRetrieve(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
         .toCompletableFuture();
@@ -284,7 +284,7 @@ public class MerchantAclController implements MerchantAclApi {
    */
   private CompletableFuture<Void> updateAllows(final MerchantGenericAcl response,
       final Interaction query) {
-    return update.allow(query).getDetail()
+    return update.allow(query)
         .thenAccept(detail -> response.getAllows().setUpdate(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
         .toCompletableFuture();
@@ -298,7 +298,7 @@ public class MerchantAclController implements MerchantAclApi {
    */
   private CompletableFuture<Void> updateAllows(final MerchantSpecificAcl response,
       final Interaction query) {
-    return update.allow(query).getDetail()
+    return update.allow(query)
         .thenAccept(detail -> response.getAllows().setUpdate(
             new CommonAllow().allowed(detail.isAllowed()).reason(detail.getDescription())))
         .toCompletableFuture();

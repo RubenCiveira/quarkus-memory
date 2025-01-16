@@ -59,7 +59,7 @@ public class AreaReadGatewayAdapter implements AreaReadRepositoryGateway {
    * @return
    */
   @Override
-  public Slide<Area> list(AreaFilter filter, AreaCursor cursor) {
+  public CompletionStage<Slide<Area>> list(AreaFilter filter, AreaCursor cursor) {
     return repository.list(filter, cursor);
   }
 

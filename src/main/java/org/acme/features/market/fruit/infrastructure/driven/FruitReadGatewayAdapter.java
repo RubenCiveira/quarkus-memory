@@ -59,7 +59,7 @@ public class FruitReadGatewayAdapter implements FruitReadRepositoryGateway {
    * @return
    */
   @Override
-  public Slide<Fruit> list(FruitFilter filter, FruitCursor cursor) {
+  public CompletionStage<Slide<Fruit>> list(FruitFilter filter, FruitCursor cursor) {
     return repository.list(filter, cursor);
   }
 
