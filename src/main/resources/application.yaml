@@ -11,6 +11,7 @@ quarkus:
       - config/telemetry.yaml
       - config/security.yaml
       - config/database.yaml
+      - config/cache.yaml
       - META-INF/build/native.yaml
   http:
     port: 8090

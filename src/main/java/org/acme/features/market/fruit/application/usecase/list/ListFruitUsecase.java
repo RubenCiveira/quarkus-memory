@@ -8,7 +8,7 @@ import org.acme.common.action.Interaction;
 import org.acme.common.exception.NotAllowedException;
 import org.acme.features.market.fruit.application.FruitDto;
 import org.acme.features.market.fruit.application.service.FruitsVisibilityService;
-import org.acme.features.market.fruit.domain.model.Fruit;
+import org.acme.features.market.fruit.domain.gateway.FruitCached;
 
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.event.Event;
@@ -48,15 +48,14 @@ public class ListFruitUsecase {
    * @param query a filter to retrieve only matching values
    * @return The slide with some values
    */
-  public FruitListResult list(final FruitListQuery query) {
-    CompletionStage<List<Fruit>> future = allow(query).getDetail().thenCompose(detail -> {
+  public CompletionStage<FruitListResult> list(final FruitListQuery query) {
+    CompletionStage<FruitCached> future = allow(query).getDetail().thenCompose(detail -> {
       if (!detail.isAllowed()) {
         throw new NotAllowedException(detail.getDescription());
       }
-      return visibility.listVisibles(query, query.getFilter(), query.getCursor());
+      return visibility.listCachedVisibles(query, query.getFilter(), query.getCursor());
     });
-    return FruitListResult.builder().query(query)
-        .fruits(future.thenCompose(values -> mapList(query, values))).build();
+    return future.thenCompose(values -> mapList(query, values));
   }
 
   /**
@@ -67,12 +66,14 @@ public class ListFruitUsecase {
    * @param fruits
    * @return The slide with some values
    */
-  private CompletionStage<List<FruitDto>> mapList(final FruitListQuery query,
-      final List<Fruit> fruits) {
+  private CompletionStage<FruitListResult> mapList(final FruitListQuery query,
+      final FruitCached fruits) {
     List<CompletableFuture<FruitDto>> futures =
-        fruits.stream().map(fruit -> visibility.copyWithHidden(query, fruit))
+        fruits.getValue().stream().map(fruit -> visibility.copyWithHidden(query, fruit))
             .map(CompletionStage::toCompletableFuture).toList();
     return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-        .thenApply(voidResult -> futures.stream().map(CompletableFuture::join).toList());
+        .thenApply(voidResult -> FruitListResult.builder().query(query)
+            .fruits(futures.stream().map(CompletableFuture::join).toList()).since(fruits.getSince())
+            .build());
   }
 }

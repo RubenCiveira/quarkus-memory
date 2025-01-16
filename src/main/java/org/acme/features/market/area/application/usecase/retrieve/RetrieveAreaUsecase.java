@@ -1,14 +1,14 @@
 package org.acme.features.market.area.application.usecase.retrieve;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.acme.common.action.Interaction;
 import org.acme.common.exception.NotAllowedException;
-import org.acme.features.market.area.application.AreaDto;
 import org.acme.features.market.area.application.service.AreasVisibilityService;
-import org.acme.features.market.area.domain.model.Area;
+import org.acme.features.market.area.domain.gateway.AreaCached;
 import org.acme.features.market.area.domain.model.AreaRef;
 
 import jakarta.enterprise.context.RequestScoped;
@@ -63,16 +63,15 @@ public class RetrieveAreaUsecase {
    * @param query a filter to retrieve only matching values
    * @return The slide with some values
    */
-  public AreaRetrieveResult retrieve(final AreaRetrieveQuery query) {
-    CompletionStage<Optional<Area>> result =
+  public CompletionStage<AreaRetrieveResult> retrieve(final AreaRetrieveQuery query) {
+    CompletionStage<AreaCached> result =
         allow(query, query.getReference()).getDetail().thenCompose(detail -> {
           if (!detail.isAllowed()) {
             throw new NotAllowedException(detail.getDescription());
           }
-          return visibility.retrieveVisible(query, query.getReference().getUidValue());
+          return visibility.retrieveCachedVisible(query, query.getReference().getUidValue());
         });
-    return AreaRetrieveResult.builder().interaction(query)
-        .area(result.thenCompose(op -> this.mapEntity(query, op))).build();
+    return result.thenCompose(op -> this.mapEntity(query, op));
   }
 
   /**
@@ -83,9 +82,13 @@ public class RetrieveAreaUsecase {
    * @param oparea
    * @return The slide with some values
    */
-  private CompletionStage<Optional<AreaDto>> mapEntity(final AreaRetrieveQuery query,
-      final Optional<Area> oparea) {
-    return oparea.map(area -> visibility.copyWithHidden(query, area).thenApply(Optional::of))
-        .orElseGet(() -> CompletableFuture.completedFuture(Optional.empty()));
+  private CompletionStage<AreaRetrieveResult> mapEntity(final AreaRetrieveQuery query,
+      final AreaCached oparea) {
+    return oparea.first()
+        .map(area -> visibility.copyWithHidden(query, area)
+            .thenApply(areaWithHidden -> AreaRetrieveResult.builder().interaction(query)
+                .area(Optional.of(areaWithHidden)).since(oparea.getSince()).build()))
+        .orElseGet(() -> CompletableFuture.completedFuture(AreaRetrieveResult.builder()
+            .interaction(query).area(Optional.empty()).since(OffsetDateTime.now()).build()));
   }
 }

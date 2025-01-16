@@ -1,14 +1,14 @@
 package org.acme.features.market.place.application.usecase.retrieve;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.acme.common.action.Interaction;
 import org.acme.common.exception.NotAllowedException;
-import org.acme.features.market.place.application.PlaceDto;
 import org.acme.features.market.place.application.service.PlacesVisibilityService;
-import org.acme.features.market.place.domain.model.Place;
+import org.acme.features.market.place.domain.gateway.PlaceCached;
 import org.acme.features.market.place.domain.model.PlaceRef;
 
 import jakarta.enterprise.context.RequestScoped;
@@ -63,16 +63,15 @@ public class RetrievePlaceUsecase {
    * @param query a filter to retrieve only matching values
    * @return The slide with some values
    */
-  public PlaceRetrieveResult retrieve(final PlaceRetrieveQuery query) {
-    CompletionStage<Optional<Place>> result =
+  public CompletionStage<PlaceRetrieveResult> retrieve(final PlaceRetrieveQuery query) {
+    CompletionStage<PlaceCached> result =
         allow(query, query.getReference()).getDetail().thenCompose(detail -> {
           if (!detail.isAllowed()) {
             throw new NotAllowedException(detail.getDescription());
           }
-          return visibility.retrieveVisible(query, query.getReference().getUidValue());
+          return visibility.retrieveCachedVisible(query, query.getReference().getUidValue());
         });
-    return PlaceRetrieveResult.builder().interaction(query)
-        .place(result.thenCompose(op -> this.mapEntity(query, op))).build();
+    return result.thenCompose(op -> this.mapEntity(query, op));
   }
 
   /**
@@ -83,9 +82,13 @@ public class RetrievePlaceUsecase {
    * @param opplace
    * @return The slide with some values
    */
-  private CompletionStage<Optional<PlaceDto>> mapEntity(final PlaceRetrieveQuery query,
-      final Optional<Place> opplace) {
-    return opplace.map(place -> visibility.copyWithHidden(query, place).thenApply(Optional::of))
-        .orElseGet(() -> CompletableFuture.completedFuture(Optional.empty()));
+  private CompletionStage<PlaceRetrieveResult> mapEntity(final PlaceRetrieveQuery query,
+      final PlaceCached opplace) {
+    return opplace.first()
+        .map(place -> visibility.copyWithHidden(query, place)
+            .thenApply(placeWithHidden -> PlaceRetrieveResult.builder().interaction(query)
+                .place(Optional.of(placeWithHidden)).since(opplace.getSince()).build()))
+        .orElseGet(() -> CompletableFuture.completedFuture(PlaceRetrieveResult.builder()
+            .interaction(query).place(Optional.empty()).since(OffsetDateTime.now()).build()));
   }
 }

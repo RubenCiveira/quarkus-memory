@@ -8,7 +8,7 @@ import org.acme.common.action.Interaction;
 import org.acme.common.exception.NotAllowedException;
 import org.acme.features.market.color.application.ColorDto;
 import org.acme.features.market.color.application.service.ColorsVisibilityService;
-import org.acme.features.market.color.domain.model.Color;
+import org.acme.features.market.color.domain.gateway.ColorCached;
 
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.event.Event;
@@ -48,15 +48,14 @@ public class ListColorUsecase {
    * @param query a filter to retrieve only matching values
    * @return The slide with some values
    */
-  public ColorListResult list(final ColorListQuery query) {
-    CompletionStage<List<Color>> future = allow(query).getDetail().thenCompose(detail -> {
+  public CompletionStage<ColorListResult> list(final ColorListQuery query) {
+    CompletionStage<ColorCached> future = allow(query).getDetail().thenCompose(detail -> {
       if (!detail.isAllowed()) {
         throw new NotAllowedException(detail.getDescription());
       }
-      return visibility.listVisibles(query, query.getFilter(), query.getCursor());
+      return visibility.listCachedVisibles(query, query.getFilter(), query.getCursor());
     });
-    return ColorListResult.builder().query(query)
-        .colors(future.thenCompose(values -> mapList(query, values))).build();
+    return future.thenCompose(values -> mapList(query, values));
   }
 
   /**
@@ -67,12 +66,14 @@ public class ListColorUsecase {
    * @param colors
    * @return The slide with some values
    */
-  private CompletionStage<List<ColorDto>> mapList(final ColorListQuery query,
-      final List<Color> colors) {
+  private CompletionStage<ColorListResult> mapList(final ColorListQuery query,
+      final ColorCached colors) {
     List<CompletableFuture<ColorDto>> futures =
-        colors.stream().map(color -> visibility.copyWithHidden(query, color))
+        colors.getValue().stream().map(color -> visibility.copyWithHidden(query, color))
             .map(CompletionStage::toCompletableFuture).toList();
     return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-        .thenApply(voidResult -> futures.stream().map(CompletableFuture::join).toList());
+        .thenApply(voidResult -> ColorListResult.builder().query(query)
+            .colors(futures.stream().map(CompletableFuture::join).toList()).since(colors.getSince())
+            .build());
   }
 }

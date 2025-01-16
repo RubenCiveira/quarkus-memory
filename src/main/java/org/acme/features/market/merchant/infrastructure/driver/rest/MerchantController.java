@@ -1,5 +1,6 @@
 package org.acme.features.market.merchant.infrastructure.driver.rest;
 
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -9,24 +10,17 @@ import org.acme.common.rest.CurrentRequest;
 import org.acme.features.market.merchant.application.MerchantDto;
 import org.acme.features.market.merchant.application.usecase.create.CreateMerchantUsecase;
 import org.acme.features.market.merchant.application.usecase.create.MerchantCreateCommand;
-import org.acme.features.market.merchant.application.usecase.create.MerchantCreateResult;
 import org.acme.features.market.merchant.application.usecase.delete.DeleteMerchantUsecase;
 import org.acme.features.market.merchant.application.usecase.delete.MerchantDeleteCommand;
-import org.acme.features.market.merchant.application.usecase.delete.MerchantDeleteResult;
 import org.acme.features.market.merchant.application.usecase.disable.DisableMerchantUsecase;
 import org.acme.features.market.merchant.application.usecase.disable.MerchantDisableCommand;
-import org.acme.features.market.merchant.application.usecase.disable.MerchantDisableResult;
 import org.acme.features.market.merchant.application.usecase.enable.EnableMerchantUsecase;
 import org.acme.features.market.merchant.application.usecase.enable.MerchantEnableCommand;
-import org.acme.features.market.merchant.application.usecase.enable.MerchantEnableResult;
 import org.acme.features.market.merchant.application.usecase.list.ListMerchantUsecase;
 import org.acme.features.market.merchant.application.usecase.list.MerchantListQuery;
-import org.acme.features.market.merchant.application.usecase.list.MerchantListResult;
 import org.acme.features.market.merchant.application.usecase.retrieve.MerchantRetrieveQuery;
-import org.acme.features.market.merchant.application.usecase.retrieve.MerchantRetrieveResult;
 import org.acme.features.market.merchant.application.usecase.retrieve.RetrieveMerchantUsecase;
 import org.acme.features.market.merchant.application.usecase.update.MerchantUpdateCommand;
-import org.acme.features.market.merchant.application.usecase.update.MerchantUpdateResult;
 import org.acme.features.market.merchant.application.usecase.update.UpdateMerchantUsecase;
 import org.acme.features.market.merchant.domain.gateway.MerchantCursor;
 import org.acme.features.market.merchant.domain.gateway.MerchantFilter;
@@ -101,12 +95,9 @@ public class MerchantController implements MerchantApi {
   @Override
   @Transactional
   public Response merchantApiCreate(Merchant merchant) {
-    return currentRequest.resolve(interaction -> {
-      MerchantDto dto = toDomainModel(merchant);
-      MerchantCreateResult result =
-          create.create(MerchantCreateCommand.builder().dto(dto).build(interaction));
-      return result.getMerchant().thenApply(res -> res.map(this::toApiModel));
-    });
+    return currentRequest.resolve(interaction -> create
+        .create(MerchantCreateCommand.builder().dto(toDomainModel(merchant)).build(interaction))
+        .thenApply(res -> res.getMerchant().map(this::toApiModel)));
   }
 
   /**
@@ -117,11 +108,10 @@ public class MerchantController implements MerchantApi {
   @Override
   @Transactional
   public Response merchantApiDelete(final String uid) {
-    return currentRequest.resolve(interaction -> {
-      MerchantDeleteResult result = delete.delete(
-          MerchantDeleteCommand.builder().reference(MerchantReference.of(uid)).build(interaction));
-      return result.getMerchant().thenApply(res -> res.map(this::toApiModel));
-    });
+    return currentRequest.resolve(interaction -> delete
+        .delete(
+            MerchantDeleteCommand.builder().reference(MerchantReference.of(uid)).build(interaction))
+        .thenApply(res -> res.getMerchant().map(this::toApiModel)));
   }
 
   /**
@@ -132,11 +122,9 @@ public class MerchantController implements MerchantApi {
   @Override
   @Transactional
   public Response merchantApiDisable(final String uid) {
-    return currentRequest.resolve(interaction -> {
-      MerchantDisableResult result = disable.disable(
-          MerchantDisableCommand.builder().reference(MerchantReference.of(uid)).build(interaction));
-      return result.getMerchant().thenApply(res -> res.map(this::toApiModel));
-    });
+    return currentRequest.resolve(interaction -> disable.disable(
+        MerchantDisableCommand.builder().reference(MerchantReference.of(uid)).build(interaction))
+        .thenApply(res -> res.getMerchant().map(this::toApiModel)));
   }
 
   /**
@@ -147,11 +135,10 @@ public class MerchantController implements MerchantApi {
   @Override
   @Transactional
   public Response merchantApiEnable(final String uid) {
-    return currentRequest.resolve(interaction -> {
-      MerchantEnableResult result = enable.enable(
-          MerchantEnableCommand.builder().reference(MerchantReference.of(uid)).build(interaction));
-      return result.getMerchant().thenApply(res -> res.map(this::toApiModel));
-    });
+    return currentRequest.resolve(interaction -> enable
+        .enable(
+            MerchantEnableCommand.builder().reference(MerchantReference.of(uid)).build(interaction))
+        .thenApply(res -> res.getMerchant().map(this::toApiModel)));
   }
 
   /**
@@ -181,11 +168,13 @@ public class MerchantController implements MerchantApi {
         cursor = cursor.order(Arrays.asList(order.split(",")).stream().map(this::mapOrder)
             .filter(Objects::nonNull).toList());
       }
-      MerchantListResult result = list.list(MerchantListQuery.builder().filter(filter.build())
-          .cursor(cursor.build()).build(interaction));
-      return result.getMerchants().thenApply(
-          merchants -> new MerchantList().content(toApiModel(merchants)).next(next(merchants)));
-    });
+      return list.list(MerchantListQuery.builder().filter(filter.build()).cursor(cursor.build())
+          .build(interaction));
+    }, value -> Response
+        .ok(new MerchantList().content(toApiModel(value.getMerchants()))
+            .next(next(value.getMerchants())))
+        .header("Last-Modified", value.getSince().format(DateTimeFormatter.RFC_1123_DATE_TIME))
+        .build());
   }
 
   /**
@@ -195,11 +184,13 @@ public class MerchantController implements MerchantApi {
    */
   @Override
   public Response merchantApiRetrieve(final String uid) {
-    return currentRequest.resolve(interaction -> {
-      MerchantRetrieveResult result = retrieve.retrieve(
-          MerchantRetrieveQuery.builder().reference(MerchantReference.of(uid)).build(interaction));
-      return result.getMerchant().thenApply(res -> res.map(this::toApiModel));
-    });
+    return currentRequest.resolve(
+        interaction -> retrieve.retrieve(MerchantRetrieveQuery.builder()
+            .reference(MerchantReference.of(uid)).build(interaction)),
+        value -> value.getMerchant()
+            .map(merchant -> Response.ok(toApiModel(merchant)).header("Last-Modified",
+                value.getSince().format(DateTimeFormatter.RFC_1123_DATE_TIME)))
+            .orElseGet(() -> Response.status(404)).build());
   }
 
   /**
@@ -211,12 +202,10 @@ public class MerchantController implements MerchantApi {
   @Override
   @Transactional
   public Response merchantApiUpdate(final String uid, final Merchant merchant) {
-    return currentRequest.resolve(interaction -> {
-      MerchantDto dto = toDomainModel(merchant);
-      MerchantUpdateResult result = update.update(MerchantUpdateCommand.builder().dto(dto)
-          .reference(MerchantReference.of(uid)).build(interaction));
-      return result.getMerchant().thenApply(res -> res.map(this::toApiModel));
-    });
+    return currentRequest.resolve(interaction -> update
+        .update(MerchantUpdateCommand.builder().dto(toDomainModel(merchant))
+            .reference(MerchantReference.of(uid)).build(interaction))
+        .thenApply(res -> res.getMerchant().map(this::toApiModel)));
   }
 
   /**

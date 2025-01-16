@@ -60,21 +60,26 @@ public class CurrentRequest {
   // lo que permite recuperar actor y conexión de forma asincrona y esperar para invocar cuando
   // este resueltos
   public <T> Response resolve(Function<Interaction, CompletionStage<T>> callback) {
+    return resolve(callback, null);
+  }
+
+  public <T> Response resolve(Function<Interaction, CompletionStage<T>> callback,
+      Function<T, Response> customize) {
     Actor actor = getActor();
     Connection conn = getConnection();
     Interaction inter = new Interaction(Interaction.builder().actor(actor).connection(conn)) {};
-    return response(callback.apply(inter));
+    return response(callback.apply(inter), customize);
   }
 
-  private <T> Response response(CompletionStage<T> future) {
+  private <T> Response response(CompletionStage<T> future, Function<T, Response> customize) {
     try {
       T response = future.toCompletableFuture().get(1, TimeUnit.SECONDS);
-      if (response instanceof Optional<?> opt) {
-        return opt.map(res -> Response.ok(res).build())
-            .orElseGet(() -> Response.status(404).build());
-      } else {
-        return Response.ok(response).build();
-      }
+      @SuppressWarnings("unchecked")
+      Optional<T> opresponse =
+          (response instanceof Optional<?> opt) ? (Optional<T>) opt : Optional.of(response);
+      return opresponse
+          .map(res -> null == customize ? Response.ok(response).build() : customize.apply(response))
+          .orElseGet(() -> Response.status(404).build());
     } catch (ExecutionException e) {
       Throwable th = e.getCause();
       th.printStackTrace();

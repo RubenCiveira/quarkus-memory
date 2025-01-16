@@ -8,7 +8,7 @@ import org.acme.common.action.Interaction;
 import org.acme.common.exception.NotAllowedException;
 import org.acme.features.market.place.application.PlaceDto;
 import org.acme.features.market.place.application.service.PlacesVisibilityService;
-import org.acme.features.market.place.domain.model.Place;
+import org.acme.features.market.place.domain.gateway.PlaceCached;
 
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.event.Event;
@@ -48,15 +48,14 @@ public class ListPlaceUsecase {
    * @param query a filter to retrieve only matching values
    * @return The slide with some values
    */
-  public PlaceListResult list(final PlaceListQuery query) {
-    CompletionStage<List<Place>> future = allow(query).getDetail().thenCompose(detail -> {
+  public CompletionStage<PlaceListResult> list(final PlaceListQuery query) {
+    CompletionStage<PlaceCached> future = allow(query).getDetail().thenCompose(detail -> {
       if (!detail.isAllowed()) {
         throw new NotAllowedException(detail.getDescription());
       }
-      return visibility.listVisibles(query, query.getFilter(), query.getCursor());
+      return visibility.listCachedVisibles(query, query.getFilter(), query.getCursor());
     });
-    return PlaceListResult.builder().query(query)
-        .places(future.thenCompose(values -> mapList(query, values))).build();
+    return future.thenCompose(values -> mapList(query, values));
   }
 
   /**
@@ -67,12 +66,14 @@ public class ListPlaceUsecase {
    * @param places
    * @return The slide with some values
    */
-  private CompletionStage<List<PlaceDto>> mapList(final PlaceListQuery query,
-      final List<Place> places) {
+  private CompletionStage<PlaceListResult> mapList(final PlaceListQuery query,
+      final PlaceCached places) {
     List<CompletableFuture<PlaceDto>> futures =
-        places.stream().map(place -> visibility.copyWithHidden(query, place))
+        places.getValue().stream().map(place -> visibility.copyWithHidden(query, place))
             .map(CompletionStage::toCompletableFuture).toList();
     return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-        .thenApply(voidResult -> futures.stream().map(CompletableFuture::join).toList());
+        .thenApply(voidResult -> PlaceListResult.builder().query(query)
+            .places(futures.stream().map(CompletableFuture::join).toList()).since(places.getSince())
+            .build());
   }
 }

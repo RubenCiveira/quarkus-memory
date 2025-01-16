@@ -35,10 +35,18 @@ tags:
     description: fruit
   - name: fruit-acl
     description: Access control for fruit
+  - name: medal
+    description: medal
+  - name: medal-acl
+    description: Access control for medal
   - name: merchant
     description: merchant
   - name: merchant-acl
     description: Access control for merchant
+  - name: verify
+    description: verify
+  - name: verify-acl
+    description: Access control for verify
   - name: place
     description: place
   - name: place-acl
@@ -570,6 +578,177 @@ paths:
                 $ref: '#/components/schemas/FruitSpecificAcl'
         '404':
           description: The item dont exists
+  /api/market/medals:
+    get:
+      tags:
+        - medal
+      summary: List of medal
+      operationId: medal-api-list
+      parameters:
+        - name: uid
+          in: query
+          description: Filter by one existent id
+          required: false
+          schema:
+            type: string
+        - name: uids
+          in: query
+          description: Filter by a list of ids
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+        - name: search
+          in: query
+          description: Textual search
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: The maximun number of results
+          required: false
+          schema:
+            type: integer
+        - name: since-uid
+          in: query
+          description: The maximun number of results
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedalList'
+    post:
+      tags:
+        - medal
+      summary: Create a new medal
+      operationId: medal-api-create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Medal'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Medal'
+  /api/market/medals/{uid}:
+    get:
+      tags:
+        - medal
+      summary: Retrive on  medal by their uid
+      operationId: medal-api-retrieve
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Medal'
+        '404':
+          description: The item dont exists
+    put:
+      tags:
+        - medal
+      summary: Update a medal by their uid
+      operationId: medal-api-update
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Medal'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Medal'
+        '404':
+          description: The item dont exists
+    delete:
+      tags:
+        - medal
+      summary: Delete a  medal by their uid
+      operationId: medal-api-delete
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Medal'
+        '404':
+          description: The item dont exists
+  /api/me/acl/market/medals:
+    get:
+      tags:
+        - medal-acl
+      summary: Check for allow permissions for the current user on medal
+      operationId: medal-api-generic-acl
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedalGenericAcl'
+  /api/me/acl/market/medals/{uid}:
+    get:
+      tags:
+        - medal-acl
+      summary: Check for allow permissions for the current user on medal by their uid
+      operationId: medal-api-contextual-acl
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedalSpecificAcl'
+        '404':
+          description: The item dont exists
   /api/market/merchants:
     get:
       tags:
@@ -795,6 +974,177 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MerchantSpecificAcl'
+        '404':
+          description: The item dont exists
+  /api/market/verifies:
+    get:
+      tags:
+        - verify
+      summary: List of verify
+      operationId: verify-api-list
+      parameters:
+        - name: uid
+          in: query
+          description: Filter by one existent id
+          required: false
+          schema:
+            type: string
+        - name: uids
+          in: query
+          description: Filter by a list of ids
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+        - name: search
+          in: query
+          description: Textual search
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: The maximun number of results
+          required: false
+          schema:
+            type: integer
+        - name: since-uid
+          in: query
+          description: The maximun number of results
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyList'
+    post:
+      tags:
+        - verify
+      summary: Create a new verify
+      operationId: verify-api-create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Verify'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Verify'
+  /api/market/verifies/{uid}:
+    get:
+      tags:
+        - verify
+      summary: Retrive on  verify by their uid
+      operationId: verify-api-retrieve
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Verify'
+        '404':
+          description: The item dont exists
+    put:
+      tags:
+        - verify
+      summary: Update a verify by their uid
+      operationId: verify-api-update
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Verify'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Verify'
+        '404':
+          description: The item dont exists
+    delete:
+      tags:
+        - verify
+      summary: Delete a  verify by their uid
+      operationId: verify-api-delete
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Verify'
+        '404':
+          description: The item dont exists
+  /api/me/acl/market/verifies:
+    get:
+      tags:
+        - verify-acl
+      summary: Check for allow permissions for the current user on verify
+      operationId: verify-api-generic-acl
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyGenericAcl'
+  /api/me/acl/market/verifies/{uid}:
+    get:
+      tags:
+        - verify-acl
+      summary: Check for allow permissions for the current user on verify by their uid
+      operationId: verify-api-contextual-acl
+      parameters:
+        - name: uid
+          in: path
+          description: The iten identification
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifySpecificAcl'
         '404':
           description: The item dont exists
   /api/market/places:
@@ -1330,6 +1680,90 @@ components:
           type: array
           items:
             type: string
+    Medal:
+      type: object
+      properties:
+        uid:
+          type: string
+        name:
+          type: string
+        version:
+          type: integer
+          format: int32
+    MedalList:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Medal'
+        next:
+          $ref: '#/components/schemas/MedalListNextOffset'
+    MedalListNextOffset:
+      type: object
+      properties:
+        since-uid:
+          type: string
+    MedalGenericAcl:
+      type: object
+      properties:
+        allows:
+          $ref: '#/components/schemas/MedalAclGenericAllows'
+        fields:
+          $ref: '#/components/schemas/MedalAclFields'
+    MedalSpecificAcl:
+      type: object
+      properties:
+        allows:
+          $ref: '#/components/schemas/MedalAclSpecificAllows'
+        fields:
+          $ref: '#/components/schemas/MedalAclFields'
+    MedalAclGenericAllows:
+      type: object
+      properties:
+        retrieve:
+          $ref: '#/components/schemas/CommonAllow'
+        create:
+          $ref: '#/components/schemas/CommonAllow'
+        update:
+          $ref: '#/components/schemas/CommonAllow'
+        delete:
+          $ref: '#/components/schemas/CommonAllow'
+        list:
+          $ref: '#/components/schemas/CommonAllow'
+      required:
+        - retrieve
+        - create
+        - update
+        - delete
+        - list
+    MedalAclSpecificAllows:
+      type: object
+      properties:
+        retrieve:
+          $ref: '#/components/schemas/CommonAllow'
+        create:
+          $ref: '#/components/schemas/CommonAllow'
+        update:
+          $ref: '#/components/schemas/CommonAllow'
+        delete:
+          $ref: '#/components/schemas/CommonAllow'
+      required:
+        - retrieve
+        - create
+        - update
+        - delete
+    MedalAclFields:
+      type: object
+      properties:
+        noEditables:
+          type: array
+          items:
+            type: string
+        noVisibles:
+          type: array
+          items:
+            type: string
     Merchant:
       type: object
       properties:
@@ -1420,6 +1854,90 @@ components:
         - enable
         - disable
     MerchantAclFields:
+      type: object
+      properties:
+        noEditables:
+          type: array
+          items:
+            type: string
+        noVisibles:
+          type: array
+          items:
+            type: string
+    Verify:
+      type: object
+      properties:
+        uid:
+          type: string
+        name:
+          type: string
+        version:
+          type: integer
+          format: int32
+    VerifyList:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Verify'
+        next:
+          $ref: '#/components/schemas/VerifyListNextOffset'
+    VerifyListNextOffset:
+      type: object
+      properties:
+        since-uid:
+          type: string
+    VerifyGenericAcl:
+      type: object
+      properties:
+        allows:
+          $ref: '#/components/schemas/VerifyAclGenericAllows'
+        fields:
+          $ref: '#/components/schemas/VerifyAclFields'
+    VerifySpecificAcl:
+      type: object
+      properties:
+        allows:
+          $ref: '#/components/schemas/VerifyAclSpecificAllows'
+        fields:
+          $ref: '#/components/schemas/VerifyAclFields'
+    VerifyAclGenericAllows:
+      type: object
+      properties:
+        retrieve:
+          $ref: '#/components/schemas/CommonAllow'
+        create:
+          $ref: '#/components/schemas/CommonAllow'
+        update:
+          $ref: '#/components/schemas/CommonAllow'
+        delete:
+          $ref: '#/components/schemas/CommonAllow'
+        list:
+          $ref: '#/components/schemas/CommonAllow'
+      required:
+        - retrieve
+        - create
+        - update
+        - delete
+        - list
+    VerifyAclSpecificAllows:
+      type: object
+      properties:
+        retrieve:
+          $ref: '#/components/schemas/CommonAllow'
+        create:
+          $ref: '#/components/schemas/CommonAllow'
+        update:
+          $ref: '#/components/schemas/CommonAllow'
+        delete:
+          $ref: '#/components/schemas/CommonAllow'
+      required:
+        - retrieve
+        - create
+        - update
+        - delete
+    VerifyAclFields:
       type: object
       properties:
         noEditables:

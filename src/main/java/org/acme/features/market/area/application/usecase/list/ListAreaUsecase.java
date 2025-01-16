@@ -8,7 +8,7 @@ import org.acme.common.action.Interaction;
 import org.acme.common.exception.NotAllowedException;
 import org.acme.features.market.area.application.AreaDto;
 import org.acme.features.market.area.application.service.AreasVisibilityService;
-import org.acme.features.market.area.domain.model.Area;
+import org.acme.features.market.area.domain.gateway.AreaCached;
 
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.event.Event;
@@ -48,15 +48,14 @@ public class ListAreaUsecase {
    * @param query a filter to retrieve only matching values
    * @return The slide with some values
    */
-  public AreaListResult list(final AreaListQuery query) {
-    CompletionStage<List<Area>> future = allow(query).getDetail().thenCompose(detail -> {
+  public CompletionStage<AreaListResult> list(final AreaListQuery query) {
+    CompletionStage<AreaCached> future = allow(query).getDetail().thenCompose(detail -> {
       if (!detail.isAllowed()) {
         throw new NotAllowedException(detail.getDescription());
       }
-      return visibility.listVisibles(query, query.getFilter(), query.getCursor());
+      return visibility.listCachedVisibles(query, query.getFilter(), query.getCursor());
     });
-    return AreaListResult.builder().query(query)
-        .areas(future.thenCompose(values -> mapList(query, values))).build();
+    return future.thenCompose(values -> mapList(query, values));
   }
 
   /**
@@ -67,12 +66,14 @@ public class ListAreaUsecase {
    * @param areas
    * @return The slide with some values
    */
-  private CompletionStage<List<AreaDto>> mapList(final AreaListQuery query,
-      final List<Area> areas) {
+  private CompletionStage<AreaListResult> mapList(final AreaListQuery query,
+      final AreaCached areas) {
     List<CompletableFuture<AreaDto>> futures =
-        areas.stream().map(area -> visibility.copyWithHidden(query, area))
+        areas.getValue().stream().map(area -> visibility.copyWithHidden(query, area))
             .map(CompletionStage::toCompletableFuture).toList();
     return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-        .thenApply(voidResult -> futures.stream().map(CompletableFuture::join).toList());
+        .thenApply(voidResult -> AreaListResult.builder().query(query)
+            .areas(futures.stream().map(CompletableFuture::join).toList()).since(areas.getSince())
+            .build());
   }
 }

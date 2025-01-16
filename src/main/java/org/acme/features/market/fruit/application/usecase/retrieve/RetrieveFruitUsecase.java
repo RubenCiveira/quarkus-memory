@@ -1,14 +1,14 @@
 package org.acme.features.market.fruit.application.usecase.retrieve;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.acme.common.action.Interaction;
 import org.acme.common.exception.NotAllowedException;
-import org.acme.features.market.fruit.application.FruitDto;
 import org.acme.features.market.fruit.application.service.FruitsVisibilityService;
-import org.acme.features.market.fruit.domain.model.Fruit;
+import org.acme.features.market.fruit.domain.gateway.FruitCached;
 import org.acme.features.market.fruit.domain.model.FruitRef;
 
 import jakarta.enterprise.context.RequestScoped;
@@ -63,16 +63,15 @@ public class RetrieveFruitUsecase {
    * @param query a filter to retrieve only matching values
    * @return The slide with some values
    */
-  public FruitRetrieveResult retrieve(final FruitRetrieveQuery query) {
-    CompletionStage<Optional<Fruit>> result =
+  public CompletionStage<FruitRetrieveResult> retrieve(final FruitRetrieveQuery query) {
+    CompletionStage<FruitCached> result =
         allow(query, query.getReference()).getDetail().thenCompose(detail -> {
           if (!detail.isAllowed()) {
             throw new NotAllowedException(detail.getDescription());
           }
-          return visibility.retrieveVisible(query, query.getReference().getUidValue());
+          return visibility.retrieveCachedVisible(query, query.getReference().getUidValue());
         });
-    return FruitRetrieveResult.builder().interaction(query)
-        .fruit(result.thenCompose(op -> this.mapEntity(query, op))).build();
+    return result.thenCompose(op -> this.mapEntity(query, op));
   }
 
   /**
@@ -83,9 +82,13 @@ public class RetrieveFruitUsecase {
    * @param opfruit
    * @return The slide with some values
    */
-  private CompletionStage<Optional<FruitDto>> mapEntity(final FruitRetrieveQuery query,
-      final Optional<Fruit> opfruit) {
-    return opfruit.map(fruit -> visibility.copyWithHidden(query, fruit).thenApply(Optional::of))
-        .orElseGet(() -> CompletableFuture.completedFuture(Optional.empty()));
+  private CompletionStage<FruitRetrieveResult> mapEntity(final FruitRetrieveQuery query,
+      final FruitCached opfruit) {
+    return opfruit.first()
+        .map(fruit -> visibility.copyWithHidden(query, fruit)
+            .thenApply(fruitWithHidden -> FruitRetrieveResult.builder().interaction(query)
+                .fruit(Optional.of(fruitWithHidden)).since(opfruit.getSince()).build()))
+        .orElseGet(() -> CompletableFuture.completedFuture(FruitRetrieveResult.builder()
+            .interaction(query).fruit(Optional.empty()).since(OffsetDateTime.now()).build()));
   }
 }

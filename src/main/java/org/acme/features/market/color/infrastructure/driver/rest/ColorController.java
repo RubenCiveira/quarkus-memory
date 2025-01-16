@@ -1,24 +1,20 @@
 package org.acme.features.market.color.infrastructure.driver.rest;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
 import org.acme.common.rest.CurrentRequest;
 import org.acme.features.market.color.application.ColorDto;
 import org.acme.features.market.color.application.usecase.create.ColorCreateCommand;
-import org.acme.features.market.color.application.usecase.create.ColorCreateResult;
 import org.acme.features.market.color.application.usecase.create.CreateColorUsecase;
 import org.acme.features.market.color.application.usecase.delete.ColorDeleteCommand;
-import org.acme.features.market.color.application.usecase.delete.ColorDeleteResult;
 import org.acme.features.market.color.application.usecase.delete.DeleteColorUsecase;
 import org.acme.features.market.color.application.usecase.list.ColorListQuery;
-import org.acme.features.market.color.application.usecase.list.ColorListResult;
 import org.acme.features.market.color.application.usecase.list.ListColorUsecase;
 import org.acme.features.market.color.application.usecase.retrieve.ColorRetrieveQuery;
-import org.acme.features.market.color.application.usecase.retrieve.ColorRetrieveResult;
 import org.acme.features.market.color.application.usecase.retrieve.RetrieveColorUsecase;
 import org.acme.features.market.color.application.usecase.update.ColorUpdateCommand;
-import org.acme.features.market.color.application.usecase.update.ColorUpdateResult;
 import org.acme.features.market.color.application.usecase.update.UpdateColorUsecase;
 import org.acme.features.market.color.domain.gateway.ColorCursor;
 import org.acme.features.market.color.domain.gateway.ColorFilter;
@@ -83,12 +79,9 @@ public class ColorController implements ColorApi {
   @Override
   @Transactional
   public Response colorApiCreate(Color color) {
-    return currentRequest.resolve(interaction -> {
-      ColorDto dto = toDomainModel(color);
-      ColorCreateResult result =
-          create.create(ColorCreateCommand.builder().dto(dto).build(interaction));
-      return result.getColor().thenApply(res -> res.map(this::toApiModel));
-    });
+    return currentRequest.resolve(interaction -> create
+        .create(ColorCreateCommand.builder().dto(toDomainModel(color)).build(interaction))
+        .thenApply(res -> res.getColor().map(this::toApiModel)));
   }
 
   /**
@@ -99,11 +92,9 @@ public class ColorController implements ColorApi {
   @Override
   @Transactional
   public Response colorApiDelete(final String uid) {
-    return currentRequest.resolve(interaction -> {
-      ColorDeleteResult result = delete.delete(
-          ColorDeleteCommand.builder().reference(ColorReference.of(uid)).build(interaction));
-      return result.getColor().thenApply(res -> res.map(this::toApiModel));
-    });
+    return currentRequest.resolve(interaction -> delete
+        .delete(ColorDeleteCommand.builder().reference(ColorReference.of(uid)).build(interaction))
+        .thenApply(res -> res.getColor().map(this::toApiModel)));
   }
 
   /**
@@ -130,11 +121,12 @@ public class ColorController implements ColorApi {
       if (null != merchant) {
         filter = filter.merchant(MerchantReference.of(merchant));
       }
-      ColorListResult result = list.list(ColorListQuery.builder().filter(filter.build())
-          .cursor(cursor.build()).build(interaction));
-      return result.getColors()
-          .thenApply(colors -> new ColorList().content(toApiModel(colors)).next(next(colors)));
-    });
+      return list.list(ColorListQuery.builder().filter(filter.build()).cursor(cursor.build())
+          .build(interaction));
+    }, value -> Response
+        .ok(new ColorList().content(toApiModel(value.getColors())).next(next(value.getColors())))
+        .header("Last-Modified", value.getSince().format(DateTimeFormatter.RFC_1123_DATE_TIME))
+        .build());
   }
 
   /**
@@ -144,11 +136,13 @@ public class ColorController implements ColorApi {
    */
   @Override
   public Response colorApiRetrieve(final String uid) {
-    return currentRequest.resolve(interaction -> {
-      ColorRetrieveResult result = retrieve.retrieve(
-          ColorRetrieveQuery.builder().reference(ColorReference.of(uid)).build(interaction));
-      return result.getColor().thenApply(res -> res.map(this::toApiModel));
-    });
+    return currentRequest.resolve(
+        interaction -> retrieve.retrieve(
+            ColorRetrieveQuery.builder().reference(ColorReference.of(uid)).build(interaction)),
+        value -> value.getColor()
+            .map(color -> Response.ok(toApiModel(color)).header("Last-Modified",
+                value.getSince().format(DateTimeFormatter.RFC_1123_DATE_TIME)))
+            .orElseGet(() -> Response.status(404)).build());
   }
 
   /**
@@ -160,12 +154,10 @@ public class ColorController implements ColorApi {
   @Override
   @Transactional
   public Response colorApiUpdate(final String uid, final Color color) {
-    return currentRequest.resolve(interaction -> {
-      ColorDto dto = toDomainModel(color);
-      ColorUpdateResult result = update.update(ColorUpdateCommand.builder().dto(dto)
-          .reference(ColorReference.of(uid)).build(interaction));
-      return result.getColor().thenApply(res -> res.map(this::toApiModel));
-    });
+    return currentRequest.resolve(interaction -> update
+        .update(ColorUpdateCommand.builder().dto(toDomainModel(color))
+            .reference(ColorReference.of(uid)).build(interaction))
+        .thenApply(res -> res.getColor().map(this::toApiModel)));
   }
 
   /**

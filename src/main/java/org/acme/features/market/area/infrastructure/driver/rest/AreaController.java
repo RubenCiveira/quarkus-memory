@@ -1,24 +1,20 @@
 package org.acme.features.market.area.infrastructure.driver.rest;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
 import org.acme.common.rest.CurrentRequest;
 import org.acme.features.market.area.application.AreaDto;
 import org.acme.features.market.area.application.usecase.create.AreaCreateCommand;
-import org.acme.features.market.area.application.usecase.create.AreaCreateResult;
 import org.acme.features.market.area.application.usecase.create.CreateAreaUsecase;
 import org.acme.features.market.area.application.usecase.delete.AreaDeleteCommand;
-import org.acme.features.market.area.application.usecase.delete.AreaDeleteResult;
 import org.acme.features.market.area.application.usecase.delete.DeleteAreaUsecase;
 import org.acme.features.market.area.application.usecase.list.AreaListQuery;
-import org.acme.features.market.area.application.usecase.list.AreaListResult;
 import org.acme.features.market.area.application.usecase.list.ListAreaUsecase;
 import org.acme.features.market.area.application.usecase.retrieve.AreaRetrieveQuery;
-import org.acme.features.market.area.application.usecase.retrieve.AreaRetrieveResult;
 import org.acme.features.market.area.application.usecase.retrieve.RetrieveAreaUsecase;
 import org.acme.features.market.area.application.usecase.update.AreaUpdateCommand;
-import org.acme.features.market.area.application.usecase.update.AreaUpdateResult;
 import org.acme.features.market.area.application.usecase.update.UpdateAreaUsecase;
 import org.acme.features.market.area.domain.gateway.AreaCursor;
 import org.acme.features.market.area.domain.gateway.AreaFilter;
@@ -83,12 +79,9 @@ public class AreaController implements AreaApi {
   @Override
   @Transactional
   public Response areaApiCreate(Area area) {
-    return currentRequest.resolve(interaction -> {
-      AreaDto dto = toDomainModel(area);
-      AreaCreateResult result =
-          create.create(AreaCreateCommand.builder().dto(dto).build(interaction));
-      return result.getArea().thenApply(res -> res.map(this::toApiModel));
-    });
+    return currentRequest.resolve(interaction -> create
+        .create(AreaCreateCommand.builder().dto(toDomainModel(area)).build(interaction))
+        .thenApply(res -> res.getArea().map(this::toApiModel)));
   }
 
   /**
@@ -99,11 +92,9 @@ public class AreaController implements AreaApi {
   @Override
   @Transactional
   public Response areaApiDelete(final String uid) {
-    return currentRequest.resolve(interaction -> {
-      AreaDeleteResult result = delete
-          .delete(AreaDeleteCommand.builder().reference(AreaReference.of(uid)).build(interaction));
-      return result.getArea().thenApply(res -> res.map(this::toApiModel));
-    });
+    return currentRequest.resolve(interaction -> delete
+        .delete(AreaDeleteCommand.builder().reference(AreaReference.of(uid)).build(interaction))
+        .thenApply(res -> res.getArea().map(this::toApiModel)));
   }
 
   /**
@@ -130,11 +121,12 @@ public class AreaController implements AreaApi {
       if (null != place) {
         filter = filter.place(PlaceReference.of(place));
       }
-      AreaListResult result = list.list(
+      return list.list(
           AreaListQuery.builder().filter(filter.build()).cursor(cursor.build()).build(interaction));
-      return result.getAreas()
-          .thenApply(areas -> new AreaList().content(toApiModel(areas)).next(next(areas)));
-    });
+    }, value -> Response
+        .ok(new AreaList().content(toApiModel(value.getAreas())).next(next(value.getAreas())))
+        .header("Last-Modified", value.getSince().format(DateTimeFormatter.RFC_1123_DATE_TIME))
+        .build());
   }
 
   /**
@@ -144,11 +136,13 @@ public class AreaController implements AreaApi {
    */
   @Override
   public Response areaApiRetrieve(final String uid) {
-    return currentRequest.resolve(interaction -> {
-      AreaRetrieveResult result = retrieve.retrieve(
-          AreaRetrieveQuery.builder().reference(AreaReference.of(uid)).build(interaction));
-      return result.getArea().thenApply(res -> res.map(this::toApiModel));
-    });
+    return currentRequest.resolve(
+        interaction -> retrieve.retrieve(
+            AreaRetrieveQuery.builder().reference(AreaReference.of(uid)).build(interaction)),
+        value -> value.getArea()
+            .map(area -> Response.ok(toApiModel(area)).header("Last-Modified",
+                value.getSince().format(DateTimeFormatter.RFC_1123_DATE_TIME)))
+            .orElseGet(() -> Response.status(404)).build());
   }
 
   /**
@@ -160,12 +154,10 @@ public class AreaController implements AreaApi {
   @Override
   @Transactional
   public Response areaApiUpdate(final String uid, final Area area) {
-    return currentRequest.resolve(interaction -> {
-      AreaDto dto = toDomainModel(area);
-      AreaUpdateResult result = update.update(
-          AreaUpdateCommand.builder().dto(dto).reference(AreaReference.of(uid)).build(interaction));
-      return result.getArea().thenApply(res -> res.map(this::toApiModel));
-    });
+    return currentRequest.resolve(interaction -> update
+        .update(AreaUpdateCommand.builder().dto(toDomainModel(area))
+            .reference(AreaReference.of(uid)).build(interaction))
+        .thenApply(res -> res.getArea().map(this::toApiModel)));
   }
 
   /**

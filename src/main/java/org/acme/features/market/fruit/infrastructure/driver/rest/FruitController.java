@@ -1,5 +1,6 @@
 package org.acme.features.market.fruit.infrastructure.driver.rest;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -7,18 +8,13 @@ import org.acme.common.rest.CurrentRequest;
 import org.acme.features.market.fruit.application.FruitDto;
 import org.acme.features.market.fruit.application.usecase.create.CreateFruitUsecase;
 import org.acme.features.market.fruit.application.usecase.create.FruitCreateCommand;
-import org.acme.features.market.fruit.application.usecase.create.FruitCreateResult;
 import org.acme.features.market.fruit.application.usecase.delete.DeleteFruitUsecase;
 import org.acme.features.market.fruit.application.usecase.delete.FruitDeleteCommand;
-import org.acme.features.market.fruit.application.usecase.delete.FruitDeleteResult;
 import org.acme.features.market.fruit.application.usecase.list.FruitListQuery;
-import org.acme.features.market.fruit.application.usecase.list.FruitListResult;
 import org.acme.features.market.fruit.application.usecase.list.ListFruitUsecase;
 import org.acme.features.market.fruit.application.usecase.retrieve.FruitRetrieveQuery;
-import org.acme.features.market.fruit.application.usecase.retrieve.FruitRetrieveResult;
 import org.acme.features.market.fruit.application.usecase.retrieve.RetrieveFruitUsecase;
 import org.acme.features.market.fruit.application.usecase.update.FruitUpdateCommand;
-import org.acme.features.market.fruit.application.usecase.update.FruitUpdateResult;
 import org.acme.features.market.fruit.application.usecase.update.UpdateFruitUsecase;
 import org.acme.features.market.fruit.domain.gateway.FruitCursor;
 import org.acme.features.market.fruit.domain.gateway.FruitFilter;
@@ -80,12 +76,9 @@ public class FruitController implements FruitApi {
   @Override
   @Transactional
   public Response fruitApiCreate(Fruit fruit) {
-    return currentRequest.resolve(interaction -> {
-      FruitDto dto = toDomainModel(fruit);
-      FruitCreateResult result =
-          create.create(FruitCreateCommand.builder().dto(dto).build(interaction));
-      return result.getFruit().thenApply(res -> res.map(this::toApiModel));
-    });
+    return currentRequest.resolve(interaction -> create
+        .create(FruitCreateCommand.builder().dto(toDomainModel(fruit)).build(interaction))
+        .thenApply(res -> res.getFruit().map(this::toApiModel)));
   }
 
   /**
@@ -96,11 +89,9 @@ public class FruitController implements FruitApi {
   @Override
   @Transactional
   public Response fruitApiDelete(final String uid) {
-    return currentRequest.resolve(interaction -> {
-      FruitDeleteResult result = delete.delete(
-          FruitDeleteCommand.builder().reference(FruitReference.of(uid)).build(interaction));
-      return result.getFruit().thenApply(res -> res.map(this::toApiModel));
-    });
+    return currentRequest.resolve(interaction -> delete
+        .delete(FruitDeleteCommand.builder().reference(FruitReference.of(uid)).build(interaction))
+        .thenApply(res -> res.getFruit().map(this::toApiModel)));
   }
 
   /**
@@ -123,11 +114,12 @@ public class FruitController implements FruitApi {
       filter = filter.uid(uid);
       filter = filter.uids(uids);
       filter = filter.search(search);
-      FruitListResult result = list.list(FruitListQuery.builder().filter(filter.build())
-          .cursor(cursor.build()).build(interaction));
-      return result.getFruits()
-          .thenApply(fruits -> new FruitList().content(toApiModel(fruits)).next(next(fruits)));
-    });
+      return list.list(FruitListQuery.builder().filter(filter.build()).cursor(cursor.build())
+          .build(interaction));
+    }, value -> Response
+        .ok(new FruitList().content(toApiModel(value.getFruits())).next(next(value.getFruits())))
+        .header("Last-Modified", value.getSince().format(DateTimeFormatter.RFC_1123_DATE_TIME))
+        .build());
   }
 
   /**
@@ -137,11 +129,13 @@ public class FruitController implements FruitApi {
    */
   @Override
   public Response fruitApiRetrieve(final String uid) {
-    return currentRequest.resolve(interaction -> {
-      FruitRetrieveResult result = retrieve.retrieve(
-          FruitRetrieveQuery.builder().reference(FruitReference.of(uid)).build(interaction));
-      return result.getFruit().thenApply(res -> res.map(this::toApiModel));
-    });
+    return currentRequest.resolve(
+        interaction -> retrieve.retrieve(
+            FruitRetrieveQuery.builder().reference(FruitReference.of(uid)).build(interaction)),
+        value -> value.getFruit()
+            .map(fruit -> Response.ok(toApiModel(fruit)).header("Last-Modified",
+                value.getSince().format(DateTimeFormatter.RFC_1123_DATE_TIME)))
+            .orElseGet(() -> Response.status(404)).build());
   }
 
   /**
@@ -153,12 +147,10 @@ public class FruitController implements FruitApi {
   @Override
   @Transactional
   public Response fruitApiUpdate(final String uid, final Fruit fruit) {
-    return currentRequest.resolve(interaction -> {
-      FruitDto dto = toDomainModel(fruit);
-      FruitUpdateResult result = update.update(FruitUpdateCommand.builder().dto(dto)
-          .reference(FruitReference.of(uid)).build(interaction));
-      return result.getFruit().thenApply(res -> res.map(this::toApiModel));
-    });
+    return currentRequest.resolve(interaction -> update
+        .update(FruitUpdateCommand.builder().dto(toDomainModel(fruit))
+            .reference(FruitReference.of(uid)).build(interaction))
+        .thenApply(res -> res.getFruit().map(this::toApiModel)));
   }
 
   /**

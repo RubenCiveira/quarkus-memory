@@ -1,14 +1,14 @@
 package org.acme.features.market.merchant.application.usecase.retrieve;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.acme.common.action.Interaction;
 import org.acme.common.exception.NotAllowedException;
-import org.acme.features.market.merchant.application.MerchantDto;
 import org.acme.features.market.merchant.application.service.MerchantsVisibilityService;
-import org.acme.features.market.merchant.domain.model.Merchant;
+import org.acme.features.market.merchant.domain.gateway.MerchantCached;
 import org.acme.features.market.merchant.domain.model.MerchantRef;
 
 import jakarta.enterprise.context.RequestScoped;
@@ -63,16 +63,15 @@ public class RetrieveMerchantUsecase {
    * @param query a filter to retrieve only matching values
    * @return The slide with some values
    */
-  public MerchantRetrieveResult retrieve(final MerchantRetrieveQuery query) {
-    CompletionStage<Optional<Merchant>> result =
+  public CompletionStage<MerchantRetrieveResult> retrieve(final MerchantRetrieveQuery query) {
+    CompletionStage<MerchantCached> result =
         allow(query, query.getReference()).getDetail().thenCompose(detail -> {
           if (!detail.isAllowed()) {
             throw new NotAllowedException(detail.getDescription());
           }
-          return visibility.retrieveVisible(query, query.getReference().getUidValue());
+          return visibility.retrieveCachedVisible(query, query.getReference().getUidValue());
         });
-    return MerchantRetrieveResult.builder().interaction(query)
-        .merchant(result.thenCompose(op -> this.mapEntity(query, op))).build();
+    return result.thenCompose(op -> this.mapEntity(query, op));
   }
 
   /**
@@ -83,10 +82,13 @@ public class RetrieveMerchantUsecase {
    * @param opmerchant
    * @return The slide with some values
    */
-  private CompletionStage<Optional<MerchantDto>> mapEntity(final MerchantRetrieveQuery query,
-      final Optional<Merchant> opmerchant) {
-    return opmerchant
-        .map(merchant -> visibility.copyWithHidden(query, merchant).thenApply(Optional::of))
-        .orElseGet(() -> CompletableFuture.completedFuture(Optional.empty()));
+  private CompletionStage<MerchantRetrieveResult> mapEntity(final MerchantRetrieveQuery query,
+      final MerchantCached opmerchant) {
+    return opmerchant.first()
+        .map(merchant -> visibility.copyWithHidden(query, merchant)
+            .thenApply(merchantWithHidden -> MerchantRetrieveResult.builder().interaction(query)
+                .merchant(Optional.of(merchantWithHidden)).since(opmerchant.getSince()).build()))
+        .orElseGet(() -> CompletableFuture.completedFuture(MerchantRetrieveResult.builder()
+            .interaction(query).merchant(Optional.empty()).since(OffsetDateTime.now()).build()));
   }
 }

@@ -1,14 +1,14 @@
 package org.acme.features.market.color.application.usecase.retrieve;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.acme.common.action.Interaction;
 import org.acme.common.exception.NotAllowedException;
-import org.acme.features.market.color.application.ColorDto;
 import org.acme.features.market.color.application.service.ColorsVisibilityService;
-import org.acme.features.market.color.domain.model.Color;
+import org.acme.features.market.color.domain.gateway.ColorCached;
 import org.acme.features.market.color.domain.model.ColorRef;
 
 import jakarta.enterprise.context.RequestScoped;
@@ -63,16 +63,15 @@ public class RetrieveColorUsecase {
    * @param query a filter to retrieve only matching values
    * @return The slide with some values
    */
-  public ColorRetrieveResult retrieve(final ColorRetrieveQuery query) {
-    CompletionStage<Optional<Color>> result =
+  public CompletionStage<ColorRetrieveResult> retrieve(final ColorRetrieveQuery query) {
+    CompletionStage<ColorCached> result =
         allow(query, query.getReference()).getDetail().thenCompose(detail -> {
           if (!detail.isAllowed()) {
             throw new NotAllowedException(detail.getDescription());
           }
-          return visibility.retrieveVisible(query, query.getReference().getUidValue());
+          return visibility.retrieveCachedVisible(query, query.getReference().getUidValue());
         });
-    return ColorRetrieveResult.builder().interaction(query)
-        .color(result.thenCompose(op -> this.mapEntity(query, op))).build();
+    return result.thenCompose(op -> this.mapEntity(query, op));
   }
 
   /**
@@ -83,9 +82,13 @@ public class RetrieveColorUsecase {
    * @param opcolor
    * @return The slide with some values
    */
-  private CompletionStage<Optional<ColorDto>> mapEntity(final ColorRetrieveQuery query,
-      final Optional<Color> opcolor) {
-    return opcolor.map(color -> visibility.copyWithHidden(query, color).thenApply(Optional::of))
-        .orElseGet(() -> CompletableFuture.completedFuture(Optional.empty()));
+  private CompletionStage<ColorRetrieveResult> mapEntity(final ColorRetrieveQuery query,
+      final ColorCached opcolor) {
+    return opcolor.first()
+        .map(color -> visibility.copyWithHidden(query, color)
+            .thenApply(colorWithHidden -> ColorRetrieveResult.builder().interaction(query)
+                .color(Optional.of(colorWithHidden)).since(opcolor.getSince()).build()))
+        .orElseGet(() -> CompletableFuture.completedFuture(ColorRetrieveResult.builder()
+            .interaction(query).color(Optional.empty()).since(OffsetDateTime.now()).build()));
   }
 }

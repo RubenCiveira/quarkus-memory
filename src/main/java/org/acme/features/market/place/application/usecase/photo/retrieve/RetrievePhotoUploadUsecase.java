@@ -69,7 +69,8 @@ public class RetrievePhotoUploadUsecase {
    * @param query
    * @return The slide with some values
    */
-  public PlaceRetrieveUploadPhotoResult read(final PlaceRetrieveUploadPhotoQuery query) {
+  public CompletionStage<PlaceRetrieveUploadPhotoResult> read(
+      final PlaceRetrieveUploadPhotoQuery query) {
     CompletionStage<Optional<BinaryContent>> result =
         allow(query, query.getReference()).getDetail().thenCompose(detail -> {
           if (!detail.isAllowed()) {
@@ -77,7 +78,8 @@ public class RetrievePhotoUploadUsecase {
           }
           return visibility.retrieveVisible(query, query.getReference().getUidValue());
         }).thenCompose(this::readPhotoIfIsPresent);
-    return PlaceRetrieveUploadPhotoResult.builder().interaction(query).photo(result).build();
+    return result.thenApply(binary -> PlaceRetrieveUploadPhotoResult.builder().interaction(query)
+        .photo(binary).build());
   }
 
   /**

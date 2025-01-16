@@ -45,7 +45,8 @@ public class PhotoTemporalUploadUsecase {
    * @param query
    * @return
    */
-  public PlacePhotoTemporalUploadReadResult read(final PlacePhotoTemporalUploadReadQuery query) {
+  public CompletionStage<PlacePhotoTemporalUploadReadResult> read(
+      final PlacePhotoTemporalUploadReadQuery query) {
     CompletionStage<Optional<BinaryContent>> result =
         allow(query).getDetail().thenCompose(detail -> {
           if (!detail.isAllowed()) {
@@ -53,7 +54,8 @@ public class PhotoTemporalUploadUsecase {
           }
           return store.readTemporalPhoto(query.getKey());
         });
-    return PlacePhotoTemporalUploadReadResult.builder().interaction(query).binary(result).build();
+    return result.thenApply(binary -> PlacePhotoTemporalUploadReadResult.builder()
+        .interaction(query).binary(binary).build());
   }
 
   /**
@@ -63,13 +65,15 @@ public class PhotoTemporalUploadUsecase {
    * @param command a filter to retrieve only matching values
    * @return The slide with some values
    */
-  public PlacePhotoTemporalUploadResult upload(final PlacePhotoTemporalUploadCommand command) {
+  public CompletionStage<PlacePhotoTemporalUploadResult> upload(
+      final PlacePhotoTemporalUploadCommand command) {
     CompletionStage<String> result = allow(command).getDetail().thenCompose(detail -> {
       if (!detail.isAllowed()) {
         throw new NotAllowedException(detail.getDescription());
       }
       return store.storeTemporalPhoto(command.getBinary());
     });
-    return PlacePhotoTemporalUploadResult.builder().interaction(command).key(result).build();
+    return result.thenApply(
+        key -> PlacePhotoTemporalUploadResult.builder().interaction(command).key(key).build());
   }
 }

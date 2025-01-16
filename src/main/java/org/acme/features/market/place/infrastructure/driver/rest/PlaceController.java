@@ -1,6 +1,7 @@
 package org.acme.features.market.place.infrastructure.driver.rest;
 
 import java.io.InputStream;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -10,26 +11,18 @@ import org.acme.features.market.merchant.domain.model.MerchantReference;
 import org.acme.features.market.place.application.PlaceDto;
 import org.acme.features.market.place.application.usecase.create.CreatePlaceUsecase;
 import org.acme.features.market.place.application.usecase.create.PlaceCreateCommand;
-import org.acme.features.market.place.application.usecase.create.PlaceCreateResult;
 import org.acme.features.market.place.application.usecase.delete.DeletePlaceUsecase;
 import org.acme.features.market.place.application.usecase.delete.PlaceDeleteCommand;
-import org.acme.features.market.place.application.usecase.delete.PlaceDeleteResult;
 import org.acme.features.market.place.application.usecase.list.ListPlaceUsecase;
 import org.acme.features.market.place.application.usecase.list.PlaceListQuery;
-import org.acme.features.market.place.application.usecase.list.PlaceListResult;
 import org.acme.features.market.place.application.usecase.photo.retrieve.PlaceRetrieveUploadPhotoQuery;
-import org.acme.features.market.place.application.usecase.photo.retrieve.PlaceRetrieveUploadPhotoResult;
 import org.acme.features.market.place.application.usecase.photo.retrieve.RetrievePhotoUploadUsecase;
 import org.acme.features.market.place.application.usecase.photo.upload.PhotoTemporalUploadUsecase;
 import org.acme.features.market.place.application.usecase.photo.upload.PlacePhotoTemporalUploadCommand;
 import org.acme.features.market.place.application.usecase.photo.upload.PlacePhotoTemporalUploadReadQuery;
-import org.acme.features.market.place.application.usecase.photo.upload.PlacePhotoTemporalUploadReadResult;
-import org.acme.features.market.place.application.usecase.photo.upload.PlacePhotoTemporalUploadResult;
 import org.acme.features.market.place.application.usecase.retrieve.PlaceRetrieveQuery;
-import org.acme.features.market.place.application.usecase.retrieve.PlaceRetrieveResult;
 import org.acme.features.market.place.application.usecase.retrieve.RetrievePlaceUsecase;
 import org.acme.features.market.place.application.usecase.update.PlaceUpdateCommand;
-import org.acme.features.market.place.application.usecase.update.PlaceUpdateResult;
 import org.acme.features.market.place.application.usecase.update.UpdatePlaceUsecase;
 import org.acme.features.market.place.domain.gateway.PlaceCursor;
 import org.acme.features.market.place.domain.gateway.PlaceFilter;
@@ -105,12 +98,9 @@ public class PlaceController implements PlaceApi {
   @Override
   @Transactional
   public Response placeApiCreate(Place place) {
-    return currentRequest.resolve(interaction -> {
-      PlaceDto dto = toDomainModel(place);
-      PlaceCreateResult result =
-          create.create(PlaceCreateCommand.builder().dto(dto).build(interaction));
-      return result.getPlace().thenApply(res -> res.map(this::toApiModel));
-    });
+    return currentRequest.resolve(interaction -> create
+        .create(PlaceCreateCommand.builder().dto(toDomainModel(place)).build(interaction))
+        .thenApply(res -> res.getPlace().map(this::toApiModel)));
   }
 
   /**
@@ -121,11 +111,9 @@ public class PlaceController implements PlaceApi {
   @Override
   @Transactional
   public Response placeApiDelete(final String uid) {
-    return currentRequest.resolve(interaction -> {
-      PlaceDeleteResult result = delete.delete(
-          PlaceDeleteCommand.builder().reference(PlaceReference.of(uid)).build(interaction));
-      return result.getPlace().thenApply(res -> res.map(this::toApiModel));
-    });
+    return currentRequest.resolve(interaction -> delete
+        .delete(PlaceDeleteCommand.builder().reference(PlaceReference.of(uid)).build(interaction))
+        .thenApply(res -> res.getPlace().map(this::toApiModel)));
   }
 
   /**
@@ -152,11 +140,12 @@ public class PlaceController implements PlaceApi {
       if (null != merchant) {
         filter = filter.merchant(MerchantReference.of(merchant));
       }
-      PlaceListResult result = list.list(PlaceListQuery.builder().filter(filter.build())
-          .cursor(cursor.build()).build(interaction));
-      return result.getPlaces()
-          .thenApply(places -> new PlaceList().content(toApiModel(places)).next(next(places)));
-    });
+      return list.list(PlaceListQuery.builder().filter(filter.build()).cursor(cursor.build())
+          .build(interaction));
+    }, value -> Response
+        .ok(new PlaceList().content(toApiModel(value.getPlaces())).next(next(value.getPlaces())))
+        .header("Last-Modified", value.getSince().format(DateTimeFormatter.RFC_1123_DATE_TIME))
+        .build());
   }
 
   /**
@@ -166,11 +155,13 @@ public class PlaceController implements PlaceApi {
    */
   @Override
   public Response placeApiRetrieve(final String uid) {
-    return currentRequest.resolve(interaction -> {
-      PlaceRetrieveResult result = retrieve.retrieve(
-          PlaceRetrieveQuery.builder().reference(PlaceReference.of(uid)).build(interaction));
-      return result.getPlace().thenApply(res -> res.map(this::toApiModel));
-    });
+    return currentRequest.resolve(
+        interaction -> retrieve.retrieve(
+            PlaceRetrieveQuery.builder().reference(PlaceReference.of(uid)).build(interaction)),
+        value -> value.getPlace()
+            .map(place -> Response.ok(toApiModel(place)).header("Last-Modified",
+                value.getSince().format(DateTimeFormatter.RFC_1123_DATE_TIME)))
+            .orElseGet(() -> Response.status(404)).build());
   }
 
   /**
@@ -183,8 +174,8 @@ public class PlaceController implements PlaceApi {
     return currentRequest.resolve(interaction -> {
       PlaceRetrieveUploadPhotoQuery query = PlaceRetrieveUploadPhotoQuery.builder()
           .reference(PlaceReference.of(uid)).build(interaction);
-      PlaceRetrieveUploadPhotoResult result = retrievePhotoUploadUsecase.read(query);
-      return result.getPhoto().thenApply(op -> op.map(BinaryContent::getInputStream));
+      return retrievePhotoUploadUsecase.read(query)
+          .thenApply(op -> op.getPhoto().map(BinaryContent::getInputStream));
     });
   }
 
@@ -198,8 +189,8 @@ public class PlaceController implements PlaceApi {
     return currentRequest.resolve(interaction -> {
       PlacePhotoTemporalUploadReadQuery query =
           PlacePhotoTemporalUploadReadQuery.builder().key(temp).build(interaction);
-      PlacePhotoTemporalUploadReadResult result = tempPhotoUploadUsecase.read(query);
-      return result.getBinary().thenApply(op -> op.map(BinaryContent::getInputStream));
+      return tempPhotoUploadUsecase.read(query)
+          .thenApply(op -> op.getBinary().map(BinaryContent::getInputStream));
     });
   }
 
@@ -212,12 +203,10 @@ public class PlaceController implements PlaceApi {
   @Override
   @Transactional
   public Response placeApiUpdate(final String uid, final Place place) {
-    return currentRequest.resolve(interaction -> {
-      PlaceDto dto = toDomainModel(place);
-      PlaceUpdateResult result = update.update(PlaceUpdateCommand.builder().dto(dto)
-          .reference(PlaceReference.of(uid)).build(interaction));
-      return result.getPlace().thenApply(res -> res.map(this::toApiModel));
-    });
+    return currentRequest.resolve(interaction -> update
+        .update(PlaceUpdateCommand.builder().dto(toDomainModel(place))
+            .reference(PlaceReference.of(uid)).build(interaction))
+        .thenApply(res -> res.getPlace().map(this::toApiModel)));
   }
 
   /**
@@ -232,9 +221,8 @@ public class PlaceController implements PlaceApi {
           .binary(BinaryContent.builder().name("photo").contentType("")
               .lastModification(System.currentTimeMillis()).inputStream(file).build())
           .build(interaction);
-      PlacePhotoTemporalUploadResult result = tempPhotoUploadUsecase.upload(command);
-      return result.getKey().thenApply(
-          key -> currentRequest.getPublicHost() + "/api/market/places/-/temp-photo?temp=" + key);
+      return tempPhotoUploadUsecase.upload(command).thenApply(key -> currentRequest.getPublicHost()
+          + "/api/market/places/-/temp-photo?temp=" + key.getKey());
     });
   }
 

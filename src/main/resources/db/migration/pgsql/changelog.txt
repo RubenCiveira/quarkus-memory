@@ -7,3 +7,4 @@ db/migration/pgsql/001.000.000/001.000.000-model.changelog.pgsql.sql
 /db/migration/pgsql/001.000.000/001.000.006-model.changelog.pgsql.sql
 /db/migration/pgsql/001.000.000/001.000.007-model.changelog.pgsql.sql
 /db/migration/pgsql/001.000.000/001.000.008-model.changelog.pgsql.sql
+/db/migration/pgsql/001.000.000/001.000.009-model.changelog.pgsql.sql

@@ -8,7 +8,7 @@ import org.acme.common.action.Interaction;
 import org.acme.common.exception.NotAllowedException;
 import org.acme.features.market.merchant.application.MerchantDto;
 import org.acme.features.market.merchant.application.service.MerchantsVisibilityService;
-import org.acme.features.market.merchant.domain.model.Merchant;
+import org.acme.features.market.merchant.domain.gateway.MerchantCached;
 
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.event.Event;
@@ -48,15 +48,14 @@ public class ListMerchantUsecase {
    * @param query a filter to retrieve only matching values
    * @return The slide with some values
    */
-  public MerchantListResult list(final MerchantListQuery query) {
-    CompletionStage<List<Merchant>> future = allow(query).getDetail().thenCompose(detail -> {
+  public CompletionStage<MerchantListResult> list(final MerchantListQuery query) {
+    CompletionStage<MerchantCached> future = allow(query).getDetail().thenCompose(detail -> {
       if (!detail.isAllowed()) {
         throw new NotAllowedException(detail.getDescription());
       }
-      return visibility.listVisibles(query, query.getFilter(), query.getCursor());
+      return visibility.listCachedVisibles(query, query.getFilter(), query.getCursor());
     });
-    return MerchantListResult.builder().query(query)
-        .merchants(future.thenCompose(values -> mapList(query, values))).build();
+    return future.thenCompose(values -> mapList(query, values));
   }
 
   /**
@@ -67,12 +66,14 @@ public class ListMerchantUsecase {
    * @param merchants
    * @return The slide with some values
    */
-  private CompletionStage<List<MerchantDto>> mapList(final MerchantListQuery query,
-      final List<Merchant> merchants) {
+  private CompletionStage<MerchantListResult> mapList(final MerchantListQuery query,
+      final MerchantCached merchants) {
     List<CompletableFuture<MerchantDto>> futures =
-        merchants.stream().map(merchant -> visibility.copyWithHidden(query, merchant))
+        merchants.getValue().stream().map(merchant -> visibility.copyWithHidden(query, merchant))
             .map(CompletionStage::toCompletableFuture).toList();
     return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-        .thenApply(voidResult -> futures.stream().map(CompletableFuture::join).toList());
+        .thenApply(voidResult -> MerchantListResult.builder().query(query)
+            .merchants(futures.stream().map(CompletableFuture::join).toList())
+            .since(merchants.getSince()).build());
   }
 }
