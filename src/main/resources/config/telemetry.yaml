@@ -4,12 +4,6 @@ quarkus:
     console:
       format: "%d{HH:mm:ss} %-5p traceId=%X{traceId}, parentId=%X{parentId}, spanId=%X{spanId}, sampled=%X{sampled} [%c{2.}] (%t) %s%e%n"  
   otel:
-#    metrics:
-#      enabled: true
-#      exporter: logging
-#    metric:
-#      export:
-#        interval: 10000ms 
     traces:
       enabled: true
     logs:
