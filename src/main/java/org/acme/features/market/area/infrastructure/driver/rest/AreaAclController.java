@@ -152,7 +152,7 @@ public class AreaAclController implements AreaAclApi {
    */
   private CompletableFuture<Void> fixedFields(final AreaAclFields response,
       final Interaction query) {
-    return visibility.fieldsToFix(query).getFixed()
+    return visibility.fieldsToFix(query)
         .thenAccept(fields -> response.setNoEditables(new ArrayList<>(fields)))
         .toCompletableFuture();
   }
@@ -165,7 +165,7 @@ public class AreaAclController implements AreaAclApi {
    */
   private CompletableFuture<Void> hiddenFields(final AreaAclFields response,
       final Interaction query) {
-    return visibility.fieldsToHide(query).getHidden()
+    return visibility.fieldsToHide(query)
         .thenAccept(fields -> response.setNoVisibles(new ArrayList<>(fields)))
         .toCompletableFuture();
   }

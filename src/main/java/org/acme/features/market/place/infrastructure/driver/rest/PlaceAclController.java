@@ -157,7 +157,7 @@ public class PlaceAclController implements PlaceAclApi {
    */
   private CompletableFuture<Void> fixedFields(final PlaceAclFields response,
       final Interaction query) {
-    return visibility.fieldsToFix(query).getFixed()
+    return visibility.fieldsToFix(query)
         .thenAccept(fields -> response.setNoEditables(new ArrayList<>(fields)))
         .toCompletableFuture();
   }
@@ -170,7 +170,7 @@ public class PlaceAclController implements PlaceAclApi {
    */
   private CompletableFuture<Void> hiddenFields(final PlaceAclFields response,
       final Interaction query) {
-    return visibility.fieldsToHide(query).getHidden()
+    return visibility.fieldsToHide(query)
         .thenAccept(fields -> response.setNoVisibles(new ArrayList<>(fields)))
         .toCompletableFuture();
   }
