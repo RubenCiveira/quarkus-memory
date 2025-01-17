@@ -1,16 +1,25 @@
 # Observability
 quarkus:
+  log:
+    console:
+      format: "%d{HH:mm:ss} %-5p traceId=%X{traceId}, parentId=%X{parentId}, spanId=%X{spanId}, sampled=%X{sampled} [%c{2.}] (%t) %s%e%n"  
   otel:
-    metrics:
-      enabled: true
-      exporter: logging
+#    metrics:
+#      enabled: true
+#      exporter: logging
+#    metric:
+#      export:
+#        interval: 10000ms 
     traces:
       enabled: true
-      exporter: logging
     logs:
       enabled: true
-      exporter: logging
-    metric:
-      export:
-        interval: 10000ms 
+    exporter:
+      otlp:
+        traces:
+          protocol: ${telemetry.protocol:grpc}
+          endpoint: http://${telemetry.host:localhost}:${telemetry.port:4317}        
+        logs:
+          protocol: ${telemetry.protocol:grpc}
+          endpoint: http://${telemetry.host:localhost}:${telemetry.port:4317}
 

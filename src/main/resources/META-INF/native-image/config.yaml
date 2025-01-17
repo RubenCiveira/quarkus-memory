@@ -1,0 +1,8 @@
+quarkus:
+  ssl:
+    native: true
+  native:
+#    additional-build-args: "--initialize-at-build-time=io.opentelemetry.exporter.otlp.internal.OtlpSpanExporterProvider"
+    resources:
+      includes: db/**
+#    additional-build-args: "--initialize-at-run-time=io.opentelemetry.api.GlobalOpenTelemetry --initialize-at-build-time=io.opentelemetry.exporter.otlp.internal.OtlpSpanExporterProvider"

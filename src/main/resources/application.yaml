@@ -2,6 +2,7 @@
 quarkus:
   application:
     name: test
+    version: 1.0.0
   banner:
     path: banner.txt
   config:
@@ -12,7 +13,8 @@ quarkus:
       - config/security.yaml
       - config/database.yaml
       - config/cache.yaml
-      - META-INF/build/native.yaml
+      - config/oauth.yaml
+      - META-INF/native-image/config.yaml
   http:
     port: 8090
 

@@ -10,5 +10,5 @@ quarkus:
     cors:
       ~: true
       origins: /.*/
-      method: "*"
+      methods: "*"
       headers: "*"

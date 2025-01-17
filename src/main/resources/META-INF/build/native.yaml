@@ -1,7 +1,0 @@
-quarkus:
-  ssl:
-    native: true
-  native:
-    resources:
-      includes: db/**
-#    additional-build-args: "--initialize-at-run-time=io.opentelemetry.api.GlobalOpenTelemetry"
