@@ -1,4 +1,4 @@
-package org.acme.app.store;
+package org.acme.bootstrap.store;
 
 import java.io.IOException;
 import java.io.InputStream;

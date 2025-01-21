@@ -1,4 +1,4 @@
-package org.acme.app.rate;
+package org.acme.bootstrap.rate;
 
 import java.time.Duration;
 

@@ -1,4 +1,4 @@
-package org.acme.app;
+package org.acme.bootstrap;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 

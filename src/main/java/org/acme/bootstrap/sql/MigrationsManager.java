@@ -1,4 +1,4 @@
-package org.acme.app.sql;
+package org.acme.bootstrap.sql;
 
 import java.sql.SQLException;
 import java.util.Map;
