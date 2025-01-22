@@ -1,6 +1,7 @@
 package org.acme.features.market.place.domain.model.valueobject;
 
 import org.acme.common.exception.ConstraintException;
+import org.acme.common.validation.AbstractFailList;
 import org.acme.common.validation.ConstraintFail;
 import org.acme.common.validation.ConstraintFailList;
 
@@ -52,7 +53,7 @@ public class PlaceUidVO {
    * @param fails Error list
    * @return An empty instance
    */
-  public static PlaceUidVO tryFrom(final Object uid, final ConstraintFailList fails) {
+  public static <T extends AbstractFailList> PlaceUidVO tryFrom(final Object uid, final T fails) {
     if (null == uid) {
       fails.add(new ConstraintFail("not-null", "uid", null, "Cant be null"));
       return null;

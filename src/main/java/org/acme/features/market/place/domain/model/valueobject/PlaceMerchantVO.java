@@ -1,6 +1,7 @@
 package org.acme.features.market.place.domain.model.valueobject;
 
 import org.acme.common.exception.ConstraintException;
+import org.acme.common.validation.AbstractFailList;
 import org.acme.common.validation.ConstraintFail;
 import org.acme.common.validation.ConstraintFailList;
 import org.acme.features.market.merchant.domain.model.MerchantRef;
@@ -65,7 +66,8 @@ public class PlaceMerchantVO {
    * @param fails Error list
    * @return An empty instance
    */
-  public static PlaceMerchantVO tryFrom(final Object merchant, final ConstraintFailList fails) {
+  public static <T extends AbstractFailList> PlaceMerchantVO tryFrom(final Object merchant,
+      final T fails) {
     if (null == merchant) {
       fails.add(new ConstraintFail("not-null", "merchant", null, "Cant be null"));
       return null;

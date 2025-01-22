@@ -3,6 +3,7 @@ package org.acme.features.market.fruit.domain.model.valueobject;
 import java.util.Optional;
 
 import org.acme.common.exception.ConstraintException;
+import org.acme.common.validation.AbstractFailList;
 import org.acme.common.validation.ConstraintFail;
 import org.acme.common.validation.ConstraintFailList;
 
@@ -15,8 +16,8 @@ import lombok.With;
 @Getter
 @ToString
 @RequiredArgsConstructor
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @With
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class FruitVersionVO {
 
   /**
@@ -64,7 +65,8 @@ public class FruitVersionVO {
    * @param fails Error list
    * @return An empty instance
    */
-  public static FruitVersionVO tryFrom(final Object version, final ConstraintFailList fails) {
+  public static <T extends AbstractFailList> FruitVersionVO tryFrom(final Object version,
+      final T fails) {
     if (null == version) {
       return new FruitVersionVO(null);
     } else if (version instanceof Integer) {

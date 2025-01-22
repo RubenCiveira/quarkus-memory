@@ -1,6 +1,7 @@
 package org.acme.features.market.area.domain.model.valueobject;
 
 import org.acme.common.exception.ConstraintException;
+import org.acme.common.validation.AbstractFailList;
 import org.acme.common.validation.ConstraintFail;
 import org.acme.common.validation.ConstraintFailList;
 import org.acme.features.market.place.domain.model.PlaceRef;
@@ -65,7 +66,8 @@ public class AreaPlaceVO {
    * @param fails Error list
    * @return An empty instance
    */
-  public static AreaPlaceVO tryFrom(final Object place, final ConstraintFailList fails) {
+  public static <T extends AbstractFailList> AreaPlaceVO tryFrom(final Object place,
+      final T fails) {
     if (null == place) {
       fails.add(new ConstraintFail("not-null", "place", null, "Cant be null"));
       return null;

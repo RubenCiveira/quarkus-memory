@@ -3,6 +3,7 @@ package org.acme.features.market.merchant.domain.model.valueobject;
 import java.util.Optional;
 
 import org.acme.common.exception.ConstraintException;
+import org.acme.common.validation.AbstractFailList;
 import org.acme.common.validation.ConstraintFail;
 import org.acme.common.validation.ConstraintFailList;
 
@@ -64,7 +65,8 @@ public class MerchantKeyVO {
    * @param fails Error list
    * @return An empty instance
    */
-  public static MerchantKeyVO tryFrom(final Object key, final ConstraintFailList fails) {
+  public static <T extends AbstractFailList> MerchantKeyVO tryFrom(final Object key,
+      final T fails) {
     if (null == key) {
       return new MerchantKeyVO(null);
     } else if (key instanceof String) {

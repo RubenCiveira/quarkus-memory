@@ -11,6 +11,7 @@ import org.acme.common.action.Slide;
 import org.acme.common.exception.ConstraintException;
 import org.acme.common.exception.NotFoundException;
 import org.acme.common.sql.OptimistLockException;
+import org.acme.common.sql.PartialWhere;
 import org.acme.common.sql.SqlCommand;
 import org.acme.common.sql.SqlConverter;
 import org.acme.common.sql.SqlListParameterValue;
@@ -21,6 +22,7 @@ import org.acme.common.sql.SqlSchematicQuery;
 import org.acme.common.sql.SqlTemplate;
 import org.acme.features.market.verify.domain.gateway.VerifyCursor;
 import org.acme.features.market.verify.domain.gateway.VerifyFilter;
+import org.acme.features.market.verify.domain.gateway.VerifyOrder;
 import org.acme.features.market.verify.domain.model.Verify;
 import org.acme.features.market.verify.domain.model.VerifyRef;
 
@@ -105,8 +107,43 @@ public class VerifyRepository {
   public CompletionStage<Slide<Verify>> list(VerifyFilter filter, VerifyCursor cursor) {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       SqlSchematicQuery<Verify> sq = filteredQuery(template, filter);
-      cursor.getSinceUid()
-          .ifPresent(since -> sq.where("uid", SqlOperator.GT, SqlParameterValue.of(since)));
+      PartialWhere offset = PartialWhere.empty();
+      PartialWhere prev = PartialWhere.empty();
+      if (null != cursor.getOrder()) {
+        for (VerifyOrder order : cursor.getOrder()) {
+          if (order == VerifyOrder.NAME_ASC) {
+            sq.orderAsc("name");
+            Optional<String> sinceName = cursor.getSinceName();
+            if (sinceName.isPresent()) {
+              String sinceNameValue = sinceName.get();
+              offset = PartialWhere.or(offset, PartialWhere.and(prev, PartialWhere.where("name",
+                  SqlOperator.GT, SqlParameterValue.of(sinceNameValue))));
+              prev = PartialWhere.and(prev,
+                  PartialWhere.where("name", SqlOperator.EQ, SqlParameterValue.of(sinceNameValue)));
+            }
+          }
+          if (order == VerifyOrder.NAME_DESC) {
+            sq.orderDesc("name");
+            Optional<String> sinceName = cursor.getSinceName();
+            if (sinceName.isPresent()) {
+              String sinceNameValue = sinceName.get();
+              offset = PartialWhere.or(offset, PartialWhere.and(prev, PartialWhere.where("name",
+                  SqlOperator.GT, SqlParameterValue.of(sinceNameValue))));
+              prev = PartialWhere.and(prev,
+                  PartialWhere.where("name", SqlOperator.EQ, SqlParameterValue.of(sinceNameValue)));
+            }
+          }
+        }
+        Optional<String> sinceUid = cursor.getSinceUid();
+        if (sinceUid.isPresent()) {
+          offset = PartialWhere.or(offset, PartialWhere.and(prev,
+              PartialWhere.where("uid", SqlOperator.GT, SqlParameterValue.of(sinceUid.get()))));
+        }
+        sq.where(offset);
+      } else {
+        cursor.getSinceUid()
+            .ifPresent(since -> sq.where("uid", SqlOperator.GT, SqlParameterValue.of(since)));
+      }
       sq.orderAsc("uid");
       return sq.query(converter()).thenApply(res -> new VerifySlice(cursor.getLimit(),
           res.limit(cursor.getLimit()), this::list, filter, cursor));
@@ -182,6 +219,8 @@ public class VerifyRepository {
     }
     filter.getSearch().ifPresent(
         search -> sq.where("name", SqlOperator.LIKE, SqlParameterValue.of("%" + search + "%")));
+    filter.getName()
+        .ifPresent(name -> sq.where("name", SqlOperator.EQ, SqlParameterValue.of(name)));
     return sq;
   }
 

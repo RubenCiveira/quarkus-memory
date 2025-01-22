@@ -4,6 +4,7 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 
 import org.acme.common.exception.ConstraintException;
+import org.acme.common.validation.AbstractFailList;
 import org.acme.common.validation.ConstraintFail;
 import org.acme.common.validation.ConstraintFailList;
 
@@ -65,8 +66,8 @@ public class PlaceOpeningDateVO {
    * @param fails Error list
    * @return An empty instance
    */
-  public static PlaceOpeningDateVO tryFrom(final Object openingDate,
-      final ConstraintFailList fails) {
+  public static <T extends AbstractFailList> PlaceOpeningDateVO tryFrom(final Object openingDate,
+      final T fails) {
     if (null == openingDate) {
       return new PlaceOpeningDateVO(null);
     } else if (openingDate instanceof OffsetDateTime) {

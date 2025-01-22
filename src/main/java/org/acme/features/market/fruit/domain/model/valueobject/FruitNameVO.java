@@ -1,6 +1,7 @@
 package org.acme.features.market.fruit.domain.model.valueobject;
 
 import org.acme.common.exception.ConstraintException;
+import org.acme.common.validation.AbstractFailList;
 import org.acme.common.validation.ConstraintFail;
 import org.acme.common.validation.ConstraintFailList;
 
@@ -13,8 +14,8 @@ import lombok.With;
 @Getter
 @ToString
 @RequiredArgsConstructor
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @With
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class FruitNameVO {
 
   /**
@@ -52,7 +53,7 @@ public class FruitNameVO {
    * @param fails Error list
    * @return An empty instance
    */
-  public static FruitNameVO tryFrom(final Object name, final ConstraintFailList fails) {
+  public static <T extends AbstractFailList> FruitNameVO tryFrom(final Object name, final T fails) {
     if (null == name) {
       fails.add(new ConstraintFail("not-null", "name", null, "Cant be null"));
       return null;

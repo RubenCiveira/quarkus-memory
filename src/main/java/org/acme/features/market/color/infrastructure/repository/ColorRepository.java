@@ -11,6 +11,7 @@ import org.acme.common.action.Slide;
 import org.acme.common.exception.ConstraintException;
 import org.acme.common.exception.NotFoundException;
 import org.acme.common.sql.OptimistLockException;
+import org.acme.common.sql.PartialWhere;
 import org.acme.common.sql.SqlCommand;
 import org.acme.common.sql.SqlConverter;
 import org.acme.common.sql.SqlListParameterValue;
@@ -21,6 +22,7 @@ import org.acme.common.sql.SqlSchematicQuery;
 import org.acme.common.sql.SqlTemplate;
 import org.acme.features.market.color.domain.gateway.ColorCursor;
 import org.acme.features.market.color.domain.gateway.ColorFilter;
+import org.acme.features.market.color.domain.gateway.ColorOrder;
 import org.acme.features.market.color.domain.model.Color;
 import org.acme.features.market.color.domain.model.ColorRef;
 
@@ -105,8 +107,43 @@ public class ColorRepository {
   public CompletionStage<Slide<Color>> list(ColorFilter filter, ColorCursor cursor) {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       SqlSchematicQuery<Color> sq = filteredQuery(template, filter);
-      cursor.getSinceUid()
-          .ifPresent(since -> sq.where("uid", SqlOperator.GT, SqlParameterValue.of(since)));
+      PartialWhere offset = PartialWhere.empty();
+      PartialWhere prev = PartialWhere.empty();
+      if (null != cursor.getOrder()) {
+        for (ColorOrder order : cursor.getOrder()) {
+          if (order == ColorOrder.NAME_ASC) {
+            sq.orderAsc("name");
+            Optional<String> sinceName = cursor.getSinceName();
+            if (sinceName.isPresent()) {
+              String sinceNameValue = sinceName.get();
+              offset = PartialWhere.or(offset, PartialWhere.and(prev, PartialWhere.where("name",
+                  SqlOperator.GT, SqlParameterValue.of(sinceNameValue))));
+              prev = PartialWhere.and(prev,
+                  PartialWhere.where("name", SqlOperator.EQ, SqlParameterValue.of(sinceNameValue)));
+            }
+          }
+          if (order == ColorOrder.NAME_DESC) {
+            sq.orderDesc("name");
+            Optional<String> sinceName = cursor.getSinceName();
+            if (sinceName.isPresent()) {
+              String sinceNameValue = sinceName.get();
+              offset = PartialWhere.or(offset, PartialWhere.and(prev, PartialWhere.where("name",
+                  SqlOperator.GT, SqlParameterValue.of(sinceNameValue))));
+              prev = PartialWhere.and(prev,
+                  PartialWhere.where("name", SqlOperator.EQ, SqlParameterValue.of(sinceNameValue)));
+            }
+          }
+        }
+        Optional<String> sinceUid = cursor.getSinceUid();
+        if (sinceUid.isPresent()) {
+          offset = PartialWhere.or(offset, PartialWhere.and(prev,
+              PartialWhere.where("uid", SqlOperator.GT, SqlParameterValue.of(sinceUid.get()))));
+        }
+        sq.where(offset);
+      } else {
+        cursor.getSinceUid()
+            .ifPresent(since -> sq.where("uid", SqlOperator.GT, SqlParameterValue.of(since)));
+      }
       sq.orderAsc("uid");
       return sq.query(converter()).thenApply(res -> new ColorSlice(cursor.getLimit(),
           res.limit(cursor.getLimit()), this::list, filter, cursor));
@@ -184,6 +221,8 @@ public class ColorRepository {
     }
     filter.getSearch().ifPresent(
         search -> sq.where("name", SqlOperator.LIKE, SqlParameterValue.of("%" + search + "%")));
+    filter.getName()
+        .ifPresent(name -> sq.where("name", SqlOperator.EQ, SqlParameterValue.of(name)));
     filter.getMerchant().ifPresent(merchant -> sq.where("merchant", SqlOperator.EQ,
         SqlParameterValue.of(merchant.getUidValue())));
     filter.getMerchantMerchantAccesible().ifPresent(merchantMerchantAccesible -> {

@@ -3,6 +3,7 @@ package org.acme.features.market.color.domain.model.valueobject;
 import java.util.Optional;
 
 import org.acme.common.exception.ConstraintException;
+import org.acme.common.validation.AbstractFailList;
 import org.acme.common.validation.ConstraintFail;
 import org.acme.common.validation.ConstraintFailList;
 import org.acme.features.market.merchant.domain.model.MerchantRef;
@@ -77,7 +78,8 @@ public class ColorMerchantVO {
    * @param fails Error list
    * @return An empty instance
    */
-  public static ColorMerchantVO tryFrom(final Object merchant, final ConstraintFailList fails) {
+  public static <T extends AbstractFailList> ColorMerchantVO tryFrom(final Object merchant,
+      final T fails) {
     if (null == merchant) {
       return new ColorMerchantVO(null);
     } else if (merchant instanceof MerchantRef) {

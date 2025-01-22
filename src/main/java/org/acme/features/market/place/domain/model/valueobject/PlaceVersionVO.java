@@ -3,6 +3,7 @@ package org.acme.features.market.place.domain.model.valueobject;
 import java.util.Optional;
 
 import org.acme.common.exception.ConstraintException;
+import org.acme.common.validation.AbstractFailList;
 import org.acme.common.validation.ConstraintFail;
 import org.acme.common.validation.ConstraintFailList;
 
@@ -64,7 +65,8 @@ public class PlaceVersionVO {
    * @param fails Error list
    * @return An empty instance
    */
-  public static PlaceVersionVO tryFrom(final Object version, final ConstraintFailList fails) {
+  public static <T extends AbstractFailList> PlaceVersionVO tryFrom(final Object version,
+      final T fails) {
     if (null == version) {
       return new PlaceVersionVO(null);
     } else if (version instanceof Integer) {

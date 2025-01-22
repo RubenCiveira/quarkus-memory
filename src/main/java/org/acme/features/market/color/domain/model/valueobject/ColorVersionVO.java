@@ -3,6 +3,7 @@ package org.acme.features.market.color.domain.model.valueobject;
 import java.util.Optional;
 
 import org.acme.common.exception.ConstraintException;
+import org.acme.common.validation.AbstractFailList;
 import org.acme.common.validation.ConstraintFail;
 import org.acme.common.validation.ConstraintFailList;
 
@@ -64,7 +65,8 @@ public class ColorVersionVO {
    * @param fails Error list
    * @return An empty instance
    */
-  public static ColorVersionVO tryFrom(final Object version, final ConstraintFailList fails) {
+  public static <T extends AbstractFailList> ColorVersionVO tryFrom(final Object version,
+      final T fails) {
     if (null == version) {
       return new ColorVersionVO(null);
     } else if (version instanceof Integer) {
