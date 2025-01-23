@@ -301,7 +301,7 @@ public class MerchantController implements MerchantApi {
     }
     if (null != merchant.getVersion()) {
       builder = builder.version(MerchantVersionVO.from(merchant.getVersion()));
-    } ;
+    }
     return builder.build();
   }
 }

@@ -345,7 +345,7 @@ public class PlaceController implements PlaceApi {
     }
     if (null != place.getVersion()) {
       builder = builder.version(PlaceVersionVO.from(place.getVersion()));
-    } ;
+    }
     return builder.build();
   }
 }

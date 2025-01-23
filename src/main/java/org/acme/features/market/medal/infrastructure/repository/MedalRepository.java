@@ -243,16 +243,16 @@ public class MedalRepository {
         if (0 == num) {
           throw new IllegalArgumentException("No insert into");
         }
-        return verifier == null ? CompletableFuture.completedFuture(Optional.of(entity))
+        return (verifier == null ? CompletableFuture.completedFuture(Optional.of(entity))
             : verifier.apply(entity).thenCompose(exists -> {
               if (exists) {
                 return CompletableFuture.completedFuture(Optional.of(entity));
               } else {
                 template.createSqlCommand("delete from \"medal\" where \"uid\" = :uid")
                     .with("uid", SqlParameterValue.of(entity.getUidValue())).execute();
-                return CompletableFuture.completedFuture(Optional.empty());
+                return CompletableFuture.completedFuture(Optional.<Medal>empty());
               }
-            });
+            }));
       });
     }
   }

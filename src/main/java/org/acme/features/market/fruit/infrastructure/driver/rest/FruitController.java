@@ -245,7 +245,7 @@ public class FruitController implements FruitApi {
     }
     if (null != fruit.getVersion()) {
       builder = builder.version(FruitVersionVO.from(fruit.getVersion()));
-    } ;
+    }
     return builder.build();
   }
 }

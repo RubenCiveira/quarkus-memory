@@ -245,7 +245,7 @@ public class MedalController implements MedalApi {
     }
     if (null != medal.getVersion()) {
       builder = builder.version(MedalVersionVO.from(medal.getVersion()));
-    } ;
+    }
     return builder.build();
   }
 }

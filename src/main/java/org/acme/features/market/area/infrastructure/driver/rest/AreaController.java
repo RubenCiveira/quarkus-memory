@@ -258,7 +258,7 @@ public class AreaController implements AreaApi {
     }
     if (null != area.getVersion()) {
       builder = builder.version(AreaVersionVO.from(area.getVersion()));
-    } ;
+    }
     return builder.build();
   }
 }

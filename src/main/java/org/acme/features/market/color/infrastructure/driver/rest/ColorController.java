@@ -258,7 +258,7 @@ public class ColorController implements ColorApi {
     }
     if (null != color.getVersion()) {
       builder = builder.version(ColorVersionVO.from(color.getVersion()));
-    } ;
+    }
     return builder.build();
   }
 }
