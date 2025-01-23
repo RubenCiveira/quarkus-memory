@@ -33,8 +33,9 @@ public class SqlResultSet {
   @Builder.Default
   private Map<String, CompletionStage<List<?>>> childs = new HashMap<>();
 
-  public <S> CompletionStage<List<?>> getChilds(String name) {
-    return childs.containsKey(name) ? childs.get(name)
+  @SuppressWarnings("unchecked")
+  public <S> CompletionStage<List<S>> getChilds(String name) {
+    return childs.containsKey(name) ? (CompletionStage<List<S>>) ((Object) childs.get(name))
         : CompletableFuture.completedFuture(List.of());
   }
 

@@ -2,6 +2,7 @@
 package org.acme.common.rest;
 
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -38,6 +39,11 @@ public class CurrentRequest {
   }
 
   private Actor getActor() {
+    System.out.println("====");
+    System.out.println("Request");
+    for (Entry<String, List<String>> entry : request.getQueryParameters().entrySet()) {
+      System.out.println("\t" + entry.getKey() + ": " + String.join(",", entry.getValue()));
+    }
     Actor.ActorBuilder builder = Actor.builder();
     if (security.isAnonymous()) {
       System.err.println("Usuario anonimo");

@@ -35,7 +35,11 @@ public class AbstractFailList {
     fails.add(fail);
   }
 
-  public <T extends ConstraintFail> boolean includeViolation(Class<T> type) {
+  public <T extends AbstractFailList> void add(T list) {
+    fails.addAll(list.getFails().toList());
+  }
+
+  public <T extends AbstractFail> boolean includeViolation(Class<T> type) {
     return fails.stream().anyMatch(fail -> type.isAssignableFrom(fail.getClass()));
   }
 

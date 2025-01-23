@@ -1,25 +1,9 @@
 package org.acme.common.sql;
 
-import java.util.List;
 import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
-
-import org.acme.common.sql.SchematicQuery.Partial;
 
 public final class SqlSchematicQuery<T> extends AbstractSqlQuery<T, SqlSchematicQuery<T>> {
   private final SchematicQuery query;
-
-  public static Partial or(Function<Partial, List<Partial>> p) {
-    return Partial.or(p);
-  }
-
-  public static Partial and(Function<Partial, List<Partial>> p) {
-    return Partial.and(p);
-  }
-
-  public static Partial not(Function<Partial, List<Partial>> p) {
-    return Partial.not(p);
-  }
 
   public SqlSchematicQuery(SqlTemplate template, String table) {
     super(template);
@@ -63,7 +47,8 @@ public final class SqlSchematicQuery<T> extends AbstractSqlQuery<T, SqlSchematic
     return this;
   }
 
-  public SqlSchematicQuery<T> where(Partial partial) {
+  public SqlSchematicQuery<T> where(PartialWhere partial) {
+    System.err.println("QUERE OF " + partial);
     this.query.where(partial);
     return this;
   }

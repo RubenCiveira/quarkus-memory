@@ -1,11 +1,17 @@
 package org.acme.common.sql;
 
 public enum SqlOperator {
-  EQ("="), GT(">"), LT("<"), GTEQ(">="), LTEQ("<="), IN("IN"), LIKE("LIKE");
+  EQ("=", null), GT(">", null), LT("<", null), GTEQ(">=", null), LTEQ("<=", null), IN("IN", ""), LIKE("LIKE", null);
 
   /* default */ final String value;
+  /* default */ final String method;
 
-  private SqlOperator(String value) {
+  private SqlOperator(String value, String method) {
     this.value = value;
+    this.method = method;
+  }
+  
+  public String format(String param) {
+    return " " + (method == null ? param : method + "(" + param + ")");
   }
 }

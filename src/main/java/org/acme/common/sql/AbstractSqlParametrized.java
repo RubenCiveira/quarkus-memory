@@ -155,6 +155,7 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
     String theSql = formatSql(child.query, childParams, Map.of(child.ref, offset.size()));
     try (PreparedStatement childps = connection.prepareStatement(theSql)) {
       // Replace childs params
+      System.out.println("La query es " + theSql);
       applyParameters(childParams, childps,
           Map.of(child.ref, SqlListParameterValue.of((String[]) offset.toArray(new String[0]))));
       try (ResultSet childRes = childps.executeQuery()) {
@@ -163,10 +164,12 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
               child.converter.convert(SqlResultSet.builder().set(childRes).build());
           if (ref.isPresent()) {
             String parentRef = childRes.getString(child.ref);
+            System.out.println("El child está en " + parentRef);
             ((List) child.childData.get(parentRef)).add(ref.get());
           }
         }
       }
+      System.out.println("El child está en " + child.childData);
       offset.forEach(key -> {
         ((CompletableFuture) child.futures.get(key)).complete(child.childData.get(key));
       });
