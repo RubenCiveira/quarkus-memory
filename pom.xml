@@ -181,6 +181,8 @@
               <configOptions>
                 <useTags>true</useTags>
                 <interfaceOnly>true</interfaceOnly>
+                <useSwaggerAnnotations>false</useSwaggerAnnotations>
+                <returnResponse>true</returnResponse>
                 <java17>true</java17>
                 <hideGenerationTimestamp>true</hideGenerationTimestamp>
                 <useJakartaEe>true</useJakartaEe>
@@ -199,7 +201,6 @@
                 <useMutiny>true</useMutiny>
                 <additionalModelTypeAnnotations>@com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL) @io.quarkus.runtime.annotations.RegisterForReflection</additionalModelTypeAnnotations>
               </configOptions>
-              <additionalProperties>interfaceOnly=true,useSwaggerAnnotations=false,returnResponse=true</additionalProperties>
               <modelPackage>org.acme.generated.openapi.model</modelPackage>
               <apiPackage>org.acme.openapi.api</apiPackage>
               <generateApiTests>false</generateApiTests>
@@ -210,6 +211,7 @@
               <generateModelDocumentation>false</generateModelDocumentation>
               <generateApis>true</generateApis>
               <apiPackage>org.acme.generated.openapi.api</apiPackage>
+              <additionalProperties>interfaceOnly=true,useSwaggerAnnotations=false,returnResponse=true</additionalProperties>
             </configuration>
           </execution>
         </executions>

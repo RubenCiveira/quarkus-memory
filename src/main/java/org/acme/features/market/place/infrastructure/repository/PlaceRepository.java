@@ -20,7 +20,6 @@ import org.acme.common.sql.SqlConverter;
 import org.acme.common.sql.SqlListParameterValue;
 import org.acme.common.sql.SqlOperator;
 import org.acme.common.sql.SqlParameterValue;
-import org.acme.common.sql.SqlResult;
 import org.acme.common.sql.SqlSchematicQuery;
 import org.acme.common.sql.SqlTemplate;
 import org.acme.features.market.place.domain.gateway.PlaceCursor;
@@ -148,8 +147,8 @@ public class PlaceRepository {
             .ifPresent(since -> sq.where("uid", SqlOperator.GT, SqlParameterValue.of(since)));
       }
       sq.orderAsc("uid");
-      return sq.query(converter()).thenApply(res -> new PlaceSlice(cursor.getLimit(),
-          res.limit(cursor.getLimit()), this::list, filter, cursor));
+      return sq.query(converter()).limit(cursor.getLimit())
+          .thenApply(res -> new PlaceSlice(cursor.getLimit(), res, this::list, filter, cursor));
     }
   }
 
@@ -164,7 +163,7 @@ public class PlaceRepository {
       PlaceFilter readyFilter = filter.map(val -> val.withUid(uid))
           .orElseGet(() -> PlaceFilter.builder().uid(uid).build());
       SqlSchematicQuery<Place> sq = filteredQuery(template, readyFilter);
-      return sq.query(converter()).thenApply(SqlResult::one);
+      return sq.query(converter()).one();
     }
   }
 

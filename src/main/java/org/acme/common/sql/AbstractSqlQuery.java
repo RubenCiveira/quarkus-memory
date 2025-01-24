@@ -1,7 +1,5 @@
 package org.acme.common.sql;
 
-import java.util.concurrent.CompletionStage;
-
 public abstract class AbstractSqlQuery<T, R extends AbstractSqlQuery<T, R>>
     extends AbstractSqlParametrized<R> {
 
@@ -9,5 +7,5 @@ public abstract class AbstractSqlQuery<T, R extends AbstractSqlQuery<T, R>>
     super(template);
   }
 
-  public abstract CompletionStage<SqlResult<T>> query(SqlConverter<T> converter);
+  public abstract SqlResult<T> query(SqlConverter<T> converter);
 }

@@ -17,7 +17,6 @@ import org.acme.common.sql.SqlConverter;
 import org.acme.common.sql.SqlListParameterValue;
 import org.acme.common.sql.SqlOperator;
 import org.acme.common.sql.SqlParameterValue;
-import org.acme.common.sql.SqlResult;
 import org.acme.common.sql.SqlSchematicQuery;
 import org.acme.common.sql.SqlTemplate;
 import org.acme.features.market.fruit.domain.gateway.FruitCursor;
@@ -145,8 +144,8 @@ public class FruitRepository {
             .ifPresent(since -> sq.where("uid", SqlOperator.GT, SqlParameterValue.of(since)));
       }
       sq.orderAsc("uid");
-      return sq.query(converter()).thenApply(res -> new FruitSlice(cursor.getLimit(),
-          res.limit(cursor.getLimit()), this::list, filter, cursor));
+      return sq.query(converter()).limit(cursor.getLimit())
+          .thenApply(res -> new FruitSlice(cursor.getLimit(), res, this::list, filter, cursor));
     }
   }
 
@@ -161,7 +160,7 @@ public class FruitRepository {
       FruitFilter readyFilter = filter.map(val -> val.withUid(uid))
           .orElseGet(() -> FruitFilter.builder().uid(uid).build());
       SqlSchematicQuery<Fruit> sq = filteredQuery(template, readyFilter);
-      return sq.query(converter()).thenApply(SqlResult::one);
+      return sq.query(converter()).one();
     }
   }
 

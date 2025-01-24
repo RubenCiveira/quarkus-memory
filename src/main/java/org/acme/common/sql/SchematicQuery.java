@@ -72,7 +72,7 @@ public class SchematicQuery {
   public void where(String on, String field, SqlOperator operator, SqlParameterValue value) {
     String name = "_field_" + where.length();
     where.append(" and " + (null == on ? "" : escape(on) + ".") + escape(field) + " "
-        + operator.value + operator.format(":" + name) );
+        + operator.value + operator.format(":" + name));
     parametrized.with(name, value);
   }
 

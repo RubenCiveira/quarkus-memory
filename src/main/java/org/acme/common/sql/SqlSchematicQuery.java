@@ -1,7 +1,5 @@
 package org.acme.common.sql;
 
-import java.util.concurrent.CompletionStage;
-
 public final class SqlSchematicQuery<T> extends AbstractSqlQuery<T, SqlSchematicQuery<T>> {
   private final SchematicQuery query;
 
@@ -17,7 +15,7 @@ public final class SqlSchematicQuery<T> extends AbstractSqlQuery<T, SqlSchematic
   }
 
   @Override
-  public CompletionStage<SqlResult<T>> query(SqlConverter<T> converter) {
+  public SqlResult<T> query(SqlConverter<T> converter) {
     return executeQuery(this.query.buildQuery(), converter);
   }
 

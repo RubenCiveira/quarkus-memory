@@ -81,7 +81,7 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
     childs.add(new ChildRequest<>(batch, name, parentBind, childRef, sql, converter));
   }
 
-  protected <R> CompletionStage<SqlResult<R>> executeQuery(String sql, SqlConverter<R> converter) {
+  protected <R> SqlResult<R> executeQuery(String sql, SqlConverter<R> converter) {
     @SuppressWarnings({"unchecked", "rawtypes"})
     Function<String, List<R>> execute = (query) -> {
       for (ChildRequest child : childs) {
@@ -119,27 +119,29 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
         throw UncheckedSqlException.exception(connection, ex);
       }
     };
-    return CompletableFuture.completedFuture(new SqlResult<R>() {
+    // CompletableFuture.completedFuture(
+    return new SqlResult<R>() {
       @Override
-      public Optional<R> one() {
-        return execute.apply(limitResults(sql, 1)).stream().findFirst();
+      public CompletionStage<Optional<R>> one() {
+        return CompletableFuture
+            .completedFuture(execute.apply(limitResults(sql, 1)).stream().findFirst());
       }
 
       @Override
-      public List<R> limit(Optional<Integer> max) {
+      public CompletionStage<List<R>> limit(Optional<Integer> max) {
         return max.map(this::limit).orElseGet(this::all);
       }
 
       @Override
-      public List<R> limit(int max) {
-        return execute.apply(limitResults(sql, max));
+      public CompletionStage<List<R>> limit(int max) {
+        return CompletableFuture.completedFuture(execute.apply(limitResults(sql, max)));
       }
 
       @Override
-      public List<R> all() {
-        return execute.apply(sql);
+      public CompletionStage<List<R>> all() {
+        return CompletableFuture.completedFuture(execute.apply(sql));
       }
-    });
+    };
   }
 
   private List<List<String>> partitionList(List<String> list, int windowSize) {
@@ -150,8 +152,10 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
 
   @SuppressWarnings({"unchecked", "rawtypes"})
   private void resolveChilds(ChildRequest child, List<String> offset) throws SQLException {
-    Map<String, Integer> childParams = new LinkedHashMap<>();
-    childParams.put(child.ref, 1);
+    Map<String, List<Integer>> childParams = new LinkedHashMap<>();
+    List<Integer> list = new ArrayList<>();
+    list.add(1);
+    childParams.put(child.ref, list);
     String theSql = formatSql(child.query, childParams, Map.of(child.ref, offset.size()));
     try (PreparedStatement childps = connection.prepareStatement(theSql)) {
       // Replace childs params
@@ -164,7 +168,6 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
               child.converter.convert(SqlResultSet.builder().set(childRes).build());
           if (ref.isPresent()) {
             String parentRef = childRes.getString(child.ref);
-            System.out.println("El child está en " + parentRef);
             ((List) child.childData.get(parentRef)).add(ref.get());
           }
         }
@@ -177,19 +180,20 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
   }
 
   private PreparedStatement prepareStatement(String sql) throws SQLException {
-    Map<String, Integer> parameterIndexMap = new LinkedHashMap<>();
+    Map<String, List<Integer>> parameterIndexMap = new LinkedHashMap<>();
     PreparedStatement prepareStatement =
         connection.prepareStatement(formatSql(sql, parameterIndexMap));
     applyParameters(parameterIndexMap, prepareStatement);
     return prepareStatement;
   }
 
-  private String formatSql(String sql, Map<String, Integer> parameterIndexMap) throws SQLException {
+  private String formatSql(String sql, Map<String, List<Integer>> parameterIndexMap)
+      throws SQLException {
     return formatSql(sql, parameterIndexMap, arrays);
 
   }
 
-  private String formatSql(String sql, Map<String, Integer> parameterIndexMap,
+  private String formatSql(String sql, Map<String, List<Integer>> parameterIndexMap,
       Map<String, Integer> larrays) throws SQLException {
     sql = parseSql(escapeIdentifiers(sql), parameterIndexMap);
     // aquellos que sean listas: toca expandirlos.
@@ -199,13 +203,26 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
         throw new IllegalArgumentException("No param " + name + " on the sentence");
       }
       listSizes.add(value);
-      Integer position = parameterIndexMap.get(name);
-      parameterIndexMap.forEach((key, index) -> {
-        if (index > position) {
-          // parameterIndexMap.remove(key);
-          parameterIndexMap.replace(key, index + value - 1);
-        }
-      });
+      List<Integer> positions = parameterIndexMap.get(name);
+      // int offset = value -1;
+      for (Integer position : positions) {
+        // Must sum offset to all positions greater than position
+        parameterIndexMap.forEach((key, indexes) -> {
+          parameterIndexMap.put(key,
+              indexes.stream().map(index -> index > position ? index + value - 1 : index).toList());
+        });
+      }
+      // positions.forEach(position -> {
+      // parameterIndexMap.forEach((key, indexes) -> {
+      // indexes.forEach(index -> {
+      // if (index > position) {
+      // // parameterIndexMap.remove(key);
+      // indexes.remo
+      // parameterIndexMap.replace(key, index + value - 1);
+      // }
+      // });
+      // });
+      // });
     });
     if (!listSizes.isEmpty()) {
       sql = replaceInPlaceholders(sql, listSizes);
@@ -213,7 +230,7 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
     return sql;
   }
 
-  private String parseSql(String sql, Map<String, Integer> parameterIndexMap) {
+  private String parseSql(String sql, Map<String, List<Integer>> parameterIndexMap) {
     StringBuilder parsedSql = new StringBuilder();
     int index = 1;
 
@@ -228,8 +245,9 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
         }
         String paramName = sql.substring(i + 1, j);
         if (!parameterIndexMap.containsKey(paramName)) {
-          parameterIndexMap.put(paramName, index++);
+          parameterIndexMap.put(paramName, new ArrayList<>());
         }
+        parameterIndexMap.get(paramName).add(index++);
         parsedSql.append('?');
         i = j - 1;
       } else {
@@ -289,12 +307,12 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
     return result.toString();
   }
 
-  private void applyParameters(Map<String, Integer> parameterIndexMap,
+  private void applyParameters(Map<String, List<Integer>> parameterIndexMap,
       PreparedStatement preparedStatement) throws SQLException {
     applyParameters(parameterIndexMap, preparedStatement, parameters);
   }
 
-  private void applyParameters(Map<String, Integer> parameterIndexMap,
+  private void applyParameters(Map<String, List<Integer>> parameterIndexMap,
       PreparedStatement preparedStatement, Map<String, SqlParameterValue> lparameters)
       throws SQLException {
     for (Entry<String, SqlParameterValue> entry : lparameters.entrySet()) {
@@ -303,7 +321,10 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
       if (!parameterIndexMap.containsKey(key)) {
         throw new IllegalArgumentException("No param " + key + " on the sentence");
       } else {
-        value.accept(parameterIndexMap.get(key), preparedStatement);
+        for (Integer index : parameterIndexMap.get(key)) {
+          value.accept(index, preparedStatement);
+        }
+
       }
     }
   }

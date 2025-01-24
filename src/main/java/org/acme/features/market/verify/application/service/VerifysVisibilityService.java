@@ -637,12 +637,14 @@ public class VerifysVisibilityService {
           }
         }
       });
-      related.add(medalsVisibilityService.checkVisibility(prev, collectMedal)
-          .whenComplete((visible, fail) -> {
-            if (!visible) {
-              throw new NotFoundException("No all medal exists: " + collectMedal);
-            }
-          }));
+      if (!collectMedal.isEmpty()) {
+        related.add(medalsVisibilityService.checkVisibility(prev, collectMedal)
+            .whenComplete((visible, fail) -> {
+              if (!visible) {
+                throw new NotFoundException("No all medal exists: " + collectMedal);
+              }
+            }));
+      }
     }
   }
 }
