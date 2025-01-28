@@ -3,6 +3,7 @@ package org.acme.features.market.verify.application;
 import java.util.Optional;
 
 import org.acme.features.market.verify.domain.model.Verify;
+import org.acme.features.market.verify.domain.model.valueobject.VerifyMedalsVO;
 import org.acme.features.market.verify.domain.model.valueobject.VerifyNameVO;
 import org.acme.features.market.verify.domain.model.valueobject.VerifyUidVO;
 import org.acme.features.market.verify.domain.model.valueobject.VerifyVersionVO;
@@ -19,42 +20,51 @@ class VerifyDtoUnitTest {
   @DisplayName("Test a entity reference contruction")
   void test_verify_dto_builder() {
     Verify entity = Verify.builder().uid(VerifyUidVO.from("one")).name(VerifyNameVO.from("one"))
-        .version(VerifyVersionVO.from(1)).build();
+        .medals(VerifyMedalsVO.from(null)).version(VerifyVersionVO.from(1)).build();
     Verify fixRef = Verify.builder().uid(VerifyUidVO.from("two")).name(VerifyNameVO.from("two"))
-        .version(VerifyVersionVO.from(2)).build();
+        .medals(VerifyMedalsVO.from(null)).version(VerifyVersionVO.from(2)).build();
     Verify other;
     VerifyDto dto = VerifyDto.from(entity);
     Assertions.assertEquals("one", dto.getUid());
     Assertions.assertEquals("one", dto.getName());
+    Assertions.assertEquals(null, dto.getMedals());
     Assertions.assertEquals(1, dto.getVersion());
     other = dto.toEntityBuilder(Optional.empty()).build();
     dto.hideField("-");
     dto.fixField("-", fixRef);
     Assertions.assertEquals("one", other.getUid().getValue());
     Assertions.assertEquals("one", other.getName().getValue());
+    Assertions.assertEquals(null, other.getMedals().getValue());
     Assertions.assertEquals(1, other.getVersion().getValue().orElse(null));
     dto.fixField("uid", fixRef);
     dto.fixField("name", fixRef);
+    dto.fixField("medals", fixRef);
     dto.fixField("version", fixRef);
     other = dto.toEntityBuilder(Optional.empty()).build();
     Assertions.assertEquals("two", other.getUid().getValue());
     Assertions.assertEquals("two", other.getName().getValue());
+    Assertions.assertEquals(null, other.getMedals().getValue());
     Assertions.assertEquals(2, other.getVersion().getValue().orElse(null));
     dto.hideField("uid");
     dto.hideField("name");
+    dto.hideField("medals");
     dto.hideField("version");
     Assertions.assertNull(dto.getUid());
     Assertions.assertNull(dto.getName());
+    Assertions.assertNull(dto.getMedals());
     Assertions.assertNull(dto.getVersion());
     dto = VerifyDto.from(entity);
     Assertions.assertEquals("one", dto.getUid());
     Assertions.assertEquals("one", dto.getName());
+    Assertions.assertEquals(null, dto.getMedals());
     Assertions.assertEquals(1, dto.getVersion());
     dto.fixField("uid");
     dto.fixField("name");
+    dto.fixField("medals");
     dto.fixField("version");
     Assertions.assertNull(dto.getUid());
     Assertions.assertNull(dto.getName());
+    Assertions.assertNull(dto.getMedals());
     Assertions.assertNull(dto.getVersion());
   }
 }

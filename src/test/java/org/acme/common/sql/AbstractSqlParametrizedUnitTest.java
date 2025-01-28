@@ -81,10 +81,9 @@ class AbstractSqlParametrizedUnitTest {
     when(converter.convert(Mockito.any())).thenReturn(Optional.of("Result"));
 
     SqlResult<String> result = testSql.with("_age", SqlParameterValue.of(22))
-        .executeQuery("SELECT * FROM table where age = :_age", converter).toCompletableFuture()
-        .get();
+        .executeQuery("SELECT * FROM table where age = :_age", converter);
 
-    Optional<String> one = result.one();
+    Optional<String> one = result.one().toCompletableFuture().get();
     assertTrue(one.isPresent());
     assertEquals("Result", one.get());
 
@@ -99,10 +98,9 @@ class AbstractSqlParametrizedUnitTest {
         Optional.of("Result2"));
 
     SqlResult<String> result = testSql.with("name", SqlParameterValue.of("green"))
-        .executeQuery("SELECT * FROM table where name = :name and :", converter)
-        .toCompletableFuture().get();
+        .executeQuery("SELECT * FROM table where name = :name and :", converter);
 
-    List<String> all = result.all();
+    List<String> all = result.all().toCompletableFuture().get();
     assertEquals(2, all.size());
     assertEquals("Result1", all.get(0));
     assertEquals("Result2", all.get(1));
@@ -121,7 +119,7 @@ class AbstractSqlParametrizedUnitTest {
         .executeQuery(
             "SELECT * FROM \"table\" where di IN(:params) and name = :name and marca = '\"uno :22 que : viene\"' :",
             converter)
-        .toCompletableFuture().get().limit(10);
+        .limit(10).toCompletableFuture().get();
 
     verify(preparedStatement).setString(1, "one");
     verify(preparedStatement).setString(2, "two");
@@ -135,27 +133,24 @@ class AbstractSqlParametrizedUnitTest {
   @Test
   void testFormatErrors() throws SQLException, InterruptedException, ExecutionException {
     SqlResult<String> other = testSql.with("params", SqlParameterValue.of("four"))
-        .executeQuery("SELECT * FROM \"table\" where name = :name and color = :name", converter)
-        .toCompletableFuture().get();
-    assertThrows(IllegalArgumentException.class, () -> other.all());
+        .executeQuery("SELECT * FROM \"table\" where name = :name and color = :name", converter);
+    assertThrows(IllegalArgumentException.class, () -> other.all().toCompletableFuture().get());
     SqlResult<String> one = testSql.with("name", SqlParameterValue.of("oo"))
         .with("params", SqlListParameterValue.of("one", "two", "three", "four"))
-        .executeQuery("SELECT * FROM \"table\" where di IN(:listParams)", converter)
-        .toCompletableFuture().get();
-    assertThrows(IllegalArgumentException.class, () -> one.all());
+        .executeQuery("SELECT * FROM \"table\" where di IN(:listParams)", converter);
+    assertThrows(IllegalArgumentException.class, () -> one.all().toCompletableFuture().get());
     SqlResult<String> three = testSql.executeQuery(
         "SELECT * FROM \"table\" where name = :name and di IN(:params) and do IN(:others)",
-        converter).toCompletableFuture().get();
-    assertThrows(IllegalArgumentException.class, () -> three.all());
+        converter);
+    assertThrows(IllegalArgumentException.class, () -> three.all().toCompletableFuture().get());
   }
 
   @Test
   void testConnectionErrors() throws SQLException, InterruptedException, ExecutionException {
     when(preparedStatement.executeQuery()).thenThrow(SQLException.class);
     SqlResult<String> result = testSql.with("_age", SqlParameterValue.of(22))
-        .executeQuery("SELECT * FROM table where age = :_age", converter).toCompletableFuture()
-        .get();
-    assertThrows(UncheckedSqlException.class, () -> result.one());
+        .executeQuery("SELECT * FROM table where age = :_age", converter);
+    assertThrows(UncheckedSqlException.class, () -> result.one().toCompletableFuture().get());
   }
 
   /*

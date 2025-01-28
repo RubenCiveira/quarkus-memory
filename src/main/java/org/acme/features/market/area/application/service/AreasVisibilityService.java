@@ -239,9 +239,9 @@ public class AreasVisibilityService {
         return set;
       });
       AreaFixedFieldsPipelineStageEvent value =
-          AreaFixedFieldsPipelineStageEvent.builder().fixed(fields).interaction(prev).build();
+          AreaFixedFieldsPipelineStageEvent.builder().fields(fields).query(prev).build();
       fireFix.fire(value);
-      return value.getFixed().whenComplete((val, ex) -> {
+      return value.getFields().whenComplete((val, ex) -> {
         if (null == ex) {
           startSpan.setAttribute("fieds", String.join(",", val));
           startSpan.setStatus(StatusCode.OK);
@@ -270,10 +270,10 @@ public class AreasVisibilityService {
             set.addAll(set2);
             return set;
           });
-      AreaFixedFieldsPipelineStageEvent value = AreaFixedFieldsPipelineStageEvent.builder()
-          .fixed(fields).area(area).interaction(prev).build();
+      AreaFixedFieldsPipelineStageEvent value =
+          AreaFixedFieldsPipelineStageEvent.builder().fields(fields).area(area).query(prev).build();
       fireFix.fire(value);
-      return value.getFixed().whenComplete((val, ex) -> {
+      return value.getFields().whenComplete((val, ex) -> {
         if (null == ex) {
           startSpan.setAttribute("fieds", String.join(",", val));
           startSpan.setStatus(StatusCode.OK);
@@ -297,9 +297,9 @@ public class AreasVisibilityService {
     try (Scope scope = startSpan.makeCurrent()) {
       CompletionStage<Set<String>> fields = CompletableFuture.completedFuture(Set.of());
       AreaHiddenFieldsPipelineStageEvent value =
-          AreaHiddenFieldsPipelineStageEvent.builder().hidden(fields).interaction(prev).build();
+          AreaHiddenFieldsPipelineStageEvent.builder().fields(fields).query(prev).build();
       fireHide.fire(value);
-      return value.getHidden().whenComplete((val, ex) -> {
+      return value.getFields().whenComplete((val, ex) -> {
         if (null == ex) {
           startSpan.setAttribute("fieds", String.join(",", val));
           startSpan.setStatus(StatusCode.OK);
@@ -324,9 +324,9 @@ public class AreasVisibilityService {
     try (Scope scope = startSpan.makeCurrent()) {
       CompletionStage<Set<String>> fields = fieldsToHide(prev);
       AreaHiddenFieldsPipelineStageEvent value = AreaHiddenFieldsPipelineStageEvent.builder()
-          .hidden(fields).area(area).interaction(prev).build();
+          .fields(fields).area(area).query(prev).build();
       fireHide.fire(value);
-      return value.getHidden().whenComplete((val, ex) -> {
+      return value.getFields().whenComplete((val, ex) -> {
         if (null == ex) {
           startSpan.setAttribute("fieds", String.join(",", val));
           startSpan.setStatus(StatusCode.OK);

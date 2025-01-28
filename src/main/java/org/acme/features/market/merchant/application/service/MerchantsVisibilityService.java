@@ -230,9 +230,9 @@ public class MerchantsVisibilityService {
         return set;
       });
       MerchantFixedFieldsPipelineStageEvent value =
-          MerchantFixedFieldsPipelineStageEvent.builder().fixed(fields).interaction(prev).build();
+          MerchantFixedFieldsPipelineStageEvent.builder().fields(fields).query(prev).build();
       fireFix.fire(value);
-      return value.getFixed().whenComplete((val, ex) -> {
+      return value.getFields().whenComplete((val, ex) -> {
         if (null == ex) {
           startSpan.setAttribute("fieds", String.join(",", val));
           startSpan.setStatus(StatusCode.OK);
@@ -262,9 +262,9 @@ public class MerchantsVisibilityService {
             return set;
           });
       MerchantFixedFieldsPipelineStageEvent value = MerchantFixedFieldsPipelineStageEvent.builder()
-          .fixed(fields).merchant(merchant).interaction(prev).build();
+          .fields(fields).merchant(merchant).query(prev).build();
       fireFix.fire(value);
-      return value.getFixed().whenComplete((val, ex) -> {
+      return value.getFields().whenComplete((val, ex) -> {
         if (null == ex) {
           startSpan.setAttribute("fieds", String.join(",", val));
           startSpan.setStatus(StatusCode.OK);
@@ -288,9 +288,9 @@ public class MerchantsVisibilityService {
     try (Scope scope = startSpan.makeCurrent()) {
       CompletionStage<Set<String>> fields = CompletableFuture.completedFuture(Set.of());
       MerchantHiddenFieldsPipelineStageEvent value =
-          MerchantHiddenFieldsPipelineStageEvent.builder().hidden(fields).interaction(prev).build();
+          MerchantHiddenFieldsPipelineStageEvent.builder().fields(fields).query(prev).build();
       fireHide.fire(value);
-      return value.getHidden().whenComplete((val, ex) -> {
+      return value.getFields().whenComplete((val, ex) -> {
         if (null == ex) {
           startSpan.setAttribute("fieds", String.join(",", val));
           startSpan.setStatus(StatusCode.OK);
@@ -315,9 +315,9 @@ public class MerchantsVisibilityService {
     try (Scope scope = startSpan.makeCurrent()) {
       CompletionStage<Set<String>> fields = fieldsToHide(prev);
       MerchantHiddenFieldsPipelineStageEvent value = MerchantHiddenFieldsPipelineStageEvent
-          .builder().hidden(fields).merchant(merchant).interaction(prev).build();
+          .builder().fields(fields).merchant(merchant).query(prev).build();
       fireHide.fire(value);
-      return value.getHidden().whenComplete((val, ex) -> {
+      return value.getFields().whenComplete((val, ex) -> {
         if (null == ex) {
           startSpan.setAttribute("fieds", String.join(",", val));
           startSpan.setStatus(StatusCode.OK);

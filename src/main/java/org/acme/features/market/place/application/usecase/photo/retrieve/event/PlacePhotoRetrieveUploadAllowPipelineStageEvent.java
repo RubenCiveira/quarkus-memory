@@ -55,7 +55,7 @@ public class PlacePhotoRetrieveUploadAllowPipelineStageEvent extends AllowPipeli
    * @return
    */
   public String actionName() {
-    return "retrieve-upload";
+    return "retrieve-upload-photo";
   }
 
   /**

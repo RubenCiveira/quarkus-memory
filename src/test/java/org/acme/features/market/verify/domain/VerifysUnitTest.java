@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.acme.features.market.verify.domain.model.Verify;
 import org.acme.features.market.verify.domain.model.Verify.VerifyBuilder;
+import org.acme.features.market.verify.domain.model.valueobject.VerifyMedalsVO;
 import org.acme.features.market.verify.domain.model.valueobject.VerifyNameVO;
 import org.acme.features.market.verify.domain.model.valueobject.VerifyUidVO;
 import org.acme.features.market.verify.domain.model.valueobject.VerifyVersionVO;
@@ -44,7 +45,7 @@ class VerifysUnitTest {
         .then(call -> call.getArgument(1));
     Verifys instance = new Verifys(entityRules, builderRules);
     Verify one = Verify.builder().uid(VerifyUidVO.from("one")).name(VerifyNameVO.from("one"))
-        .version(VerifyVersionVO.from(1)).build();
+        .medals(VerifyMedalsVO.from(null)).version(VerifyVersionVO.from(1)).build();
     instance.clean(one);
     Mockito.verify(entityRule).apply(Mockito.eq(VerifyActionType.DELETE), Mockito.any(),
         Mockito.any(), Mockito.eq(new Object[] {Optional.of(one)}));
@@ -75,7 +76,7 @@ class VerifysUnitTest {
         .then(call -> call.getArgument(1));
     Verifys instance = new Verifys(entityRules, builderRules);
     Verify one = Verify.builder().uid(VerifyUidVO.from("one")).name(VerifyNameVO.from("one"))
-        .version(VerifyVersionVO.from(1)).build();
+        .medals(VerifyMedalsVO.from(null)).version(VerifyVersionVO.from(1)).build();
     VerifyBuilder oneBuilder = one.toBuilder();
     instance.initialize(oneBuilder);
     Mockito.verify(builderRule).apply(Mockito.eq(VerifyActionType.CREATE), Mockito.any(),
@@ -109,9 +110,9 @@ class VerifysUnitTest {
         .then(call -> call.getArgument(1));
     Verifys instance = new Verifys(entityRules, builderRules);
     Verify one = Verify.builder().uid(VerifyUidVO.from("one")).name(VerifyNameVO.from("one"))
-        .version(VerifyVersionVO.from(1)).build();
+        .medals(VerifyMedalsVO.from(null)).version(VerifyVersionVO.from(1)).build();
     Verify other = Verify.builder().uid(VerifyUidVO.from("two")).name(VerifyNameVO.from("two"))
-        .version(VerifyVersionVO.from(2)).build();
+        .medals(VerifyMedalsVO.from(null)).version(VerifyVersionVO.from(2)).build();
     VerifyBuilder otherBuilder = other.toBuilder();
     instance.modify(one, otherBuilder);
     Mockito.verify(builderRule).apply(Mockito.eq(VerifyActionType.UPDATE), Mockito.any(),

@@ -1,6 +1,7 @@
 package org.acme.common.security;
 
 import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 
 import org.acme.common.action.Interaction;
 
@@ -24,4 +25,12 @@ public abstract class AllowPipelineStageEvent {
   public abstract String resourceName();
 
   public abstract String actionName();
+
+  public void map(Function<Allow, Allow> allowed) {
+    detail = detail.thenApply(allowed::apply);
+  }
+
+  public void mergeMap(Function<Allow, CompletionStage<Allow>> allowed) {
+    detail = detail.thenCompose(allowed::apply);
+  }
 }

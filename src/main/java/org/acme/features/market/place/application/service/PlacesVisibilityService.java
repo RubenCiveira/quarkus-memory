@@ -240,9 +240,9 @@ public class PlacesVisibilityService {
         return set;
       });
       PlaceFixedFieldsPipelineStageEvent value =
-          PlaceFixedFieldsPipelineStageEvent.builder().fixed(fields).interaction(prev).build();
+          PlaceFixedFieldsPipelineStageEvent.builder().fields(fields).query(prev).build();
       fireFix.fire(value);
-      return value.getFixed().whenComplete((val, ex) -> {
+      return value.getFields().whenComplete((val, ex) -> {
         if (null == ex) {
           startSpan.setAttribute("fieds", String.join(",", val));
           startSpan.setStatus(StatusCode.OK);
@@ -272,9 +272,9 @@ public class PlacesVisibilityService {
             return set;
           });
       PlaceFixedFieldsPipelineStageEvent value = PlaceFixedFieldsPipelineStageEvent.builder()
-          .fixed(fields).place(place).interaction(prev).build();
+          .fields(fields).place(place).query(prev).build();
       fireFix.fire(value);
-      return value.getFixed().whenComplete((val, ex) -> {
+      return value.getFields().whenComplete((val, ex) -> {
         if (null == ex) {
           startSpan.setAttribute("fieds", String.join(",", val));
           startSpan.setStatus(StatusCode.OK);
@@ -298,9 +298,9 @@ public class PlacesVisibilityService {
     try (Scope scope = startSpan.makeCurrent()) {
       CompletionStage<Set<String>> fields = CompletableFuture.completedFuture(Set.of());
       PlaceHiddenFieldsPipelineStageEvent value =
-          PlaceHiddenFieldsPipelineStageEvent.builder().hidden(fields).interaction(prev).build();
+          PlaceHiddenFieldsPipelineStageEvent.builder().fields(fields).query(prev).build();
       fireHide.fire(value);
-      return value.getHidden().whenComplete((val, ex) -> {
+      return value.getFields().whenComplete((val, ex) -> {
         if (null == ex) {
           startSpan.setAttribute("fieds", String.join(",", val));
           startSpan.setStatus(StatusCode.OK);
@@ -325,9 +325,9 @@ public class PlacesVisibilityService {
     try (Scope scope = startSpan.makeCurrent()) {
       CompletionStage<Set<String>> fields = fieldsToHide(prev);
       PlaceHiddenFieldsPipelineStageEvent value = PlaceHiddenFieldsPipelineStageEvent.builder()
-          .hidden(fields).place(place).interaction(prev).build();
+          .fields(fields).place(place).query(prev).build();
       fireHide.fire(value);
-      return value.getHidden().whenComplete((val, ex) -> {
+      return value.getFields().whenComplete((val, ex) -> {
         if (null == ex) {
           startSpan.setAttribute("fieds", String.join(",", val));
           startSpan.setStatus(StatusCode.OK);

@@ -4,6 +4,18 @@ mp:
     verify:
       publickey:
         location: ${security.jwt.public.key}
+    audiences:
+      hermeshift-api
+  rcab:
+    model: phylax
+    phylax:
+      api-key: 1111
+      audience: hermeshift-api
+      register:
+        scope: ${security.rcab.host}/resource/scope
+        schema: ${security.rcab.host}/resource/schema
+      check:
+        grant: ${security.rcab.host}/grant
 
 quarkus:
   http:

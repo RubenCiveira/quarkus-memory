@@ -65,7 +65,6 @@ public class SecurityFilter implements ContainerRequestFilter {
     for (String header : requestContext.getHeaders().keySet()) {
       String value = requestContext.getHeaderString(header);
       riskScore += analyzeValue(value);
-      System.out.println("RISK FOR " + header + " => " + riskScore);
     }
     for (Entry<String, List<String>> entry : requestContext.getUriInfo().getQueryParameters()
         .entrySet()) {

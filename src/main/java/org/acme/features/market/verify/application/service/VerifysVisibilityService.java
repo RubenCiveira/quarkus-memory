@@ -240,9 +240,9 @@ public class VerifysVisibilityService {
         return set;
       });
       VerifyFixedFieldsPipelineStageEvent value =
-          VerifyFixedFieldsPipelineStageEvent.builder().fixed(fields).interaction(prev).build();
+          VerifyFixedFieldsPipelineStageEvent.builder().fields(fields).query(prev).build();
       fireFix.fire(value);
-      return value.getFixed().whenComplete((val, ex) -> {
+      return value.getFields().whenComplete((val, ex) -> {
         if (null == ex) {
           startSpan.setAttribute("fieds", String.join(",", val));
           startSpan.setStatus(StatusCode.OK);
@@ -272,9 +272,9 @@ public class VerifysVisibilityService {
             return set;
           });
       VerifyFixedFieldsPipelineStageEvent value = VerifyFixedFieldsPipelineStageEvent.builder()
-          .fixed(fields).verify(verify).interaction(prev).build();
+          .fields(fields).verify(verify).query(prev).build();
       fireFix.fire(value);
-      return value.getFixed().whenComplete((val, ex) -> {
+      return value.getFields().whenComplete((val, ex) -> {
         if (null == ex) {
           startSpan.setAttribute("fieds", String.join(",", val));
           startSpan.setStatus(StatusCode.OK);
@@ -298,9 +298,9 @@ public class VerifysVisibilityService {
     try (Scope scope = startSpan.makeCurrent()) {
       CompletionStage<Set<String>> fields = CompletableFuture.completedFuture(Set.of());
       VerifyHiddenFieldsPipelineStageEvent value =
-          VerifyHiddenFieldsPipelineStageEvent.builder().hidden(fields).interaction(prev).build();
+          VerifyHiddenFieldsPipelineStageEvent.builder().fields(fields).query(prev).build();
       fireHide.fire(value);
-      return value.getHidden().whenComplete((val, ex) -> {
+      return value.getFields().whenComplete((val, ex) -> {
         if (null == ex) {
           startSpan.setAttribute("fieds", String.join(",", val));
           startSpan.setStatus(StatusCode.OK);
@@ -325,9 +325,9 @@ public class VerifysVisibilityService {
     try (Scope scope = startSpan.makeCurrent()) {
       CompletionStage<Set<String>> fields = fieldsToHide(prev);
       VerifyHiddenFieldsPipelineStageEvent value = VerifyHiddenFieldsPipelineStageEvent.builder()
-          .hidden(fields).verify(verify).interaction(prev).build();
+          .fields(fields).verify(verify).query(prev).build();
       fireHide.fire(value);
-      return value.getHidden().whenComplete((val, ex) -> {
+      return value.getFields().whenComplete((val, ex) -> {
         if (null == ex) {
           startSpan.setAttribute("fieds", String.join(",", val));
           startSpan.setStatus(StatusCode.OK);

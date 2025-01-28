@@ -46,7 +46,7 @@ public class PlacePhotoTempUploadAllowPipelineStageEvent extends AllowPipelineSt
    * @return
    */
   public String actionName() {
-    return "temp-upload";
+    return "temp-upload-photo";
   }
 
   /**

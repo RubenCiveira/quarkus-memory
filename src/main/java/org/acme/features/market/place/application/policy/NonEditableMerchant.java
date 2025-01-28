@@ -19,7 +19,7 @@ public class NonEditableMerchant {
    * @param fixed
    */
   public void fixedFields(@Observes PlaceFixedFieldsPipelineStageEvent fixed) {
-    Actor actor = fixed.getInteraction().getActor();
+    Actor actor = fixed.getQuery().getActor();
     if (!actor.hasRole(ROL_ROOT)) {
       fixed.add("merchant");
     }

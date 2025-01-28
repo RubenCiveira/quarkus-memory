@@ -230,9 +230,9 @@ public class FruitsVisibilityService {
         return set;
       });
       FruitFixedFieldsPipelineStageEvent value =
-          FruitFixedFieldsPipelineStageEvent.builder().fixed(fields).interaction(prev).build();
+          FruitFixedFieldsPipelineStageEvent.builder().fields(fields).query(prev).build();
       fireFix.fire(value);
-      return value.getFixed().whenComplete((val, ex) -> {
+      return value.getFields().whenComplete((val, ex) -> {
         if (null == ex) {
           startSpan.setAttribute("fieds", String.join(",", val));
           startSpan.setStatus(StatusCode.OK);
@@ -262,9 +262,9 @@ public class FruitsVisibilityService {
             return set;
           });
       FruitFixedFieldsPipelineStageEvent value = FruitFixedFieldsPipelineStageEvent.builder()
-          .fixed(fields).fruit(fruit).interaction(prev).build();
+          .fields(fields).fruit(fruit).query(prev).build();
       fireFix.fire(value);
-      return value.getFixed().whenComplete((val, ex) -> {
+      return value.getFields().whenComplete((val, ex) -> {
         if (null == ex) {
           startSpan.setAttribute("fieds", String.join(",", val));
           startSpan.setStatus(StatusCode.OK);
@@ -288,9 +288,9 @@ public class FruitsVisibilityService {
     try (Scope scope = startSpan.makeCurrent()) {
       CompletionStage<Set<String>> fields = CompletableFuture.completedFuture(Set.of());
       FruitHiddenFieldsPipelineStageEvent value =
-          FruitHiddenFieldsPipelineStageEvent.builder().hidden(fields).interaction(prev).build();
+          FruitHiddenFieldsPipelineStageEvent.builder().fields(fields).query(prev).build();
       fireHide.fire(value);
-      return value.getHidden().whenComplete((val, ex) -> {
+      return value.getFields().whenComplete((val, ex) -> {
         if (null == ex) {
           startSpan.setAttribute("fieds", String.join(",", val));
           startSpan.setStatus(StatusCode.OK);
@@ -315,9 +315,9 @@ public class FruitsVisibilityService {
     try (Scope scope = startSpan.makeCurrent()) {
       CompletionStage<Set<String>> fields = fieldsToHide(prev);
       FruitHiddenFieldsPipelineStageEvent value = FruitHiddenFieldsPipelineStageEvent.builder()
-          .hidden(fields).fruit(fruit).interaction(prev).build();
+          .fields(fields).fruit(fruit).query(prev).build();
       fireHide.fire(value);
-      return value.getHidden().whenComplete((val, ex) -> {
+      return value.getFields().whenComplete((val, ex) -> {
         if (null == ex) {
           startSpan.setAttribute("fieds", String.join(",", val));
           startSpan.setStatus(StatusCode.OK);
