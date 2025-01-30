@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
+@Deprecated
 public abstract class Slide<T> {
   private final Optional<Integer> limit;
 

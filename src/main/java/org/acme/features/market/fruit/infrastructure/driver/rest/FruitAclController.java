@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 
 import org.acme.common.action.Interaction;
-import org.acme.common.rest.CurrentRequest;
+import org.acme.common.infrastructure.CurrentRequest;
 import org.acme.features.market.fruit.application.service.FruitsVisibilityService;
 import org.acme.features.market.fruit.application.usecase.create.CreateFruitUsecase;
 import org.acme.features.market.fruit.application.usecase.delete.DeleteFruitUsecase;

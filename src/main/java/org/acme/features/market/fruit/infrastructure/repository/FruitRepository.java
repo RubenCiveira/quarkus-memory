@@ -1,15 +1,13 @@
 package org.acme.features.market.fruit.infrastructure.repository;
 
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
-
 import javax.sql.DataSource;
-
-import org.acme.common.action.Slide;
 import org.acme.common.exception.ConstraintException;
-import org.acme.common.exception.NotFoundException;
+import org.acme.common.infrastructure.SliderImpl;
+import org.acme.common.infrastructure.StreamImpl;
+import org.acme.common.reactive.Slider;
+import org.acme.common.reactive.Stream;
 import org.acme.common.sql.OptimistLockException;
 import org.acme.common.sql.PartialWhere;
 import org.acme.common.sql.SqlCommand;
@@ -24,7 +22,6 @@ import org.acme.features.market.fruit.domain.gateway.FruitFilter;
 import org.acme.features.market.fruit.domain.gateway.FruitOrder;
 import org.acme.features.market.fruit.domain.model.Fruit;
 import org.acme.features.market.fruit.domain.model.FruitRef;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,7 +39,7 @@ public class FruitRepository {
    * @param entity
    * @return
    */
-  public CompletionStage<Optional<Fruit>> create(Fruit entity) {
+  public Stream<Fruit> create(Fruit entity) {
     return runCreate(entity, null);
   }
 
@@ -52,8 +49,8 @@ public class FruitRepository {
    * @param verifier
    * @return
    */
-  public CompletionStage<Optional<Fruit>> create(Fruit entity,
-      Function<Fruit, CompletionStage<Boolean>> verifier) {
+  public Stream<Fruit> create(Fruit entity,
+      Function<Fruit, Stream<Boolean>> verifier) {
     return runCreate(entity, verifier);
   }
 
@@ -62,11 +59,11 @@ public class FruitRepository {
    * @param entity
    * @return
    */
-  public CompletionStage<Fruit> delete(Fruit entity) {
-    try (SqlTemplate template = new SqlTemplate(datasource)) {
+  public Stream<Fruit> delete(Fruit entity) {
+    try( SqlTemplate template = new SqlTemplate(datasource) ) {
       SqlCommand sq = template.createSqlCommand("delete from \"fruit\" where \"uid\" = :uid");
       sq.with("uid", SqlParameterValue.of(entity.getUidValue()));
-      return sq.execute().thenApply(num -> {
+      return sq.execute().map(num -> {
         if (0 == num) {
           throw new IllegalArgumentException("No delete from");
         }
@@ -80,11 +77,8 @@ public class FruitRepository {
    * @param reference
    * @return
    */
-  public CompletionStage<Fruit> enrich(FruitRef reference) {
-    return reference instanceof Fruit ? CompletableFuture.completedStage((Fruit) reference)
-        : retrieve(reference.getUidValue(), Optional.empty())
-            .thenApply(optional -> optional.orElseThrow(() -> new NotFoundException(
-                "Trying to enrich inexistent Fruit: " + reference.getUidValue())));
+  public Stream<Fruit> enrich(FruitRef reference) {
+    return reference instanceof Fruit ? Stream.just((Fruit) reference) : retrieve(reference.getUidValue(), Optional.empty());
   }
 
   /**
@@ -93,8 +87,8 @@ public class FruitRepository {
    * @param filter
    * @return
    */
-  public CompletionStage<Boolean> exists(String uid, Optional<FruitFilter> filter) {
-    return retrieve(uid, filter).thenApply(Optional::isPresent);
+  public Stream<Boolean> exists(String uid, Optional<FruitFilter> filter) {
+    return retrieve(uid, filter).isEmpty();
   }
 
   /**
@@ -103,7 +97,11 @@ public class FruitRepository {
    * @param cursor
    * @return
    */
-  public CompletionStage<Slide<Fruit>> list(FruitFilter filter, FruitCursor cursor) {
+  public Slider<Fruit> list(FruitFilter filter, FruitCursor cursor) {
+    return runlist(filter, cursor);
+  }
+  
+  private SliderImpl<Fruit> runlist(FruitFilter filter, FruitCursor cursor) {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       SqlSchematicQuery<Fruit> sq = filteredQuery(template, filter);
       PartialWhere offset = PartialWhere.empty();
@@ -144,8 +142,7 @@ public class FruitRepository {
             .ifPresent(since -> sq.where("uid", SqlOperator.GT, SqlParameterValue.of(since)));
       }
       sq.orderAsc("uid");
-      return sq.query(converter()).limit(cursor.getLimit())
-          .thenApply(res -> new FruitSlice(cursor.getLimit(), res, this::list, filter, cursor));
+      return new FruitSlider(sq.query(converter()).limit(cursor.getLimit()), cursor.getLimit().orElse(0), this::runlist, filter, cursor);
     }
   }
 
@@ -155,13 +152,10 @@ public class FruitRepository {
    * @param filter
    * @return
    */
-  public CompletionStage<Optional<Fruit>> retrieve(String uid, Optional<FruitFilter> filter) {
-    try (SqlTemplate template = new SqlTemplate(datasource)) {
-      FruitFilter readyFilter = filter.map(val -> val.withUid(uid))
-          .orElseGet(() -> FruitFilter.builder().uid(uid).build());
-      SqlSchematicQuery<Fruit> sq = filteredQuery(template, readyFilter);
-      return sq.query(converter()).one();
-    }
+  public Stream<Fruit> retrieve(String uid, Optional<FruitFilter> filter) {
+    FruitFilter readyFilter = filter.map(val -> val.withUid(uid))
+        .orElseGet(() -> FruitFilter.builder().uid(uid).build());
+    return filteredQuery(new SqlTemplate(datasource), readyFilter).query(converter()).one();
   }
 
   /**
@@ -169,8 +163,8 @@ public class FruitRepository {
    * @param entity
    * @return
    */
-  public CompletionStage<Fruit> update(Fruit entity) {
-    try (SqlTemplate template = new SqlTemplate(datasource)) {
+  public Stream<Fruit> update(Fruit entity) {
+    try( SqlTemplate template = new SqlTemplate(datasource) ) {
       int version = entity.getVersionValue().orElse(0);
       SqlCommand sq = template.createSqlCommand(
           "update \"fruit\" set  \"name\" = :name, \"version\" = \"version\" + 1 where \"uid\" = :uid and \"version\" = :version");
@@ -178,7 +172,7 @@ public class FruitRepository {
       sq.with("name", SqlParameterValue.of(entity.getNameValue()));
       sq.with("version", entity.getVersionValue().map(SqlParameterValue::of)
           .orElseGet(SqlParameterValue::ofNullInteger));
-      return sq.execute().thenApply(num -> {
+      return sq.execute().map(num -> {
         if (0 == num) {
           throw new OptimistLockException("No delete from");
         }
@@ -229,27 +223,27 @@ public class FruitRepository {
    * @param verifier
    * @return
    */
-  private CompletionStage<Optional<Fruit>> runCreate(Fruit entity,
-      Function<Fruit, CompletionStage<Boolean>> verifier) {
-    try (SqlTemplate template = new SqlTemplate(datasource)) {
+  private Stream<Fruit> runCreate(Fruit entity,
+      Function<Fruit, Stream<Boolean>> verifier) {
+    try ( SqlTemplate template = new SqlTemplate(datasource) ) {
       SqlCommand sq = template.createSqlCommand(
           "insert into \"fruit\" ( \"uid\", \"name\", \"version\") values ( :uid, :name, :version)");
       sq.with("uid", SqlParameterValue.of(entity.getUidValue()));
       sq.with("name", SqlParameterValue.of(entity.getNameValue()));
       sq.with("version", entity.getVersionValue().map(SqlParameterValue::of)
           .orElseGet(SqlParameterValue::ofNullInteger));
-      return sq.execute().thenCompose(num -> {
+      return sq.execute().flatMap(num -> {
         if (0 == num) {
           throw new IllegalArgumentException("No insert into");
         }
-        return (verifier == null ? CompletableFuture.completedFuture(Optional.of(entity))
-            : verifier.apply(entity).thenCompose(exists -> {
+        return (verifier == null ? new StreamImpl<>(entity)
+            : verifier.apply(entity).flatMap(exists -> {
               if (exists) {
-                return CompletableFuture.completedFuture(Optional.of(entity));
+                return new StreamImpl<>(entity);
               } else {
                 template.createSqlCommand("delete from \"fruit\" where \"uid\" = :uid")
                     .with("uid", SqlParameterValue.of(entity.getUidValue())).execute();
-                return CompletableFuture.completedFuture(Optional.<Fruit>empty());
+                return new StreamImpl<>();
               }
             }));
       });

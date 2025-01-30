@@ -1,13 +1,13 @@
 package org.acme.common.sql;
 
-import java.util.concurrent.CompletionStage;
+import org.acme.common.reactive.Stream;
 
 public abstract class AbstractSqlCommand<T extends AbstractSqlCommand<T>>
     extends AbstractSqlParametrized<T> {
 
-  public AbstractSqlCommand(SqlTemplate template) {
+  /* default */ AbstractSqlCommand(SqlTemplate template) {
     super(template);
   }
 
-  public abstract CompletionStage<Integer> execute();
+  public abstract Stream<Integer> execute();
 }

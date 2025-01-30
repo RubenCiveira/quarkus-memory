@@ -1,9 +1,8 @@
 package org.acme.features.market.fruit.domain.gateway;
 
 import java.util.Optional;
-import java.util.concurrent.CompletionStage;
-
-import org.acme.common.action.Slide;
+import org.acme.common.reactive.Slider;
+import org.acme.common.reactive.Stream;
 import org.acme.features.market.fruit.domain.model.Fruit;
 import org.acme.features.market.fruit.domain.model.FruitRef;
 
@@ -16,7 +15,7 @@ public interface FruitReadRepositoryGateway {
    * @param reference a filter to retrieve only matching values
    * @return Retrieve one single value
    */
-  CompletionStage<Fruit> enrich(FruitRef reference);
+  Stream<Fruit> enrich(FruitRef reference);
 
   /**
    * Retrieve one single value
@@ -26,7 +25,7 @@ public interface FruitReadRepositoryGateway {
    * @param filter a filter to retrieve only matching values
    * @return Retrieve one single value
    */
-  CompletionStage<Boolean> exists(String uid, Optional<FruitFilter> filter);
+  Stream<Boolean> exists(String uid, Optional<FruitFilter> filter);
 
   /**
    * The slide with some values
@@ -36,7 +35,7 @@ public interface FruitReadRepositoryGateway {
    * @param cursor a cursor to order and skip
    * @return The slide with some values
    */
-  CompletionStage<Slide<Fruit>> list(FruitFilter filter, FruitCursor cursor);
+  Slider<Fruit> list(FruitFilter filter, FruitCursor cursor);
 
   /**
    * Retrieve one single value
@@ -46,5 +45,5 @@ public interface FruitReadRepositoryGateway {
    * @param filter a filter to retrieve only matching values
    * @return Retrieve one single value
    */
-  CompletionStage<Optional<Fruit>> retrieve(String uid, Optional<FruitFilter> filter);
+  Stream<Fruit> retrieve(String uid, Optional<FruitFilter> filter);
 }

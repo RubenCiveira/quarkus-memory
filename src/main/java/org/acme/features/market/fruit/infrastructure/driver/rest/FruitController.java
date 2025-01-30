@@ -5,8 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-
-import org.acme.common.rest.CurrentRequest;
+import org.acme.common.infrastructure.CurrentRequest;
 import org.acme.features.market.fruit.application.FruitDto;
 import org.acme.features.market.fruit.application.usecase.create.CreateFruitUsecase;
 import org.acme.features.market.fruit.application.usecase.create.FruitCreateCommand;

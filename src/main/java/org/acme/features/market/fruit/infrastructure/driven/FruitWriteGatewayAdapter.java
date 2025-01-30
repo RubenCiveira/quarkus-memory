@@ -7,6 +7,8 @@ import java.util.function.Function;
 import javax.sql.DataSource;
 
 import org.acme.common.action.Slide;
+import org.acme.common.reactive.Slider;
+import org.acme.common.reactive.Stream;
 import org.acme.features.market.fruit.domain.gateway.FruitCursor;
 import org.acme.features.market.fruit.domain.gateway.FruitFilter;
 import org.acme.features.market.fruit.domain.gateway.FruitWriteRepositoryGateway;
@@ -42,7 +44,7 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public CompletionStage<Optional<Fruit>> create(Fruit entity) {
+  public Stream<Fruit> create(Fruit entity) {
     return repository.create(entity);
   }
 
@@ -53,8 +55,8 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public CompletionStage<Optional<Fruit>> create(Fruit entity,
-      Function<Fruit, CompletionStage<Boolean>> verifier) {
+  public Stream<Fruit> create(Fruit entity,
+      Function<Fruit, Stream<Boolean>> verifier) {
     return repository.create(entity, verifier);
   }
 
@@ -64,7 +66,7 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public CompletionStage<Fruit> delete(Fruit entity) {
+  public Stream<Fruit> delete(Fruit entity) {
     return repository.delete(entity);
   }
 
@@ -74,7 +76,7 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public CompletionStage<Fruit> enrich(FruitRef reference) {
+  public Stream<Fruit> enrich(FruitRef reference) {
     return repository.enrich(reference);
   }
 
@@ -85,7 +87,7 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public CompletionStage<Boolean> exists(String uid, Optional<FruitFilter> filter) {
+  public Stream<Boolean> exists(String uid, Optional<FruitFilter> filter) {
     return repository.exists(uid, filter);
   }
 
@@ -96,7 +98,7 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public CompletionStage<Slide<Fruit>> list(FruitFilter filter, FruitCursor cursor) {
+  public Slider<Fruit> list(FruitFilter filter, FruitCursor cursor) {
     return repository.list(filter, cursor);
   }
 
@@ -107,7 +109,7 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public CompletionStage<Optional<Fruit>> retrieve(String uid, Optional<FruitFilter> filter) {
+  public Stream<Fruit> retrieve(String uid, Optional<FruitFilter> filter) {
     return repository.retrieve(uid, filter);
   }
 
@@ -118,7 +120,7 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public CompletionStage<Fruit> update(FruitRef reference, Fruit entity) {
+  public Stream<Fruit> update(FruitRef reference, Fruit entity) {
     return repository.update(entity);
   }
 }

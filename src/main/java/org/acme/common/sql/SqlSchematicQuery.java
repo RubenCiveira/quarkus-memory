@@ -3,7 +3,7 @@ package org.acme.common.sql;
 public final class SqlSchematicQuery<T> extends AbstractSqlQuery<T, SqlSchematicQuery<T>> {
   private final SchematicQuery query;
 
-  public SqlSchematicQuery(SqlTemplate template, String table) {
+  /* default */ SqlSchematicQuery(SqlTemplate template, String table) {
     super(template);
     this.query = new SchematicQuery("SELECT", table, this);
   }

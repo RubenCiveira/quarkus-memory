@@ -1,8 +1,7 @@
 package org.acme.features.market.fruit.application.usecase.create.event;
 
-import java.util.concurrent.CompletableFuture;
-
 import org.acme.common.action.Interaction;
+import org.acme.common.reactive.Stream;
 import org.acme.common.security.Allow;
 import org.acme.common.security.AllowPipelineStageEvent;
 
@@ -35,8 +34,7 @@ public class FruitCreateAllowPipelineStageEvent extends AllowPipelineStageEvent 
    */
   public static FruitCreateAllowPipelineStageEvent build(final Interaction query,
       final boolean allowed, final String reason) {
-    return FruitCreateAllowPipelineStageEvent.builder().query(query).detail(CompletableFuture
-        .completedFuture(Allow.builder().allowed(allowed).description(reason).build())).build();
+    return FruitCreateAllowPipelineStageEvent.builder().query(query).detail(Stream.just(Allow.builder().allowed(allowed).description(reason).build())).build();
   }
 
   /**

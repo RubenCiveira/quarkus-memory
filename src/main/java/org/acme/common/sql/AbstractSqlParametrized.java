@@ -12,12 +12,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
+import org.acme.common.infrastructure.StreamDefferred;
+import org.acme.common.infrastructure.StreamImpl;
+import org.acme.common.reactive.Stream;
 
 public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<T>> {
   private static class ChildRequest<R> {
@@ -32,9 +33,8 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
     // Calculated
     public final List<String> params = new ArrayList<>();
     // Calculated
-    public final Map<String, CompletableFuture<List<R>>> futures = new LinkedHashMap<>();
-    public final Map<String, CompletableFuture<List<R>>> childData = new LinkedHashMap<>();
-
+    public final Map<String, StreamDefferred<R>> futures = new LinkedHashMap<>();
+    public final Map<String, StreamDefferred<R>> childData = new LinkedHashMap<>();
 
     public ChildRequest(int batch, String name, String bind, String ref, String query,
         SqlConverter<R> converter) {
@@ -52,9 +52,21 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
   private final List<ChildRequest<?>> childs = new ArrayList<>();
 
   private final Connection connection;
+  private final SqlTemplate template;
+  private boolean closed = false;
 
-  public AbstractSqlParametrized(SqlTemplate template) {
+  /* default */ AbstractSqlParametrized(SqlTemplate template) {
+    this.template = template;
     this.connection = template.currentConnection();
+  }
+  
+  protected void close() {
+    closed = true;
+    template.clear();
+  }
+  
+  /* default */ boolean isClosed() {
+    return closed;
   }
 
   @SuppressWarnings("unchecked")
@@ -66,9 +78,10 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
     return (T) this;
   }
 
-  protected CompletionStage<Integer> executeUpdate(String sql) {
+  protected Stream<Integer> executeUpdate(String sql) {
     try (PreparedStatement run = prepareStatement(sql)) {
-      return CompletableFuture.completedFuture(run.executeUpdate());
+      int value = run.executeUpdate();
+      return new StreamImpl<Integer>(value).completed(this::close);
     } catch (SQLException e) {
       throw UncheckedSqlException.exception(connection, e);
     }
@@ -96,11 +109,11 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
         // Si tengo listas hijas => tengo que ir por ellas.
         while (executeQuery.next()) {
           // foreach child
-          Map<String, CompletionStage<List<?>>> childData = new HashMap<>();
+          Map<String, Stream<?>> childData = new HashMap<>();
           for (ChildRequest child : childs) {
             String of = executeQuery.getString(child.bind);
             child.params.add(of);
-            CompletionStage<List<?>> future = new CompletableFuture<>();
+            StreamDefferred<?> future = new StreamDefferred<>();
             child.futures.put(of, future);
             child.childData.put(of, new ArrayList<>());
             childData.put(child.name, future);
@@ -119,27 +132,29 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
         throw UncheckedSqlException.exception(connection, ex);
       }
     };
+    Runnable close = this::close;
     // CompletableFuture.completedFuture(
     return new SqlResult<R>() {
       @Override
-      public CompletionStage<Optional<R>> one() {
-        return CompletableFuture
-            .completedFuture(execute.apply(limitResults(sql, 1)).stream().findFirst());
+      public Stream<R> one() {
+        return new StreamImpl<>(
+            execute.apply(limitResults(sql, 1)).stream().findFirst()
+        ).completed(close);
       }
 
       @Override
-      public CompletionStage<List<R>> limit(Optional<Integer> max) {
+      public Stream<R> limit(Optional<Integer> max) {
         return max.map(this::limit).orElseGet(this::all);
       }
 
       @Override
-      public CompletionStage<List<R>> limit(int max) {
-        return CompletableFuture.completedFuture(execute.apply(limitResults(sql, max)));
+      public Stream<R> limit(int max) {
+        return new StreamImpl<>(execute.apply(limitResults(sql, max))).completed(close);
       }
 
       @Override
-      public CompletionStage<List<R>> all() {
-        return CompletableFuture.completedFuture(execute.apply(sql));
+      public Stream<R> all() {
+        return new StreamImpl<>(execute.apply(sql)).completed(close);
       }
     };
   }
@@ -174,7 +189,7 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
       }
       System.out.println("El child está en " + child.childData);
       offset.forEach(key -> {
-        ((CompletableFuture) child.futures.get(key)).complete(child.childData.get(key));
+        ((StreamDefferred) child.futures.get(key)).complete(child.childData.get(key));
       });
     }
   }

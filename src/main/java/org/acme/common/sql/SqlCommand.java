@@ -1,11 +1,11 @@
 package org.acme.common.sql;
 
-import java.util.concurrent.CompletionStage;
+import org.acme.common.reactive.Stream;
 
 public final class SqlCommand extends AbstractSqlCommand<SqlCommand> {
   private final String sql;
 
-  public SqlCommand(SqlTemplate template, String sql) {
+  /* default */ SqlCommand(SqlTemplate template, String sql) {
     super(template);
     this.sql = sql;
   }
@@ -17,8 +17,7 @@ public final class SqlCommand extends AbstractSqlCommand<SqlCommand> {
   }
 
   @Override
-  public CompletionStage<Integer> execute() {
-    return executeUpdate(this.sql);
+  public Stream<Integer> execute() {
+    return executeUpdate(this.sql).completed(this::close);
   }
-
 }

@@ -3,7 +3,7 @@ package org.acme.common.sql;
 public final class SqlQuery<T> extends AbstractSqlQuery<T, SqlQuery<T>> {
   private final String sql;
 
-  public SqlQuery(SqlTemplate template, String sql) {
+  /* default */ SqlQuery(SqlTemplate template, String sql) {
     super(template);
     this.sql = sql;
   }
