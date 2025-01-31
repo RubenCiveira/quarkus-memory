@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.acme.common.exception.NotAllowedException;
 import org.acme.common.infrastructure.CurrentRequest;
+
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;

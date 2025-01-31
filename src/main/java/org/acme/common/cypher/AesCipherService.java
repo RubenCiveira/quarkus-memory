@@ -57,7 +57,7 @@ public class AesCipherService {
    */
   private static final int SALT_LENGTH_BYTE = 16;
 
-  @ConfigProperty(name = "security.encryption.key", defaultValue = "net.civeira.dagda.security")
+  @ConfigProperty(name = "app.security.encryption.key")
   private final String cipherKey;
 
   /**

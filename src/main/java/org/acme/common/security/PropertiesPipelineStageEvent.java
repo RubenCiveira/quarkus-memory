@@ -4,7 +4,9 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import org.acme.common.action.Interaction;
+
 import lombok.Data;
 import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
@@ -33,8 +35,8 @@ public abstract class PropertiesPipelineStageEvent {
   public void add(List<String> newfields) {
     try {
       fields.addAll(newfields);
-    } catch(UnsupportedOperationException ex) {
-      fields = new HashSet<>( newfields );
+    } catch (UnsupportedOperationException ex) {
+      fields = new HashSet<>(newfields);
     }
   }
 

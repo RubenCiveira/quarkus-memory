@@ -8,6 +8,7 @@ import org.acme.common.security.scope.ResourceDescription;
 import org.acme.common.security.scope.ScopeAllowList;
 import org.acme.common.security.scope.ScopeDescription;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+
 import io.quarkus.arc.properties.IfBuildProperty;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.RequiredArgsConstructor;

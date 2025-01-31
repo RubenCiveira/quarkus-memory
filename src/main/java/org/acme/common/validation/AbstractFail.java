@@ -82,10 +82,6 @@ public abstract class AbstractFail {
     if (messages.contains(code + ".description")) {
       builder.description(messages.get(code + ".description"));
     }
-    if (withSource && null != violation
-        && !"false".equals(messages.get(code + ".show-violation"))) {
-      builder = builder.violation(violation);
-    }
     List<LocalizedWrongValue> wrongs = new ArrayList<>();
     for (WrongValue wrongValue : wrongValues) {
       String key = code + ".field." + wrongValue.getField();
@@ -94,6 +90,10 @@ public abstract class AbstractFail {
           .errorMessage(messages.contains(key) ? messages.get(key) : wrongValue.getErrorMessage())
           .build());
     }
-    return builder.wrongValues(wrongValues).build();
+    if (withSource && null != violation
+        && !"false".equals(messages.get(code + ".show-violation"))) {
+      builder = builder.violation(violation);
+    }
+    return builder.build();
   }
 }

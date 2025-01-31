@@ -5,11 +5,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
+
 import org.acme.common.action.Interaction;
 import org.acme.common.security.Actor;
 import org.acme.common.security.Connection;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.jwt.JsonWebToken;
+
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.core.UriInfo;
@@ -32,7 +34,7 @@ public class CurrentRequest {
   public boolean isAnonymous() {
     return security.isAnonymous();
   }
-  
+
   public Interaction interaction() {
     Actor actor = getActor();
     Connection conn = getConnection();

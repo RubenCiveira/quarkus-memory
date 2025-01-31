@@ -1,7 +1,9 @@
 package org.acme.common.security;
 
 import java.util.function.Function;
+
 import org.acme.common.action.Interaction;
+
 import lombok.Data;
 import lombok.NonNull;
 import lombok.experimental.SuperBuilder;

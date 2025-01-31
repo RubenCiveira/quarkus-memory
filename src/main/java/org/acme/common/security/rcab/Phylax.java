@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
 import org.acme.common.security.Actor;
 import org.acme.common.security.RbacStore;
 import org.acme.common.security.scope.FieldDescription;
@@ -25,9 +26,11 @@ import org.acme.common.security.scope.ScopeAllow;
 import org.acme.common.security.scope.ScopeAllowList;
 import org.acme.common.security.scope.ScopeDescription;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.quarkus.arc.properties.IfBuildProperty;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.annotation.Priority;

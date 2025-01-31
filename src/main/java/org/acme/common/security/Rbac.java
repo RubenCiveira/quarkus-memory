@@ -2,9 +2,11 @@ package org.acme.common.security;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.acme.common.security.scope.FieldDescription;
 import org.acme.common.security.scope.ResourceDescription;
 import org.acme.common.security.scope.ScopeDescription;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +40,8 @@ public class Rbac {
       }
     });
     return processors.stream().findFirst()
-        .<Allow>map(store -> Allow.builder().allowed(store.checkRoleScopes(actor).allowed(resource, action)).build())
+        .<Allow>map(store -> Allow.builder()
+            .allowed(store.checkRoleScopes(actor).allowed(resource, action)).build())
         .orElseGet(() -> Allow.builder().allowed(true).build());
   }
 
@@ -50,7 +53,7 @@ public class Rbac {
       }
     });
     return processors.stream().findFirst()
-        .map(store -> store.checkRoleProperties(actor).innacesiblesFor(resource, view) )
+        .map(store -> store.checkRoleProperties(actor).innacesiblesFor(resource, view))
         .orElseGet(List::of);
   }
 }
