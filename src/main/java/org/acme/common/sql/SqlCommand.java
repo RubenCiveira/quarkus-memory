@@ -1,7 +1,5 @@
 package org.acme.common.sql;
 
-import org.acme.common.reactive.Stream;
-
 public final class SqlCommand extends AbstractSqlCommand<SqlCommand> {
   private final String sql;
 
@@ -17,7 +15,7 @@ public final class SqlCommand extends AbstractSqlCommand<SqlCommand> {
   }
 
   @Override
-  public Stream<Integer> execute() {
-    return executeUpdate(this.sql).completed(this::close);
+  public Integer execute() {
+    return executeUpdate(this.sql);
   }
 }

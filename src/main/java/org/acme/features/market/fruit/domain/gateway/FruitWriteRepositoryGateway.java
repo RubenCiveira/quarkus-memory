@@ -2,8 +2,7 @@ package org.acme.features.market.fruit.domain.gateway;
 
 import java.util.Optional;
 import java.util.function.Function;
-import org.acme.common.reactive.Slider;
-import org.acme.common.reactive.Stream;
+import org.acme.common.algorithms.Slider;
 import org.acme.features.market.fruit.domain.model.Fruit;
 import org.acme.features.market.fruit.domain.model.FruitRef;
 
@@ -17,8 +16,8 @@ public interface FruitWriteRepositoryGateway {
    * @param verifier a filter to retrieve only matching values
    * @return Retrieve one single value
    */
-  Stream<Fruit> create(Fruit entity,
-      Function<Fruit, Stream<Boolean>> verifier);
+  Fruit create(Fruit entity,
+      Function<Fruit, Boolean> verifier);
 
   /**
    * Retrieve one single value
@@ -27,7 +26,7 @@ public interface FruitWriteRepositoryGateway {
    * @param entity a filter to retrieve only matching values
    * @return Retrieve one single value
    */
-  Stream<Fruit> create(Fruit entity);
+  Fruit create(Fruit entity);
 
   /**
    * Retrieve one single value
@@ -36,7 +35,7 @@ public interface FruitWriteRepositoryGateway {
    * @param entity a filter to retrieve only matching values
    * @return Retrieve one single value
    */
-  Stream<Fruit> delete(Fruit entity);
+  Fruit delete(Fruit entity);
 
   /**
    * Retrieve one single value
@@ -45,7 +44,7 @@ public interface FruitWriteRepositoryGateway {
    * @param reference a filter to retrieve only matching values
    * @return Retrieve one single value
    */
-  Stream<Fruit> enrich(FruitRef reference);
+  Fruit enrich(FruitRef reference);
 
   /**
    * Retrieve one single value
@@ -55,7 +54,7 @@ public interface FruitWriteRepositoryGateway {
    * @param filter a filter to retrieve only matching values
    * @return Retrieve one single value
    */
-  Stream<Boolean> exists(String uid, Optional<FruitFilter> filter);
+  boolean exists(String uid, Optional<FruitFilter> filter);
 
   /**
    * The slide with some values
@@ -75,7 +74,7 @@ public interface FruitWriteRepositoryGateway {
    * @param filter a filter to retrieve only matching values
    * @return Retrieve one single value
    */
-  Stream<Fruit> retrieve(String uid, Optional<FruitFilter> filter);
+  Optional<Fruit> retrieve(String uid, Optional<FruitFilter> filter);
 
   /**
    * Retrieve one single value
@@ -85,5 +84,5 @@ public interface FruitWriteRepositoryGateway {
    * @param entity a filter to retrieve only matching values
    * @return Retrieve one single value
    */
-  Stream<Fruit> update(FruitRef reference, Fruit entity);
+  Fruit update(FruitRef reference, Fruit entity);
 }

@@ -2,19 +2,17 @@ package org.acme.common.sql;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 import javax.sql.DataSource;
 
 public class SqlTemplate implements AutoCloseable {
   private final Connection connection;
-  private final List<AbstractSqlParametrized<?>> queries = new ArrayList<>();
-  private boolean closed = false;
+
   // Constructor que recibe la conexión
   public SqlTemplate(Connection connection) {
     if (connection == null) {
       throw new IllegalArgumentException("Connection cannot be null");
     }
+    System.out.println("Abrimos una template");
     this.connection = connection;
   }
 
@@ -23,6 +21,7 @@ public class SqlTemplate implements AutoCloseable {
     if (source == null) {
       throw new IllegalArgumentException("Connection cannot be null");
     }
+    System.out.println("Abrimos una template");
     try {
       this.connection = source.getConnection();
     } catch (SQLException ex) {
@@ -75,24 +74,12 @@ public class SqlTemplate implements AutoCloseable {
    * Cierra la conexión.
    */
   public void close() {
-    this.closed = true;
-    this.clear();
-  }
-  
-  /* default */ void clear() {
-    if( this.closed ) {
-      boolean childsClosed = queries.stream().
-          allMatch(AbstractSqlParametrized::isClosed);
-      if( childsClosed ) {
-        queries.clear();
-        try {
-          if (!connection.isClosed()) {
-            connection.close();
-          }
-        } catch (SQLException ex) {
-          throw UncheckedSqlException.exception(connection, ex);
-        }
+    try {
+      if (!connection.isClosed()) {
+        connection.close();
       }
+    } catch (SQLException ex) {
+      throw UncheckedSqlException.exception(connection, ex);
     }
   }
   
@@ -101,21 +88,15 @@ public class SqlTemplate implements AutoCloseable {
   }
 
   public <T> SqlSchematicQuery<T> createSqlSchematicQuery(String table) {
-    SqlSchematicQuery<T> val = new SqlSchematicQuery<>(this, table);
-    queries.add( val );
-    return val;
+    return new SqlSchematicQuery<>(this, table);
   }
 
   public <T> SqlQuery<T> createSqlQuery(String sql) {
-    SqlQuery<T> val = new SqlQuery<>(this, sql);
-    queries.add(val);
-    return val;
+    return new SqlQuery<>(this, sql);
   }
 
   public SqlCommand createSqlCommand(String sql) {
-    SqlCommand val = new SqlCommand(this, sql);
-    queries.add( val );
-    return val;
+    return new SqlCommand(this, sql);
   }
 
 }

@@ -12,12 +12,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
 import org.acme.common.security.Actor;
 import org.acme.common.security.RbacStore;
 import org.acme.common.security.scope.FieldDescription;
@@ -28,11 +25,9 @@ import org.acme.common.security.scope.ScopeAllow;
 import org.acme.common.security.scope.ScopeAllowList;
 import org.acme.common.security.scope.ScopeDescription;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.quarkus.arc.properties.IfBuildProperty;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.annotation.Priority;
@@ -57,7 +52,7 @@ public class Phylax implements RbacStore {
   private final HttpClient client = HttpClient.newHttpClient();
   private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
 
-  private transient CompletionStage<List<PhylaxGrants>> readScopes = null;
+  private transient List<PhylaxGrants> readScopes = null;
   private transient OffsetDateTime scopesExpiration = OffsetDateTime.now();
   private transient Map<String, Map<String, Object>> scopesToRegister = new HashMap<>();
   private transient Map<String, Map<String, Object>> propertiesToRegister = new HashMap<>();
@@ -94,39 +89,37 @@ public class Phylax implements RbacStore {
   }
 
   @Override
-  public CompletionStage<ScopeAllowList> checkRoleScopes(Actor actor) {
-    return cachedCallCheckScopes().thenApply(grants -> {
-      List<String> roles = actor.getRoles().stream().filter(role -> role.startsWith(audience + "."))
-          .map(role -> role.substring(audience.length() + 1)).toList();
-      ScopeAllowList descriptions = new ScopeAllowList();
-      grants.stream().filter(grant -> roles.contains(grant.getRolename())).forEach(grant -> {
-        grant.getAllowedScopes().forEach(scope -> {
-          String[] parts = scope.split("\\:");
-          descriptions.add(ScopeAllow.builder().name(parts[1]).resource(parts[0]).build());
-        });
+  public ScopeAllowList checkRoleScopes(Actor actor) {
+    List<PhylaxGrants> grants = cachedCallCheckScopes();
+    List<String> roles = actor.getRoles().stream().filter(role -> role.startsWith(audience + "."))
+        .map(role -> role.substring(audience.length() + 1)).toList();
+    ScopeAllowList descriptions = new ScopeAllowList();
+    grants.stream().filter(grant -> roles.contains(grant.getRolename())).forEach(grant -> {
+      grant.getAllowedScopes().forEach(scope -> {
+        String[] parts = scope.split("\\:");
+        descriptions.add(ScopeAllow.builder().name(parts[1]).resource(parts[0]).build());
       });
-      return descriptions;
     });
+    return descriptions;
   }
 
   @Override
-  public CompletionStage<FieldGrantList> checkRoleProperties(Actor actor) {
-    return cachedCallCheckScopes().thenApply(grants -> {
-      List<String> roles = actor.getRoles().stream().filter(role -> role.startsWith(audience + "."))
-          .map(role -> role.substring(audience.length() + 1)).toList();
+  public FieldGrantList checkRoleProperties(Actor actor) {
+    List<PhylaxGrants> grants = cachedCallCheckScopes();
+    List<String> roles = actor.getRoles().stream().filter(role -> role.startsWith(audience + "."))
+        .map(role -> role.substring(audience.length() + 1)).toList();
 
-      FieldGrantList descriptions = new FieldGrantList();
-      grants.stream().filter(grant -> roles.contains(grant.getRolename())).forEach(grant -> {
-        grant.getRestrictedFields().entrySet().forEach(entry -> {
-          entry.getValue().forEach(field -> {
-            String[] parts = field.split("\\:");
-            descriptions.add(FieldGrant.builder().view(entry.getKey()).name(parts[1])
-                .resource(parts[0]).build());
-          });
+    FieldGrantList descriptions = new FieldGrantList();
+    grants.stream().filter(grant -> roles.contains(grant.getRolename())).forEach(grant -> {
+      grant.getRestrictedFields().entrySet().forEach(entry -> {
+        entry.getValue().forEach(field -> {
+          String[] parts = field.split("\\:");
+          descriptions.add(
+              FieldGrant.builder().view(entry.getKey()).name(parts[1]).resource(parts[0]).build());
         });
       });
-      return descriptions;
     });
+    return descriptions;
   }
 
   void complete(@Observes @Priority(100) StartupEvent ev) {
@@ -181,7 +174,7 @@ public class Phylax implements RbacStore {
     propertiesToRegister.clear();
   }
 
-  private synchronized CompletionStage<List<PhylaxGrants>> cachedCallCheckScopes() {
+  private synchronized List<PhylaxGrants> cachedCallCheckScopes() {
     if (scopesExpiration.isBefore(OffsetDateTime.now())) {
       scopesExpiration = OffsetDateTime.now().plus(15, ChronoUnit.MINUTES);
       readScopes = callCheckScopes();
@@ -189,7 +182,7 @@ public class Phylax implements RbacStore {
     return readScopes;
   }
 
-  private CompletionStage<List<PhylaxGrants>> callCheckScopes() {
+  private List<PhylaxGrants> callCheckScopes() {
     try {
       HttpRequest request = HttpRequest.newBuilder().uri(new URI(checkGrantsUrl))
           .header("api-key", apiKey).header("Content-Type", "application/json").GET().build();
@@ -200,9 +193,7 @@ public class Phylax implements RbacStore {
             "Error " + response.statusCode() + ": " + response.body());
       } else {
         try {
-          List<PhylaxGrants> readValue =
-              mapper.readValue(response.body(), new TypeReference<List<PhylaxGrants>>() {});
-          return CompletableFuture.completedStage(readValue);
+          return mapper.readValue(response.body(), new TypeReference<List<PhylaxGrants>>() {});
         } catch (JsonProcessingException e) {
           throw new IllegalArgumentException(
               "Unable to parse as a phylax grants response" + response.body(), e);

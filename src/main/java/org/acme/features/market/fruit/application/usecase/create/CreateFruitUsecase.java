@@ -1,23 +1,17 @@
 package org.acme.features.market.fruit.application.usecase.create;
 
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-
 import org.acme.common.action.Interaction;
 import org.acme.common.exception.NotAllowedException;
 import org.acme.common.security.Allow;
+import org.acme.features.market.fruit.application.FruitDto;
 import org.acme.features.market.fruit.application.service.FruitsVisibilityService;
 import org.acme.features.market.fruit.application.usecase.create.event.FruitCreateAllowPipelineStageEvent;
 import org.acme.features.market.fruit.domain.Fruits;
 import org.acme.features.market.fruit.domain.gateway.FruitCacheGateway;
 import org.acme.features.market.fruit.domain.gateway.FruitWriteRepositoryGateway;
 import org.acme.features.market.fruit.domain.model.Fruit;
-
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.context.Scope;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.event.Event;
 import lombok.RequiredArgsConstructor;
@@ -63,23 +57,11 @@ public class CreateFruitUsecase {
    * @param query
    * @return
    */
-  public CompletionStage<Allow> allow(final Interaction query) {
-    Span startSpan = tracer.spanBuilder("fruit-create-allow").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      FruitCreateAllowPipelineStageEvent base =
-          FruitCreateAllowPipelineStageEvent.build(query, true, "Allowed by default");
-      createAllow.fire(base);
-      return base.getDetail().whenComplete((val, ex) -> {
-        if (null == ex) {
-          startSpan.setAttribute("allowed", val.isAllowed());
-          startSpan.setAttribute("reason", val.getDescription());
-          startSpan.setStatus(StatusCode.OK);
-        } else {
-          startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-        }
-        startSpan.end();
-      });
-    }
+  public Allow allow(final Interaction query) {
+    FruitCreateAllowPipelineStageEvent base =
+        FruitCreateAllowPipelineStageEvent.build(query, true, "Allowed by default");
+    createAllow.fire(base);
+    return base.getDetail();
   }
 
   /**
@@ -89,26 +71,16 @@ public class CreateFruitUsecase {
    * @param query a filter to retrieve only matching values
    * @return The slide with some values
    */
-  public CompletionStage<FruitCreateResult> create(final FruitCreateCommand query) {
-    Span startSpan = tracer.spanBuilder("fruit-create").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      CompletionStage<Optional<Fruit>> create = allow(query).thenCompose(detail -> {
-        if (!detail.isAllowed()) {
-          throw new NotAllowedException(detail.getDescription());
-        }
-        return visibility.copyWithFixed(query, query.getDto())
-            .thenCompose(builder -> aggregate.initialize(builder.toEntityBuilder(Optional.empty()))
-                .thenCompose(fruitEntity -> createAndVerify(query, fruitEntity)));
-      });
-      return create.thenCompose(fruit -> mapEntity(query, fruit)).whenComplete((val, ex) -> {
-        if (null == ex) {
-          startSpan.setStatus(StatusCode.OK);
-        } else {
-          startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-        }
-        startSpan.end();
-      });
+  public FruitDto create(final FruitCreateCommand query) {
+    Allow detail = allow(query);
+    if (!detail.isAllowed()) {
+      throw new NotAllowedException(detail.getDescription());
     }
+    FruitDto builder = visibility.copyWithFixed(query, query.getDto());
+    Fruit fruitEntity = aggregate.initialize(builder.toEntityBuilder(Optional.empty()));
+    Fruit created = createAndVerify(query, fruitEntity);
+    cache.update(created);
+    return mapEntity(query, created);
   }
 
   /**
@@ -117,24 +89,10 @@ public class CreateFruitUsecase {
    * @param fruitEntity
    * @return
    */
-  private CompletionStage<Optional<Fruit>> createAndVerify(final FruitCreateCommand query,
+  private Fruit createAndVerify(final FruitCreateCommand query,
       final Fruit fruitEntity) {
-    Span startSpan = tracer.spanBuilder("fruit-run-create-and-verify").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      return gateway
-          .create(fruitEntity, created -> visibility.checkVisibility(query, created.getUidValue()))
-          .thenCompose(validated -> validated
-              .map(created -> cache.update(created).thenApply(_ready -> Optional.of(created)))
-              .orElseGet(() -> CompletableFuture.completedStage(Optional.empty())))
-          .whenComplete((val, ex) -> {
-            if (null == ex) {
-              startSpan.setStatus(StatusCode.OK);
-            } else {
-              startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-            }
-            startSpan.end();
-          });
-    }
+    return gateway
+        .create(fruitEntity, created -> visibility.checkVisibility(query, created.getUidValue()));
   }
 
   /**
@@ -145,24 +103,7 @@ public class CreateFruitUsecase {
    * @param opfruit
    * @return The slide with some values
    */
-  private CompletionStage<FruitCreateResult> mapEntity(final FruitCreateCommand command,
-      final Optional<Fruit> opfruit) {
-    Span startSpan = tracer.spanBuilder("fruit-map-created-entity").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      return opfruit
-          .map(fruit -> visibility.copyWithHidden(command, fruit)
-              .thenApply(visible -> FruitCreateResult.builder().command(command)
-                  .fruit(Optional.of(visible)).build()))
-          .orElseGet(() -> CompletableFuture.completedStage(
-              FruitCreateResult.builder().command(command).fruit(Optional.empty()).build()))
-          .whenComplete((val, ex) -> {
-            if (null == ex) {
-              startSpan.setStatus(StatusCode.OK);
-            } else {
-              startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-            }
-            startSpan.end();
-          });
-    }
+  private FruitDto mapEntity(final FruitCreateCommand command, final Fruit fruit) {
+    return visibility.copyWithHidden(command, fruit);
   }
 }

@@ -5,22 +5,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
-
 import org.acme.common.action.Interaction;
 import org.acme.common.security.Actor;
 import org.acme.common.security.Connection;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.jwt.JsonWebToken;
-
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.enterprise.context.RequestScoped;
-import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +31,12 @@ public class CurrentRequest {
 
   public boolean isAnonymous() {
     return security.isAnonymous();
+  }
+  
+  public Interaction interaction() {
+    Actor actor = getActor();
+    Connection conn = getConnection();
+    return new Interaction(Interaction.builder().actor(actor).connection(conn)) {};
   }
 
   private Actor getActor() {
@@ -70,46 +67,6 @@ public class CurrentRequest {
 
   private Connection getConnection() {
     return Connection.builder().request(request.getPath()).build();
-  }
-
-  // FIXME: crear un método "resolve" que reciba como entrada una lambda de Interacion => response
-  // lo que permite recuperar actor y conexión de forma asincrona y esperar para invocar cuando
-  // este resueltos
-  public <T> Response resolve(Function<Interaction, CompletionStage<T>> callback) {
-    return resolve(callback, null);
-  }
-
-  public <T> Response resolve(Function<Interaction, CompletionStage<T>> callback,
-      Function<T, Response> customize) {
-    Actor actor = getActor();
-    Connection conn = getConnection();
-    Interaction inter = new Interaction(Interaction.builder().actor(actor).connection(conn)) {};
-    return response(callback.apply(inter), customize);
-  }
-
-  private <T> Response response(CompletionStage<T> future, Function<T, Response> customize) {
-    try {
-      T response = future.toCompletableFuture().get(1, TimeUnit.SECONDS);
-      @SuppressWarnings("unchecked")
-      Optional<T> opresponse =
-          (response instanceof Optional<?> opt) ? (Optional<T>) opt : Optional.of(response);
-      return opresponse
-          .map(res -> null == customize ? Response.ok(response).build() : customize.apply(response))
-          .orElseGet(() -> Response.status(404).build());
-    } catch (ExecutionException e) {
-      Throwable th = e.getCause();
-      if (th instanceof RuntimeException re) {
-        throw re;
-      } else {
-        th.printStackTrace();
-        return Response.serverError().build();
-      }
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      return Response.serverError().build();
-    } catch(TimeoutException e) {
-      return Response.serverError().build();
-    }
   }
 
   private String removePrefix(String role) {

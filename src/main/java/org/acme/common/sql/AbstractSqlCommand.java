@@ -1,7 +1,5 @@
 package org.acme.common.sql;
 
-import org.acme.common.reactive.Stream;
-
 public abstract class AbstractSqlCommand<T extends AbstractSqlCommand<T>>
     extends AbstractSqlParametrized<T> {
 
@@ -9,5 +7,5 @@ public abstract class AbstractSqlCommand<T extends AbstractSqlCommand<T>>
     super(template);
   }
 
-  public abstract Stream<Integer> execute();
+  public abstract Integer execute();
 }

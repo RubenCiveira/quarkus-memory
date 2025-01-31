@@ -1,17 +1,10 @@
 package org.acme.features.market.fruit.application.service;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-
 import org.acme.common.action.Interaction;
 import org.acme.features.market.fruit.application.FruitDto;
 import org.acme.features.market.fruit.application.service.event.FruitFormulaBuilderPipelineStageEvent;
 import org.acme.features.market.fruit.domain.model.Fruit;
-
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.context.Scope;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.event.Event;
 import lombok.RequiredArgsConstructor;
@@ -41,23 +34,11 @@ public class FruitsFormulaService {
    * @param source The source interaction
    * @return The input entity with the copy values without hidden
    */
-  public CompletionStage<FruitDto> copyWithFormulas(Interaction prev, Fruit original,
-      FruitDto source) {
-    Span startSpan = tracer.spanBuilder("-copy-existent-with-formulas").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      FruitFormulaBuilderPipelineStageEvent formulas = FruitFormulaBuilderPipelineStageEvent
-          .builder().dto(CompletableFuture.completedFuture(source)).original(original)
-          .interaction(prev).build();
-      formulaBuilder.fire(formulas);
-      return formulas.getDto().whenComplete((val, ex) -> {
-        if (null == ex) {
-          startSpan.setStatus(StatusCode.OK);
-        } else {
-          startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-        }
-        startSpan.end();
-      });
-    }
+  public FruitDto copyWithFormulas(Interaction prev, Fruit original, FruitDto source) {
+    FruitFormulaBuilderPipelineStageEvent formulas = FruitFormulaBuilderPipelineStageEvent.builder()
+        .dto(source).original(original).interaction(prev).build();
+    formulaBuilder.fire(formulas);
+    return formulas.getDto();
   }
 
   /**
@@ -68,20 +49,10 @@ public class FruitsFormulaService {
    * @param source The source interaction
    * @return The input entity with the copy values without hidden
    */
-  public CompletionStage<FruitDto> copyWithFormulas(Interaction prev, FruitDto source) {
-    Span startSpan = tracer.spanBuilder("-copy-new-with-formulas").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      FruitFormulaBuilderPipelineStageEvent formulas = FruitFormulaBuilderPipelineStageEvent
-          .builder().dto(CompletableFuture.completedFuture(source)).interaction(prev).build();
-      formulaBuilder.fire(formulas);
-      return formulas.getDto().whenComplete((val, ex) -> {
-        if (null == ex) {
-          startSpan.setStatus(StatusCode.OK);
-        } else {
-          startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-        }
-        startSpan.end();
-      });
-    }
+  public FruitDto copyWithFormulas(Interaction prev, FruitDto source) {
+    FruitFormulaBuilderPipelineStageEvent formulas = FruitFormulaBuilderPipelineStageEvent.builder()
+        .dto(source).interaction(prev).build();
+    formulaBuilder.fire(formulas);
+    return formulas.getDto();
   }
 }

@@ -1,6 +1,5 @@
 package org.acme.features.market.fruit.infrastructure.driver.rest;
 
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -28,7 +27,6 @@ import org.acme.generated.openapi.api.FruitApi;
 import org.acme.generated.openapi.model.Fruit;
 import org.acme.generated.openapi.model.FruitList;
 import org.acme.generated.openapi.model.FruitListNextOffset;
-
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.core.Response;
@@ -78,9 +76,9 @@ public class FruitController implements FruitApi {
   @Override
   @Transactional
   public Response fruitApiCreate(Fruit fruit) {
-    return currentRequest.resolve(interaction -> create
-        .create(FruitCreateCommand.builder().dto(toDomainModel(fruit)).build(interaction))
-        .thenApply(res -> res.getFruit().map(this::toApiModel)));
+    FruitDto created = create.create(
+        FruitCreateCommand.builder().dto(toDomainModel(fruit)).build(currentRequest.interaction()));
+    return Response.ok(toApiModel(created)).build();
   }
 
   /**
@@ -91,9 +89,9 @@ public class FruitController implements FruitApi {
   @Override
   @Transactional
   public Response fruitApiDelete(final String uid) {
-    return currentRequest.resolve(interaction -> delete
-        .delete(FruitDeleteCommand.builder().reference(FruitReference.of(uid)).build(interaction))
-        .thenApply(res -> res.getFruit().map(this::toApiModel)));
+    FruitDto deleted = delete.delete(FruitDeleteCommand.builder().reference(FruitReference.of(uid))
+        .build(currentRequest.interaction()));
+    return Response.ok(toApiModel(deleted)).build();
   }
 
   /**
@@ -115,7 +113,6 @@ public class FruitController implements FruitApi {
     List<FruitOrder> orderSteps = null == order ? List.of()
         : Arrays.asList(order.split(",")).stream().map(this::mapOrder).filter(Objects::nonNull)
             .toList();
-    return currentRequest.resolve(interaction -> {
       FruitFilter.FruitFilterBuilder filter = FruitFilter.builder();
       FruitCursor.FruitCursorBuilder cursor = FruitCursor.builder();
       cursor = cursor.limit(limit);
@@ -126,13 +123,11 @@ public class FruitController implements FruitApi {
       filter = filter.name(name);
       cursor = cursor.sinceName(sinceName);
       cursor = cursor.order(orderSteps);
-      return list.list(FruitListQuery.builder().filter(filter.build()).cursor(cursor.build())
-          .build(interaction));
-    }, value -> Response
-        .ok(new FruitList().content(toApiModel(value.getFruits()))
-            .next(next(orderSteps, value.getFruits())))
-        .header("Last-Modified", value.getSince().format(DateTimeFormatter.RFC_1123_DATE_TIME))
-        .build());
+      List<FruitDto> listed = list.list(FruitListQuery.builder().filter(filter.build()).cursor(cursor.build())
+          .build(currentRequest.interaction()));
+      // .header("Last-Modified", value.getSince().format(DateTimeFormatter.RFC_1123_DATE_TIME))
+      return Response.ok( new FruitList().content(toApiModel(listed))
+          .next(next(orderSteps, listed)) ).build();
   }
 
   /**
@@ -142,13 +137,10 @@ public class FruitController implements FruitApi {
    */
   @Override
   public Response fruitApiRetrieve(final String uid) {
-    return currentRequest.resolve(
-        interaction -> retrieve.retrieve(
-            FruitRetrieveQuery.builder().reference(FruitReference.of(uid)).build(interaction)),
-        value -> value.getFruit()
-            .map(fruit -> Response.ok(toApiModel(fruit)).header("Last-Modified",
-                value.getSince().format(DateTimeFormatter.RFC_1123_DATE_TIME)))
-            .orElseGet(() -> Response.status(404)).build());
+    FruitDto retrieved = retrieve.retrieve(FruitRetrieveQuery.builder()
+        .reference(FruitReference.of(uid)).build(currentRequest.interaction()));
+    // .header("Last-Modified", value.getSince().format(DateTimeFormatter.RFC_1123_DATE_TIME)))
+    return Response.ok( toApiModel(retrieved) ).build();
   }
 
   /**
@@ -160,10 +152,9 @@ public class FruitController implements FruitApi {
   @Override
   @Transactional
   public Response fruitApiUpdate(final String uid, final Fruit fruit) {
-    return currentRequest.resolve(interaction -> update
-        .update(FruitUpdateCommand.builder().dto(toDomainModel(fruit))
-            .reference(FruitReference.of(uid)).build(interaction))
-        .thenApply(res -> res.getFruit().map(this::toApiModel)));
+    FruitDto updated = update.update(FruitUpdateCommand.builder().dto(toDomainModel(fruit))
+        .reference(FruitReference.of(uid)).build(currentRequest.interaction()));
+    return Response.ok(toApiModel(updated)).build();
   }
 
   /**

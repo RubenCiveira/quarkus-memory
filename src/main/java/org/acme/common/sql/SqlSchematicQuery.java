@@ -46,7 +46,6 @@ public final class SqlSchematicQuery<T> extends AbstractSqlQuery<T, SqlSchematic
   }
 
   public SqlSchematicQuery<T> where(PartialWhere partial) {
-    System.err.println("QUERE OF " + partial);
     this.query.where(partial);
     return this;
   }

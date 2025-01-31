@@ -1,9 +1,6 @@
 package org.acme.features.market.fruit.application.usecase.list;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-
 import org.acme.common.action.Interaction;
 import org.acme.common.exception.NotAllowedException;
 import org.acme.common.security.Allow;
@@ -11,11 +8,8 @@ import org.acme.features.market.fruit.application.FruitDto;
 import org.acme.features.market.fruit.application.service.FruitsVisibilityService;
 import org.acme.features.market.fruit.application.usecase.list.event.FruitListAllowPipelineStageEvent;
 import org.acme.features.market.fruit.domain.gateway.FruitCached;
-
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.StatusCode;
+import org.acme.features.market.fruit.domain.model.Fruit;
 import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.context.Scope;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.event.Event;
 import lombok.RequiredArgsConstructor;
@@ -46,23 +40,11 @@ public class ListFruitUsecase {
    * @param query
    * @return
    */
-  public CompletionStage<Allow> allow(final Interaction query) {
-    Span startSpan = tracer.spanBuilder("fruit-list-allow").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      FruitListAllowPipelineStageEvent base =
-          FruitListAllowPipelineStageEvent.build(query, true, "Allowed by default");
-      listAllow.fire(base);
-      return base.getDetail().whenComplete((val, ex) -> {
-        if (null == ex) {
-          startSpan.setAttribute("allowed", val.isAllowed());
-          startSpan.setAttribute("reason", val.getDescription());
-          startSpan.setStatus(StatusCode.OK);
-        } else {
-          startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-        }
-        startSpan.end();
-      });
-    }
+  public Allow allow(final Interaction query) {
+    FruitListAllowPipelineStageEvent base =
+        FruitListAllowPipelineStageEvent.build(query, true, "Allowed by default");
+    listAllow.fire(base);
+    return base.getDetail();
   }
 
   /**
@@ -72,24 +54,13 @@ public class ListFruitUsecase {
    * @param query a filter to retrieve only matching values
    * @return The slide with some values
    */
-  public CompletionStage<FruitListResult> list(final FruitListQuery query) {
-    Span startSpan = tracer.spanBuilder("fruit-list").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      CompletionStage<FruitCached> future = allow(query).thenCompose(detail -> {
-        if (!detail.isAllowed()) {
-          throw new NotAllowedException(detail.getDescription());
-        }
-        return visibility.listCachedVisibles(query, query.getFilter(), query.getCursor());
-      });
-      return future.thenCompose(values -> mapList(query, values)).whenComplete((val, ex) -> {
-        if (null == ex) {
-          startSpan.setStatus(StatusCode.OK);
-        } else {
-          startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-        }
-        startSpan.end();
-      });
+  public List<FruitDto> list(final FruitListQuery query) {
+    Allow detail = allow(query);
+    if (!detail.isAllowed()) {
+      throw new NotAllowedException(detail.getDescription());
     }
+    FruitCached values = visibility.listCachedVisibles(query, query.getFilter(), query.getCursor());
+    return values.getValue().stream().map(value -> mapList(query, value)).toList();
   }
 
   /**
@@ -100,25 +71,7 @@ public class ListFruitUsecase {
    * @param fruits
    * @return The slide with some values
    */
-  private CompletionStage<FruitListResult> mapList(final FruitListQuery query,
-      final FruitCached fruits) {
-    Span startSpan = tracer.spanBuilder("fruit-map-list-response").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      List<CompletableFuture<FruitDto>> futures =
-          fruits.getValue().stream().map(fruit -> visibility.copyWithHidden(query, fruit))
-              .map(CompletionStage::toCompletableFuture).toList();
-      return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-          .thenApply(voidResult -> FruitListResult.builder().query(query)
-              .fruits(futures.stream().map(CompletableFuture::join).toList())
-              .since(fruits.getSince()).build())
-          .whenComplete((val, ex) -> {
-            if (null == ex) {
-              startSpan.setStatus(StatusCode.OK);
-            } else {
-              startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-            }
-            startSpan.end();
-          });
-    }
+  private FruitDto mapList(final FruitListQuery query, final Fruit fruit) {
+    return visibility.copyWithHidden(query, fruit);
   }
 }

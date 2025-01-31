@@ -1,22 +1,17 @@
 package org.acme.features.market.fruit.application.usecase.retrieve;
 
-import java.time.OffsetDateTime;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-
 import org.acme.common.action.Interaction;
 import org.acme.common.exception.NotAllowedException;
+import org.acme.common.exception.NotFoundException;
 import org.acme.common.security.Allow;
+import org.acme.features.market.fruit.application.FruitDto;
 import org.acme.features.market.fruit.application.service.FruitsVisibilityService;
 import org.acme.features.market.fruit.application.usecase.retrieve.event.FruitRetrieveAllowPipelineStageEvent;
 import org.acme.features.market.fruit.domain.gateway.FruitCached;
+import org.acme.features.market.fruit.domain.model.Fruit;
 import org.acme.features.market.fruit.domain.model.FruitRef;
-
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.context.Scope;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.event.Event;
 import lombok.RequiredArgsConstructor;
@@ -48,23 +43,11 @@ public class RetrieveFruitUsecase {
    * @param reference
    * @return
    */
-  public CompletionStage<Allow> allow(final Interaction query, final FruitRef reference) {
-    Span startSpan = tracer.spanBuilder("fruit-specific-allow-retrieve").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      FruitRetrieveAllowPipelineStageEvent base = FruitRetrieveAllowPipelineStageEvent.build(query,
-          Optional.of(reference), true, "Allowed by default");
-      retrieveAllow.fire(base);
-      return base.getDetail().whenComplete((val, ex) -> {
-        if (null == ex) {
-          startSpan.setAttribute("allowed", val.isAllowed());
-          startSpan.setAttribute("reason", val.getDescription());
-          startSpan.setStatus(StatusCode.OK);
-        } else {
-          startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-        }
-        startSpan.end();
-      });
-    }
+  public Allow allow(final Interaction query, final FruitRef reference) {
+    FruitRetrieveAllowPipelineStageEvent base = FruitRetrieveAllowPipelineStageEvent.build(query,
+        Optional.of(reference), true, "Allowed by default");
+    retrieveAllow.fire(base);
+    return base.getDetail();
   }
 
   /**
@@ -72,23 +55,11 @@ public class RetrieveFruitUsecase {
    * @param query
    * @return
    */
-  public CompletionStage<Allow> allow(final Interaction query) {
-    Span startSpan = tracer.spanBuilder("fruit-generic-allow-retrieve").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      FruitRetrieveAllowPipelineStageEvent base = FruitRetrieveAllowPipelineStageEvent.build(query,
-          Optional.empty(), true, "Allowed by default");
-      retrieveAllow.fire(base);
-      return base.getDetail().whenComplete((val, ex) -> {
-        if (null == ex) {
-          startSpan.setAttribute("allowed", val.isAllowed());
-          startSpan.setAttribute("reason", val.getDescription());
-          startSpan.setStatus(StatusCode.OK);
-        } else {
-          startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-        }
-        startSpan.end();
-      });
-    }
+  public Allow allow(final Interaction query) {
+    FruitRetrieveAllowPipelineStageEvent base = FruitRetrieveAllowPipelineStageEvent.build(query,
+        Optional.empty(), true, "Allowed by default");
+    retrieveAllow.fire(base);
+    return base.getDetail();
   }
 
   /**
@@ -98,25 +69,16 @@ public class RetrieveFruitUsecase {
    * @param query a filter to retrieve only matching values
    * @return The slide with some values
    */
-  public CompletionStage<FruitRetrieveResult> retrieve(final FruitRetrieveQuery query) {
-    Span startSpan = tracer.spanBuilder("fruit-retrieve").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      CompletionStage<FruitCached> result =
-          allow(query, query.getReference()).thenCompose(detail -> {
-            if (!detail.isAllowed()) {
-              throw new NotAllowedException(detail.getDescription());
-            }
-            return visibility.retrieveCachedVisible(query, query.getReference().getUidValue());
-          });
-      return result.thenCompose(op -> this.mapEntity(query, op)).whenComplete((val, ex) -> {
-        if (null == ex) {
-          startSpan.setStatus(StatusCode.OK);
-        } else {
-          startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-        }
-        startSpan.end();
-      });
+  public FruitDto retrieve(final FruitRetrieveQuery query) {
+    Allow detail = allow(query, query.getReference());
+    if (!detail.isAllowed()) {
+      throw new NotAllowedException(detail.getDescription());
     }
+    FruitCached retrieveCachedVisible =
+        visibility.retrieveCachedVisible(query, query.getReference().getUidValue());
+    return retrieveCachedVisible.first()
+        .map( first -> mapEntity(query, first) )
+        .orElseThrow(() -> new NotFoundException(""));
   }
 
   /**
@@ -127,24 +89,7 @@ public class RetrieveFruitUsecase {
    * @param opfruit
    * @return The slide with some values
    */
-  private CompletionStage<FruitRetrieveResult> mapEntity(final FruitRetrieveQuery query,
-      final FruitCached opfruit) {
-    Span startSpan = tracer.spanBuilder("fruit-map-retrieve-result").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      return opfruit.first()
-          .map(fruit -> visibility.copyWithHidden(query, fruit)
-              .thenApply(fruitWithHidden -> FruitRetrieveResult.builder().interaction(query)
-                  .fruit(Optional.of(fruitWithHidden)).since(opfruit.getSince()).build()))
-          .orElseGet(() -> CompletableFuture.completedFuture(FruitRetrieveResult.builder()
-              .interaction(query).fruit(Optional.empty()).since(OffsetDateTime.now()).build()))
-          .whenComplete((val, ex) -> {
-            if (null == ex) {
-              startSpan.setStatus(StatusCode.OK);
-            } else {
-              startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-            }
-            startSpan.end();
-          });
-    }
+  private FruitDto mapEntity(final FruitRetrieveQuery query, final Fruit fruit) {
+    return visibility.copyWithHidden(query, fruit);
   }
 }

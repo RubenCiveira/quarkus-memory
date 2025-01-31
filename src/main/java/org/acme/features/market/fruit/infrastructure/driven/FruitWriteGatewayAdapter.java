@@ -1,21 +1,15 @@
 package org.acme.features.market.fruit.infrastructure.driven;
 
 import java.util.Optional;
-import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
-
 import javax.sql.DataSource;
-
-import org.acme.common.action.Slide;
-import org.acme.common.reactive.Slider;
-import org.acme.common.reactive.Stream;
+import org.acme.common.algorithms.Slider;
 import org.acme.features.market.fruit.domain.gateway.FruitCursor;
 import org.acme.features.market.fruit.domain.gateway.FruitFilter;
 import org.acme.features.market.fruit.domain.gateway.FruitWriteRepositoryGateway;
 import org.acme.features.market.fruit.domain.model.Fruit;
 import org.acme.features.market.fruit.domain.model.FruitRef;
 import org.acme.features.market.fruit.infrastructure.repository.FruitRepository;
-
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Named;
@@ -44,7 +38,7 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public Stream<Fruit> create(Fruit entity) {
+  public Fruit create(Fruit entity) {
     return repository.create(entity);
   }
 
@@ -55,8 +49,8 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public Stream<Fruit> create(Fruit entity,
-      Function<Fruit, Stream<Boolean>> verifier) {
+  public Fruit create(Fruit entity,
+      Function<Fruit, Boolean> verifier) {
     return repository.create(entity, verifier);
   }
 
@@ -66,7 +60,7 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public Stream<Fruit> delete(Fruit entity) {
+  public Fruit delete(Fruit entity) {
     return repository.delete(entity);
   }
 
@@ -76,7 +70,7 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public Stream<Fruit> enrich(FruitRef reference) {
+  public Fruit enrich(FruitRef reference) {
     return repository.enrich(reference);
   }
 
@@ -87,7 +81,7 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public Stream<Boolean> exists(String uid, Optional<FruitFilter> filter) {
+  public boolean exists(String uid, Optional<FruitFilter> filter) {
     return repository.exists(uid, filter);
   }
 
@@ -109,7 +103,7 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public Stream<Fruit> retrieve(String uid, Optional<FruitFilter> filter) {
+  public Optional<Fruit> retrieve(String uid, Optional<FruitFilter> filter) {
     return repository.retrieve(uid, filter);
   }
 
@@ -120,7 +114,7 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public Stream<Fruit> update(FruitRef reference, Fruit entity) {
+  public Fruit update(FruitRef reference, Fruit entity) {
     return repository.update(entity);
   }
 }

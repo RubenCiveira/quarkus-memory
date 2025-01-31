@@ -1,7 +1,5 @@
 package org.acme.common.security.rcab;
 
-import java.util.concurrent.CompletionStage;
-
 import org.acme.common.security.Actor;
 import org.acme.common.security.RbacStore;
 import org.acme.common.security.scope.FieldDescription;
@@ -10,7 +8,6 @@ import org.acme.common.security.scope.ResourceDescription;
 import org.acme.common.security.scope.ScopeAllowList;
 import org.acme.common.security.scope.ScopeDescription;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import io.quarkus.arc.properties.IfBuildProperty;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.RequiredArgsConstructor;
@@ -39,12 +36,12 @@ public class Keycloack implements RbacStore {
   }
 
   @Override
-  public CompletionStage<ScopeAllowList> checkRoleScopes(Actor actor) {
+  public ScopeAllowList checkRoleScopes(Actor actor) {
     return null;
   }
 
   @Override
-  public CompletionStage<FieldGrantList> checkRoleProperties(Actor actor) {
+  public FieldGrantList checkRoleProperties(Actor actor) {
     return null;
   }
 

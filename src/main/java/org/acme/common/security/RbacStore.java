@@ -1,7 +1,5 @@
 package org.acme.common.security;
 
-import java.util.concurrent.CompletionStage;
-
 import org.acme.common.security.scope.FieldDescription;
 import org.acme.common.security.scope.FieldGrantList;
 import org.acme.common.security.scope.ResourceDescription;
@@ -16,7 +14,7 @@ public interface RbacStore {
 
   void registerResourceAction(ResourceDescription resource, ScopeDescription action);
 
-  CompletionStage<ScopeAllowList> checkRoleScopes(Actor actor);
+  ScopeAllowList checkRoleScopes(Actor actor);
 
-  CompletionStage<FieldGrantList> checkRoleProperties(Actor actor);
+  FieldGrantList checkRoleProperties(Actor actor);
 }

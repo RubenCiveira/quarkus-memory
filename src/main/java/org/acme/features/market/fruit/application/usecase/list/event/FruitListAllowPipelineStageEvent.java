@@ -1,11 +1,8 @@
 package org.acme.features.market.fruit.application.usecase.list.event;
 
-import java.util.concurrent.CompletableFuture;
-
 import org.acme.common.action.Interaction;
 import org.acme.common.security.Allow;
 import org.acme.common.security.AllowPipelineStageEvent;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
@@ -35,8 +32,8 @@ public class FruitListAllowPipelineStageEvent extends AllowPipelineStageEvent {
    */
   public static FruitListAllowPipelineStageEvent build(final Interaction query,
       final boolean allowed, final String reason) {
-    return FruitListAllowPipelineStageEvent.builder().query(query).detail(CompletableFuture
-        .completedFuture(Allow.builder().allowed(allowed).description(reason).build())).build();
+    return FruitListAllowPipelineStageEvent.builder().query(query)
+        .detail(Allow.builder().allowed(allowed).description(reason).build()).build();
   }
 
   /**

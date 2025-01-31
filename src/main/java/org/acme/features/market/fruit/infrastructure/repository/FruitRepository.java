@@ -1,13 +1,13 @@
 package org.acme.features.market.fruit.infrastructure.repository;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import javax.sql.DataSource;
+import org.acme.common.algorithms.Slider;
 import org.acme.common.exception.ConstraintException;
-import org.acme.common.infrastructure.SliderImpl;
-import org.acme.common.infrastructure.StreamImpl;
-import org.acme.common.reactive.Slider;
-import org.acme.common.reactive.Stream;
+import org.acme.common.exception.NotFoundException;
 import org.acme.common.sql.OptimistLockException;
 import org.acme.common.sql.PartialWhere;
 import org.acme.common.sql.SqlCommand;
@@ -39,7 +39,7 @@ public class FruitRepository {
    * @param entity
    * @return
    */
-  public Stream<Fruit> create(Fruit entity) {
+  public Fruit create(Fruit entity) {
     return runCreate(entity, null);
   }
 
@@ -49,8 +49,7 @@ public class FruitRepository {
    * @param verifier
    * @return
    */
-  public Stream<Fruit> create(Fruit entity,
-      Function<Fruit, Stream<Boolean>> verifier) {
+  public Fruit create(Fruit entity, Function<Fruit, Boolean> verifier) {
     return runCreate(entity, verifier);
   }
 
@@ -59,16 +58,15 @@ public class FruitRepository {
    * @param entity
    * @return
    */
-  public Stream<Fruit> delete(Fruit entity) {
-    try( SqlTemplate template = new SqlTemplate(datasource) ) {
+  public Fruit delete(Fruit entity) {
+    try (SqlTemplate template = new SqlTemplate(datasource)) {
       SqlCommand sq = template.createSqlCommand("delete from \"fruit\" where \"uid\" = :uid");
       sq.with("uid", SqlParameterValue.of(entity.getUidValue()));
-      return sq.execute().map(num -> {
-        if (0 == num) {
-          throw new IllegalArgumentException("No delete from");
-        }
-        return entity;
-      });
+      int num = sq.execute();
+      if (0 == num) {
+        throw new NotFoundException("No delete from");
+      }
+      return entity;
     }
   }
 
@@ -77,8 +75,10 @@ public class FruitRepository {
    * @param reference
    * @return
    */
-  public Stream<Fruit> enrich(FruitRef reference) {
-    return reference instanceof Fruit ? Stream.just((Fruit) reference) : retrieve(reference.getUidValue(), Optional.empty());
+  public Fruit enrich(FruitRef reference) {
+    return reference instanceof Fruit ? (Fruit) reference
+        : retrieve(reference.getUidValue(), Optional.empty())
+            .orElseThrow(() -> new NotFoundException("Unkonw fruit reference ["+reference.getUidValue()+"]"));
   }
 
   /**
@@ -87,7 +87,7 @@ public class FruitRepository {
    * @param filter
    * @return
    */
-  public Stream<Boolean> exists(String uid, Optional<FruitFilter> filter) {
+  public boolean exists(String uid, Optional<FruitFilter> filter) {
     return retrieve(uid, filter).isEmpty();
   }
 
@@ -98,10 +98,11 @@ public class FruitRepository {
    * @return
    */
   public Slider<Fruit> list(FruitFilter filter, FruitCursor cursor) {
-    return runlist(filter, cursor);
+    return new FruitSlider(runlist(filter, cursor), cursor.getLimit().orElse(0), this::runlist,
+        filter, cursor);
   }
-  
-  private SliderImpl<Fruit> runlist(FruitFilter filter, FruitCursor cursor) {
+
+  private Iterator<Fruit> runlist(FruitFilter filter, FruitCursor cursor) {
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       SqlSchematicQuery<Fruit> sq = filteredQuery(template, filter);
       PartialWhere offset = PartialWhere.empty();
@@ -142,7 +143,8 @@ public class FruitRepository {
             .ifPresent(since -> sq.where("uid", SqlOperator.GT, SqlParameterValue.of(since)));
       }
       sq.orderAsc("uid");
-      return new FruitSlider(sq.query(converter()).limit(cursor.getLimit()), cursor.getLimit().orElse(0), this::runlist, filter, cursor);
+      List<Fruit> limit = sq.query(converter()).limit(cursor.getLimit());
+      return limit.iterator();
     }
   }
 
@@ -152,10 +154,13 @@ public class FruitRepository {
    * @param filter
    * @return
    */
-  public Stream<Fruit> retrieve(String uid, Optional<FruitFilter> filter) {
-    FruitFilter readyFilter = filter.map(val -> val.withUid(uid))
-        .orElseGet(() -> FruitFilter.builder().uid(uid).build());
-    return filteredQuery(new SqlTemplate(datasource), readyFilter).query(converter()).one();
+  public Optional<Fruit> retrieve(String uid, Optional<FruitFilter> filter) {
+    System.out.println("CREANDO EL Template para insertar");
+    try (SqlTemplate template = new SqlTemplate(datasource)) {
+      FruitFilter readyFilter = filter.map(val -> val.withUid(uid))
+          .orElseGet(() -> FruitFilter.builder().uid(uid).build());
+      return filteredQuery(template, readyFilter).query(converter()).one();
+    }
   }
 
   /**
@@ -163,8 +168,8 @@ public class FruitRepository {
    * @param entity
    * @return
    */
-  public Stream<Fruit> update(Fruit entity) {
-    try( SqlTemplate template = new SqlTemplate(datasource) ) {
+  public Fruit update(Fruit entity) {
+    try (SqlTemplate template = new SqlTemplate(datasource)) {
       int version = entity.getVersionValue().orElse(0);
       SqlCommand sq = template.createSqlCommand(
           "update \"fruit\" set  \"name\" = :name, \"version\" = \"version\" + 1 where \"uid\" = :uid and \"version\" = :version");
@@ -172,12 +177,11 @@ public class FruitRepository {
       sq.with("name", SqlParameterValue.of(entity.getNameValue()));
       sq.with("version", entity.getVersionValue().map(SqlParameterValue::of)
           .orElseGet(SqlParameterValue::ofNullInteger));
-      return sq.execute().map(num -> {
-        if (0 == num) {
-          throw new OptimistLockException("No delete from");
-        }
-        return entity.withVersionValue(version + 1);
-      });
+      int num = sq.execute();
+      if (0 == num) {
+        throw new OptimistLockException("No delete from");
+      }
+      return entity.withVersionValue(version + 1);
     }
   }
 
@@ -204,6 +208,7 @@ public class FruitRepository {
    * @return
    */
   private SqlSchematicQuery<Fruit> filteredQuery(SqlTemplate template, FruitFilter filter) {
+    System.out.println("Creando el schematic de filteredQuery");
     SqlSchematicQuery<Fruit> sq = template.createSqlSchematicQuery("fruit");
     sq.select("fruit.uid", "fruit.name", "fruit.version");
     filter.getUid().ifPresent(uid -> sq.where("uid", SqlOperator.EQ, SqlParameterValue.of(uid)));
@@ -223,30 +228,35 @@ public class FruitRepository {
    * @param verifier
    * @return
    */
-  private Stream<Fruit> runCreate(Fruit entity,
-      Function<Fruit, Stream<Boolean>> verifier) {
-    try ( SqlTemplate template = new SqlTemplate(datasource) ) {
+  private Fruit runCreate(Fruit entity, Function<Fruit, Boolean> verifier) {
+    System.out.println("CREO UN Datasource desde un template");
+    try (SqlTemplate template = new SqlTemplate(datasource)) {
+      System.out.println("CREANDO LA QUERY DE INSERT");
       SqlCommand sq = template.createSqlCommand(
           "insert into \"fruit\" ( \"uid\", \"name\", \"version\") values ( :uid, :name, :version)");
       sq.with("uid", SqlParameterValue.of(entity.getUidValue()));
       sq.with("name", SqlParameterValue.of(entity.getNameValue()));
       sq.with("version", entity.getVersionValue().map(SqlParameterValue::of)
           .orElseGet(SqlParameterValue::ofNullInteger));
-      return sq.execute().flatMap(num -> {
-        if (0 == num) {
-          throw new IllegalArgumentException("No insert into");
-        }
-        return (verifier == null ? new StreamImpl<>(entity)
-            : verifier.apply(entity).flatMap(exists -> {
-              if (exists) {
-                return new StreamImpl<>(entity);
-              } else {
-                template.createSqlCommand("delete from \"fruit\" where \"uid\" = :uid")
-                    .with("uid", SqlParameterValue.of(entity.getUidValue())).execute();
-                return new StreamImpl<>();
-              }
-            }));
-      });
+      int num = sq.execute();
+      System.out.println("EXECUTE OF QUERY INSERT: " + num);
+      if (0 == num) {
+        throw new IllegalArgumentException("No insert into");
+      }
+      return verifier == null ? entity
+          : verified(verifier.apply(entity), entity, template);
+    }
+  }
+
+  private Fruit verified(Boolean exists, Fruit entity, SqlTemplate template) {
+    if (exists) {
+      System.out.println("SI CUMPLE EL FILTRO: CONSERVAMOS");
+      return entity;
+    } else {
+      System.out.println("NO CUMPLE EL FILTRO: borramos ");
+      template.createSqlCommand("delete from \"fruit\" where \"uid\" = :uid")
+          .with("uid", SqlParameterValue.of(entity.getUidValue())).execute();
+      throw new NotFoundException("");
     }
   }
 }

@@ -2,8 +2,7 @@ package org.acme.features.market.fruit.infrastructure.driven;
 
 import java.util.Optional;
 import javax.sql.DataSource;
-import org.acme.common.reactive.Slider;
-import org.acme.common.reactive.Stream;
+import org.acme.common.algorithms.Slider;
 import org.acme.features.market.fruit.domain.gateway.FruitCursor;
 import org.acme.features.market.fruit.domain.gateway.FruitFilter;
 import org.acme.features.market.fruit.domain.gateway.FruitReadRepositoryGateway;
@@ -34,7 +33,7 @@ public class FruitReadGatewayAdapter implements FruitReadRepositoryGateway {
    * @return
    */
   @Override
-  public Stream<Fruit> enrich(FruitRef reference) {
+  public Fruit enrich(FruitRef reference) {
     return repository.enrich(reference);
   }
 
@@ -45,7 +44,7 @@ public class FruitReadGatewayAdapter implements FruitReadRepositoryGateway {
    * @return
    */
   @Override
-  public Stream<Boolean> exists(String uid, Optional<FruitFilter> filter) {
+  public boolean exists(String uid, Optional<FruitFilter> filter) {
     return repository.exists(uid, filter);
   }
 
@@ -67,7 +66,7 @@ public class FruitReadGatewayAdapter implements FruitReadRepositoryGateway {
    * @return
    */
   @Override
-  public Stream<Fruit> retrieve(String uid, Optional<FruitFilter> filter) {
+  public Optional<Fruit> retrieve(String uid, Optional<FruitFilter> filter) {
     return repository.retrieve(uid, filter);
   }
 }

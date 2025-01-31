@@ -20,8 +20,8 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.acme.common.infrastructure.StreamImpl;
-import org.acme.common.reactive.Stream;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import lombok.Builder;
 import lombok.NonNull;
 
@@ -30,12 +30,12 @@ public class SqlResultSet {
   @NonNull
   private final ResultSet set;
   @Builder.Default
-  private Map<String, Stream<?>> childs = new HashMap<>();
+  private Map<String, CompletableFuture<?>> childs = new HashMap<>();
 
   @SuppressWarnings("unchecked")
-  public <S> Stream<S> getChilds(String name) {
-    return childs.containsKey(name) ? (Stream<S>) ((Object) childs.get(name))
-        : new StreamImpl<>(List.of());
+  public <S> CompletionStage<List<S>> getChilds(String name) {
+    return childs.containsKey(name) ? (CompletionStage<List<S>>) ((Object) childs.get(name))
+        : CompletableFuture.completedFuture(List.of());
   }
 
   public String getString(int columnIndex) throws SQLException {

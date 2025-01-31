@@ -1,12 +1,11 @@
 package org.acme.features.market.fruit.application.usecase.delete;
 
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-
 import org.acme.common.action.Interaction;
 import org.acme.common.exception.NotAllowedException;
+import org.acme.common.exception.NotFoundException;
 import org.acme.common.security.Allow;
+import org.acme.features.market.fruit.application.FruitDto;
 import org.acme.features.market.fruit.application.service.FruitsVisibilityService;
 import org.acme.features.market.fruit.application.usecase.delete.event.FruitDeleteAllowPipelineStageEvent;
 import org.acme.features.market.fruit.domain.Fruits;
@@ -14,11 +13,7 @@ import org.acme.features.market.fruit.domain.gateway.FruitCacheGateway;
 import org.acme.features.market.fruit.domain.gateway.FruitWriteRepositoryGateway;
 import org.acme.features.market.fruit.domain.model.Fruit;
 import org.acme.features.market.fruit.domain.model.FruitRef;
-
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.context.Scope;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.event.Event;
 import lombok.RequiredArgsConstructor;
@@ -65,23 +60,11 @@ public class DeleteFruitUsecase {
    * @param reference
    * @return
    */
-  public CompletionStage<Allow> allow(final Interaction query, final FruitRef reference) {
-    Span startSpan = tracer.spanBuilder("fruit-specific-delete-allow").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      FruitDeleteAllowPipelineStageEvent base = FruitDeleteAllowPipelineStageEvent.build(query,
-          Optional.of(reference), true, "Allowed by default");
-      deleteAllow.fire(base);
-      return base.getDetail().whenComplete((val, ex) -> {
-        if (null == ex) {
-          startSpan.setAttribute("allowed", val.isAllowed());
-          startSpan.setAttribute("reason", val.getDescription());
-          startSpan.setStatus(StatusCode.OK);
-        } else {
-          startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-        }
-        startSpan.end();
-      });
-    }
+  public Allow allow(final Interaction query, final FruitRef reference) {
+    FruitDeleteAllowPipelineStageEvent base = FruitDeleteAllowPipelineStageEvent.build(query,
+        Optional.of(reference), true, "Allowed by default");
+    deleteAllow.fire(base);
+    return base.getDetail();
   }
 
   /**
@@ -89,23 +72,11 @@ public class DeleteFruitUsecase {
    * @param query
    * @return
    */
-  public CompletionStage<Allow> allow(final Interaction query) {
-    Span startSpan = tracer.spanBuilder("fruit-generic-delete-allow").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      FruitDeleteAllowPipelineStageEvent base = FruitDeleteAllowPipelineStageEvent.build(query,
-          Optional.empty(), true, "Allowed by default");
-      deleteAllow.fire(base);
-      return base.getDetail().whenComplete((val, ex) -> {
-        if (null == ex) {
-          startSpan.setAttribute("allowed", val.isAllowed());
-          startSpan.setAttribute("reason", val.getDescription());
-          startSpan.setStatus(StatusCode.OK);
-        } else {
-          startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-        }
-        startSpan.end();
-      });
-    }
+  public Allow allow(final Interaction query) {
+    FruitDeleteAllowPipelineStageEvent base = FruitDeleteAllowPipelineStageEvent.build(query,
+        Optional.empty(), true, "Allowed by default");
+    deleteAllow.fire(base);
+    return base.getDetail();
   }
 
   /**
@@ -115,26 +86,17 @@ public class DeleteFruitUsecase {
    * @param command a filter to retrieve only matching values
    * @return The slide with some values
    */
-  public CompletionStage<FruitDeleteResult> delete(final FruitDeleteCommand command) {
-    Span startSpan = tracer.spanBuilder("fruit-delete").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      CompletionStage<Optional<Fruit>> updated =
-          allow(command, command.getReference()).thenCompose(detail -> {
-            if (!detail.isAllowed()) {
-              throw new NotAllowedException(detail.getDescription());
-            }
-            return visibility.retrieveVisible(command, command.getReference().getUidValue())
-                .thenCompose(this::deleteIfIsPresent);
-          });
-      return updated.thenCompose(entity -> mapEntity(command, entity)).whenComplete((val, ex) -> {
-        if (null == ex) {
-          startSpan.setStatus(StatusCode.OK);
-        } else {
-          startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-        }
-        startSpan.end();
-      });
+  public FruitDto delete(final FruitDeleteCommand command) {
+    Allow detail = allow(command, command.getReference());
+    if (!detail.isAllowed()) {
+      throw new NotAllowedException(detail.getDescription());
     }
+    Fruit retrieveVisible =
+        visibility.retrieveVisible(command, command.getReference().getUidValue())
+        .orElseThrow(() -> new NotFoundException(""));
+    Fruit deleted = this.deleteEntity(retrieveVisible);
+    cache.update(deleted);
+    return mapEntity(command, deleted);
   }
 
   /**
@@ -144,43 +106,8 @@ public class DeleteFruitUsecase {
    * @param original
    * @return The slide with some values
    */
-  private CompletionStage<Optional<Fruit>> deleteEntity(final Fruit original) {
-    Span startSpan = tracer.spanBuilder("fruit-call-to-delete").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      return aggregate.clean(original).thenCompose(fruit -> gateway.delete(fruit))
-          .thenCompose(deleted -> cache.remove(deleted).thenApply(_ready -> Optional.of(deleted)))
-          .whenComplete((val, ex) -> {
-            if (null == ex) {
-              startSpan.setStatus(StatusCode.OK);
-            } else {
-              startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-            }
-            startSpan.end();
-          });
-    }
-  }
-
-  /**
-   * The slide with some values
-   *
-   * @autogenerated DeleteUsecaseGenerator
-   * @param result
-   * @return The slide with some values
-   */
-  private CompletionStage<Optional<Fruit>> deleteIfIsPresent(final Optional<Fruit> result) {
-    Span startSpan = tracer.spanBuilder("fruit-delete-if-present").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      return result.map(this::deleteEntity)
-          .orElseGet(() -> CompletableFuture.completedFuture(Optional.empty()))
-          .whenComplete((val, ex) -> {
-            if (null == ex) {
-              startSpan.setStatus(StatusCode.OK);
-            } else {
-              startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-            }
-            startSpan.end();
-          });
-    }
+  private Fruit deleteEntity(final Fruit original) {
+    return gateway.delete(aggregate.clean(original));
   }
 
   /**
@@ -191,24 +118,7 @@ public class DeleteFruitUsecase {
    * @param opfruit
    * @return The slide with some values
    */
-  private CompletionStage<FruitDeleteResult> mapEntity(final FruitDeleteCommand command,
-      final Optional<Fruit> opfruit) {
-    Span startSpan = tracer.spanBuilder("fruit-map-response").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      return opfruit
-          .map(fruit -> visibility.copyWithHidden(command, fruit)
-              .thenApply(visible -> FruitDeleteResult.builder().command(command)
-                  .fruit(Optional.of(visible)).build()))
-          .orElseGet(() -> CompletableFuture.completedStage(
-              FruitDeleteResult.builder().command(command).fruit(Optional.empty()).build()))
-          .whenComplete((val, ex) -> {
-            if (null == ex) {
-              startSpan.setStatus(StatusCode.OK);
-            } else {
-              startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-            }
-            startSpan.end();
-          });
-    }
+  private FruitDto mapEntity(final FruitDeleteCommand command, final Fruit fruit) {
+    return visibility.copyWithHidden(command, fruit);
   }
 }

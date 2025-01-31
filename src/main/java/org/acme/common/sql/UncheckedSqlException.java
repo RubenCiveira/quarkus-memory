@@ -11,6 +11,7 @@ public class UncheckedSqlException extends RuntimeException {
     String databaseProductName = getDatabaseProductName(connection);
     int errorCode = sqlException.getErrorCode();
     String sqlState = sqlException.getSQLState();
+    sqlException.printStackTrace();
     if (isDuplicateKeyError(databaseProductName, sqlState, errorCode)) {
       return new NotUniqueException("Duplicate key error: " + sqlException.getMessage(),
           sqlException);

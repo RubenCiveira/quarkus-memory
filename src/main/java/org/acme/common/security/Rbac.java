@@ -1,16 +1,10 @@
 package org.acme.common.security;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-
 import org.acme.common.security.scope.FieldDescription;
 import org.acme.common.security.scope.ResourceDescription;
 import org.acme.common.security.scope.ScopeDescription;
-
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import lombok.RequiredArgsConstructor;
@@ -36,33 +30,27 @@ public class Rbac {
     });
   }
 
-  public CompletionStage<Allow> checkAllow(Actor actor, String resource, String action) {
+  public Allow checkAllow(Actor actor, String resource, String action) {
     List<RbacStore> processors = new ArrayList<>();
     manager.forEach(instance -> {
       if (instance.isActive()) {
         processors.add(instance);
       }
     });
-    return manager.stream().findFirst()
-        .<CompletionStage<Allow>>map(store -> store.checkRoleScopes(actor)
-            .thenApply(scopes -> Allow.builder().allowed(scopes.allowed(resource, action)).build()))
-        .orElseGet(() -> CompletableFuture.completedStage(Allow.builder().allowed(false).build()));
+    return processors.stream().findFirst()
+        .<Allow>map(store -> Allow.builder().allowed(store.checkRoleScopes(actor).allowed(resource, action)).build())
+        .orElseGet(() -> Allow.builder().allowed(true).build());
   }
 
-  public CompletionStage<Set<String>> inaccesibleFileds(Actor actor, String resource, String view) {
+  public List<String> inaccesibleFileds(Actor actor, String resource, String view) {
     List<RbacStore> processors = new ArrayList<>();
     manager.forEach(instance -> {
       if (instance.isActive()) {
         processors.add(instance);
       }
     });
-    return manager.stream().findFirst().<CompletionStage<Set<String>>>map(
-        store -> store.checkRoleProperties(actor).thenApply(scopes -> {
-          System.out.println("los valores que vienen del store son: " + scopes);
-          System.out.println("Consultado la vista " + view);
-          Set<String> set = new HashSet<>();
-          set.addAll(scopes.innacesiblesFor(resource, view));
-          return set;
-        })).orElseGet(() -> CompletableFuture.completedStage(Set.of()));
+    return processors.stream().findFirst()
+        .map(store -> store.checkRoleProperties(actor).innacesiblesFor(resource, view) )
+        .orElseGet(List::of);
   }
 }

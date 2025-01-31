@@ -1,16 +1,12 @@
 package org.acme.features.market.fruit.application.service;
 
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-
 import org.acme.common.action.Interaction;
-import org.acme.common.reactive.Stream;
 import org.acme.features.market.fruit.application.FruitDto;
 import org.acme.features.market.fruit.application.service.event.FruitFixedFieldsPipelineStageEvent;
 import org.acme.features.market.fruit.application.service.event.FruitHiddenFieldsPipelineStageEvent;
@@ -24,11 +20,7 @@ import org.acme.features.market.fruit.domain.gateway.FruitFilter;
 import org.acme.features.market.fruit.domain.gateway.FruitReadRepositoryGateway;
 import org.acme.features.market.fruit.domain.model.Fruit;
 import org.acme.features.market.fruit.domain.model.FruitRef;
-
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.context.Scope;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.event.Event;
 import lombok.RequiredArgsConstructor;
@@ -98,8 +90,8 @@ public class FruitsVisibilityService {
    * @param uid
    * @return The input entity with the copy values without hidden
    */
-  public Stream<Boolean> checkVisibility(Interaction prev, String uid) {
-    return retrieveVisible(prev, uid).isEmpty();
+  public boolean checkVisibility(Interaction prev, String uid) {
+    return retrieveVisible(prev, uid).isPresent();
   }
 
   /**
@@ -110,20 +102,9 @@ public class FruitsVisibilityService {
    * @param uids
    * @return The input entity with the copy values without hidden
    */
-  public CompletionStage<Boolean> checkVisibility(Interaction prev, List<String> uids) {
-    Span startSpan = tracer.spanBuilder("fruit-check-item-visbility").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      return listVisibles(prev, FruitFilter.builder().uids(uids).build(),
-          FruitCursor.builder().build()).thenApply(list -> list.size() == uids.size())
-              .whenComplete((val, ex) -> {
-                if (null == ex) {
-                  startSpan.setStatus(StatusCode.OK);
-                } else {
-                  startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-                }
-                startSpan.end();
-              });
-    }
+  public boolean checkVisibility(Interaction prev, List<String> uids) {
+    return listVisibles(prev, FruitFilter.builder().uids(uids).build(),
+        FruitCursor.builder().build()).isEmpty();
   }
 
   /**
@@ -135,23 +116,9 @@ public class FruitsVisibilityService {
    * @param source The source interaction
    * @return The input entity with the copy values without hidden
    */
-  public CompletionStage<FruitDto> copyWithFixed(Interaction prev, Fruit original,
-      FruitDto source) {
-    Span startSpan = tracer.spanBuilder("fruit-copy-existent-with-fixed").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      return fieldsToFix(prev, original).thenApply(fixeds -> {
-        fixeds.forEach(field -> source.fixField(field, original));
-        return source;
-      }).thenCompose(fixed -> formula.copyWithFormulas(prev, original, fixed))
-          .whenComplete((val, ex) -> {
-            if (null == ex) {
-              startSpan.setStatus(StatusCode.OK);
-            } else {
-              startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-            }
-            startSpan.end();
-          });
-    }
+  public FruitDto copyWithFixed(Interaction prev, Fruit original, FruitDto source) {
+    fieldsToFix(prev, original).forEach(field -> source.fixField(field, original));
+    return formula.copyWithFormulas(prev, original, source);
   }
 
   /**
@@ -162,21 +129,9 @@ public class FruitsVisibilityService {
    * @param source The source interaction
    * @return The input entity with the copy values without hidden
    */
-  public CompletionStage<FruitDto> copyWithFixed(Interaction prev, FruitDto source) {
-    Span startSpan = tracer.spanBuilder("fruit-copy-new-with-fixed").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      return fieldsToFix(prev).thenApply(fixeds -> {
-        fixeds.forEach(field -> source.fixField(field));
-        return source;
-      }).thenCompose(fixed -> formula.copyWithFormulas(prev, fixed)).whenComplete((val, ex) -> {
-        if (null == ex) {
-          startSpan.setStatus(StatusCode.OK);
-        } else {
-          startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-        }
-        startSpan.end();
-      });
-    }
+  public FruitDto copyWithFixed(Interaction prev, FruitDto source) {
+    fieldsToFix(prev).forEach(field -> source.fixField(field));
+    return formula.copyWithFormulas(prev, source);
   }
 
   /**
@@ -187,22 +142,10 @@ public class FruitsVisibilityService {
    * @param fruit
    * @return The input dto with hidden values
    */
-  public CompletionStage<FruitDto> copyWithHidden(Interaction prev, Fruit fruit) {
-    Span startSpan = tracer.spanBuilder("fruit-copy-with-hidden").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      return fieldsToHide(prev, fruit).thenApply(hidden -> {
-        FruitDto target = FruitDto.from(fruit);
-        hidden.forEach(target::hideField);
-        return target;
-      }).whenComplete((val, ex) -> {
-        if (null == ex) {
-          startSpan.setStatus(StatusCode.OK);
-        } else {
-          startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-        }
-        startSpan.end();
-      });
-    }
+  public FruitDto copyWithHidden(Interaction prev, Fruit fruit) {
+    FruitDto target = FruitDto.from(fruit);
+    fieldsToHide(prev, fruit).forEach(target::hideField);
+    return target;
   }
 
   /**
@@ -212,27 +155,13 @@ public class FruitsVisibilityService {
    * @param prev The source interaction
    * @return initialsFixFields
    */
-  public CompletionStage<Set<String>> fieldsToFix(Interaction prev) {
-    Span startSpan = tracer.spanBuilder("fruit-field-to-fix-for-new").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      CompletionStage<Set<String>> fields = fieldsToHide(prev).thenApply(hidden -> {
-        Set<String> set = new HashSet<>(aggregate.calcultadFields());
-        set.addAll(hidden);
-        return set;
-      });
-      FruitFixedFieldsPipelineStageEvent value =
-          FruitFixedFieldsPipelineStageEvent.builder().fields(fields).query(prev).build();
-      fireFix.fire(value);
-      return value.getFields().whenComplete((val, ex) -> {
-        if (null == ex) {
-          startSpan.setAttribute("fieds", String.join(",", val));
-          startSpan.setStatus(StatusCode.OK);
-        } else {
-          startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-        }
-        startSpan.end();
-      });
-    }
+  public Set<String> fieldsToFix(Interaction prev) {
+    Set<String> hide = new HashSet<>( fieldsToHide(prev) );
+    hide.addAll( aggregate.calcultadFields() );
+    FruitFixedFieldsPipelineStageEvent value =
+        FruitFixedFieldsPipelineStageEvent.builder().fields(hide).query(prev).build();
+    fireFix.fire(value);
+    return value.getFields();
   }
 
   /**
@@ -243,28 +172,13 @@ public class FruitsVisibilityService {
    * @param fruit
    * @return initialsFixFields
    */
-  public CompletionStage<Set<String>> fieldsToFix(Interaction prev, FruitRef fruit) {
-    Span startSpan = tracer.spanBuilder("fruit-field-to-fix-for-existent").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      CompletionStage<Set<String>> fields =
-          fieldsToFix(prev).thenCombine(fieldsToHide(prev, fruit), (set1, set2) -> {
-            Set<String> set = new HashSet<>(set1);
-            set.addAll(set2);
-            return set;
-          });
-      FruitFixedFieldsPipelineStageEvent value = FruitFixedFieldsPipelineStageEvent.builder()
-          .fields(fields).fruit(fruit).query(prev).build();
-      fireFix.fire(value);
-      return value.getFields().whenComplete((val, ex) -> {
-        if (null == ex) {
-          startSpan.setAttribute("fieds", String.join(",", val));
-          startSpan.setStatus(StatusCode.OK);
-        } else {
-          startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-        }
-        startSpan.end();
-      });
-    }
+  public Set<String> fieldsToFix(Interaction prev, FruitRef fruit) {
+    Set<String> fields = fieldsToFix(prev);
+    fields.addAll(fieldsToHide(prev, fruit));
+    FruitFixedFieldsPipelineStageEvent value = FruitFixedFieldsPipelineStageEvent.builder()
+        .fields(fields).fruit(fruit).query(prev).build();
+    fireFix.fire(value);
+    return value.getFields();
   }
 
   /**
@@ -274,23 +188,11 @@ public class FruitsVisibilityService {
    * @param prev The source interaction
    * @return initialsHideFields
    */
-  public CompletionStage<Set<String>> fieldsToHide(Interaction prev) {
-    Span startSpan = tracer.spanBuilder("fruit-field-to-hide-for-new").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      CompletionStage<Set<String>> fields = CompletableFuture.completedFuture(Set.of());
-      FruitHiddenFieldsPipelineStageEvent value =
-          FruitHiddenFieldsPipelineStageEvent.builder().fields(fields).query(prev).build();
-      fireHide.fire(value);
-      return value.getFields().whenComplete((val, ex) -> {
-        if (null == ex) {
-          startSpan.setAttribute("fieds", String.join(",", val));
-          startSpan.setStatus(StatusCode.OK);
-        } else {
-          startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-        }
-        startSpan.end();
-      });
-    }
+  public Set<String> fieldsToHide(Interaction prev) {
+    FruitHiddenFieldsPipelineStageEvent value =
+        FruitHiddenFieldsPipelineStageEvent.builder().fields(Set.of()).query(prev).build();
+    fireHide.fire(value);
+    return value.getFields();
   }
 
   /**
@@ -301,23 +203,12 @@ public class FruitsVisibilityService {
    * @param fruit
    * @return initialsHideFields
    */
-  public CompletionStage<Set<String>> fieldsToHide(Interaction prev, FruitRef fruit) {
-    Span startSpan = tracer.spanBuilder("fruit-field-to-hide-for-existent").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      CompletionStage<Set<String>> fields = fieldsToHide(prev);
-      FruitHiddenFieldsPipelineStageEvent value = FruitHiddenFieldsPipelineStageEvent.builder()
-          .fields(fields).fruit(fruit).query(prev).build();
-      fireHide.fire(value);
-      return value.getFields().whenComplete((val, ex) -> {
-        if (null == ex) {
-          startSpan.setAttribute("fieds", String.join(",", val));
-          startSpan.setStatus(StatusCode.OK);
-        } else {
-          startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-        }
-        startSpan.end();
-      });
-    }
+  public Set<String> fieldsToHide(Interaction prev, FruitRef fruit) {
+    Set<String> fields = fieldsToHide(prev);
+    FruitHiddenFieldsPipelineStageEvent value = FruitHiddenFieldsPipelineStageEvent.builder()
+        .fields(fields).fruit(fruit).query(prev).build();
+    fireHide.fire(value);
+    return value.getFields();
   }
 
   /**
@@ -329,22 +220,10 @@ public class FruitsVisibilityService {
    * @param cursor The filter to retrieve values
    * @return The input entity with the copy values without hidden
    */
-  public Stream<FruitCached> listCachedVisibles(Interaction prev, FruitFilter filter,
-      FruitCursor cursor) {
-    
-    
-      return applyPreVisibilityFilter(prev, filter)
-          .flatMap(visfilter -> cache.retrieve(visfilter, cursor)
-              .ifEmpty(() -> {
-                queryItems(prev, filter, cursor);
-                Stream<FruitCached> all = queryItems(prev, filter, cursor).all(values -> {
-                  Stream<FruitCached> map = cache.store(filter, cursor, values).map(cached -> {
-                    return FruitCached.builder().value(values).since(OffsetDateTime.now()).build();
-                  });
-                  return map;
-                });
-                return all;
-              }) );
+  public FruitCached listCachedVisibles(Interaction prev, FruitFilter filter, FruitCursor cursor) {
+    FruitFilter visibleFilter = applyPreVisibilityFilter(prev, filter);
+    return cache.retrieve(visibleFilter, cursor)
+        .orElseGet(() -> cache.store(visibleFilter, cursor, listVisibles(prev, filter, cursor)));
   }
 
   /**
@@ -356,10 +235,8 @@ public class FruitsVisibilityService {
    * @param cursor The filter to retrieve values
    * @return The input entity with the copy values without hidden
    */
-  public Stream<Fruit> listVisibles(Interaction prev, FruitFilter filter,
-      FruitCursor cursor) {
-      return applyPreVisibilityFilter(prev, filter)
-          .flatMap(visfilter -> queryItems(prev, visfilter, cursor));
+  public List<Fruit> listVisibles(Interaction prev, FruitFilter filter, FruitCursor cursor) {
+    return queryItems(prev, applyPreVisibilityFilter(prev, filter), cursor);
   }
 
   /**
@@ -370,35 +247,14 @@ public class FruitsVisibilityService {
    * @param uid
    * @return The input entity with the copy values without hidden
    */
-  public CompletionStage<FruitCached> retrieveCachedVisible(Interaction prev, String uid) {
-    Span startSpan = tracer.spanBuilder("fruit-retrieve-cached-visible").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      return applyPreVisibilityFilter(prev, FruitFilter.builder().uid(uid).build())
-          .thenCompose(filter -> {
-            filter.setUid(uid);
-            FruitCursor cursor = FruitCursor.builder().limit(1).build();
-            return cache.retrieve(filter, cursor).thenCompose(cached -> {
-              if (cached.isPresent()) {
-                startSpan.setAttribute("source", "cache");
-                return CompletableFuture.completedStage(cached.get());
-              } else {
-                startSpan.setAttribute("source", "gateway");
-                return queryItem(prev, uid, filter).thenApply(value -> {
-                  List<Fruit> values = value.map(List::of).orElseGet(List::of);
-                  cache.store(filter, cursor, values);
-                  return FruitCached.builder().value(values).since(OffsetDateTime.now()).build();
-                });
-              }
-            });
-          }).whenComplete((val, ex) -> {
-            if (null == ex) {
-              startSpan.setStatus(StatusCode.OK);
-            } else {
-              startSpan.recordException(ex).setStatus(StatusCode.ERROR);
-            }
-            startSpan.end();
-          });
-    }
+  public FruitCached retrieveCachedVisible(Interaction prev, String uid) {
+    FruitCursor cursor = FruitCursor.builder().limit(1).build();
+    FruitFilter visibleFilter =
+        applyPreVisibilityFilter(prev, FruitFilter.builder().uid(uid).build());
+    return cache.retrieve(visibleFilter, cursor).orElseGet(() -> {
+      List<Fruit> list = retrieveVisible(prev, uid).<List<Fruit>>map(List::of).orElseGet(List::of);
+      return cache.store(visibleFilter, cursor, list);
+    });
   }
 
   /**
@@ -409,12 +265,9 @@ public class FruitsVisibilityService {
    * @param uid
    * @return The input entity with the copy values without hidden
    */
-  public Stream<Fruit> retrieveVisible(Interaction prev, String uid) {
-    Span startSpan = tracer.spanBuilder("fruit-retrieve-visible").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      return applyPreVisibilityFilter(prev, FruitFilter.builder().uid(uid).build())
-          .flatMap(filter -> queryItem(prev, uid, filter));
-    }
+  public Optional<Fruit> retrieveVisible(Interaction prev, String uid) {
+    FruitFilter filter = applyPreVisibilityFilter(prev, FruitFilter.builder().uid(uid).build());
+    return queryItem(prev, uid, filter);
   }
 
   /**
@@ -425,26 +278,11 @@ public class FruitsVisibilityService {
    * @param filter The filter to retrieve values
    * @return The self filter modified with the prepared values.
    */
-  private Stream<FruitFilter> applyPreVisibilityFilter(Interaction prev, FruitFilter filter) {
-    Span startSpan = tracer.spanBuilder("fruit-calculate-visible-filter").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      FruitVisibilityQueryPipelineStageEvent visible = FruitVisibilityQueryPipelineStageEvent
-          .builder().filter(Stream.just(filter)).interaction(prev).build();
-      fireVisibleFilter.fire(visible);
-      return visible.getFilter();
-    }
-  }
-
-  /**
-   * The input dto with hidden values
-   *
-   * @autogenerated VisibilityServiceGenerator
-   * @param prev The source interaction
-   * @param fruitRefs The source interaction
-   * @return The input dto with hidden values
-   */
-  private Stream<Fruit> evaluatePostVisibility(Interaction prev, Stream<Fruit> fruitRefs) {
-    return fruitRefs.filter(item -> evaluatePostVisibility(prev, item));
+  private FruitFilter applyPreVisibilityFilter(Interaction prev, FruitFilter filter) {
+    FruitVisibilityQueryPipelineStageEvent visible =
+        FruitVisibilityQueryPipelineStageEvent.builder().filter(filter).interaction(prev).build();
+    fireVisibleFilter.fire(visible);
+    return visible.getFilter();
   }
 
   /**
@@ -455,9 +293,9 @@ public class FruitsVisibilityService {
    * @param fruitRef The source interaction
    * @return The input dto with hidden values
    */
-  private Stream<Boolean> evaluatePostVisibility(Interaction prev, Fruit fruitRef) {
+  private boolean evaluatePostVisibility(Interaction prev, Fruit fruitRef) {
     FruitVisibleContentPipelineStageEvent list = FruitVisibleContentPipelineStageEvent.builder()
-        .entity(fruitRef).visible(Stream.just(true)).interaction(prev).build();
+        .entity(fruitRef).visible(true).interaction(prev).build();
     fireVisibleList.fire(list);
     return list.getVisible();
   }
@@ -471,12 +309,9 @@ public class FruitsVisibilityService {
    * @param filter The filter to retrieve values
    * @return The input entity with the copy values without hidden
    */
-  private Stream<Fruit> queryItem(Interaction prev, String uid, FruitFilter filter) {
-    Span startSpan = tracer.spanBuilder("fruit-query-item").startSpan();
-    try (Scope scope = startSpan.makeCurrent()) {
-      return fruitReadRepositoryGateway.retrieve(uid, Optional.of(filter))
-          .filter(values -> evaluatePostVisibility(prev, values));
-    }
+  private Optional<Fruit> queryItem(Interaction prev, String uid, FruitFilter filter) {
+    return fruitReadRepositoryGateway.retrieve(uid, Optional.of(filter))
+        .filter(values -> evaluatePostVisibility(prev, values));
   }
 
   /**
@@ -488,8 +323,13 @@ public class FruitsVisibilityService {
    * @param cursor The filter to retrieve values
    * @return The input entity with the copy values without hidden
    */
-  private Stream<Fruit> queryItems(Interaction prev, FruitFilter filter, FruitCursor cursor) {
-    return fruitReadRepositoryGateway.list(filter, cursor)
+  private List<Fruit> queryItems(Interaction prev, FruitFilter filter, FruitCursor cursor) {
+    List<Fruit> list = new ArrayList<>();
+    Iterator<Fruit> slide = fruitReadRepositoryGateway.list(filter, cursor)
         .slide(values -> evaluatePostVisibility(prev, values));
+    while (slide.hasNext()) {
+      list.add(slide.next());
+    }
+    return list;
   }
 }

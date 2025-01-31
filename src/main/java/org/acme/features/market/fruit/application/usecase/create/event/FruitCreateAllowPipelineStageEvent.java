@@ -1,10 +1,8 @@
 package org.acme.features.market.fruit.application.usecase.create.event;
 
 import org.acme.common.action.Interaction;
-import org.acme.common.reactive.Stream;
 import org.acme.common.security.Allow;
 import org.acme.common.security.AllowPipelineStageEvent;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
@@ -34,7 +32,8 @@ public class FruitCreateAllowPipelineStageEvent extends AllowPipelineStageEvent 
    */
   public static FruitCreateAllowPipelineStageEvent build(final Interaction query,
       final boolean allowed, final String reason) {
-    return FruitCreateAllowPipelineStageEvent.builder().query(query).detail(Stream.just(Allow.builder().allowed(allowed).description(reason).build())).build();
+    return FruitCreateAllowPipelineStageEvent.builder().query(query)
+        .detail(Allow.builder().allowed(allowed).description(reason).build()).build();
   }
 
   /**

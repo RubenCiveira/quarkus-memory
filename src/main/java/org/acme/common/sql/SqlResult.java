@@ -1,15 +1,15 @@
 package org.acme.common.sql;
 
+import java.util.List;
 import java.util.Optional;
-import org.acme.common.reactive.Stream;
 
 public interface SqlResult<T> {
 
-  Stream<T> one();
+  Optional<T> one();
 
-  Stream<T> limit(Optional<Integer> max);
+  List<T> limit(Optional<Integer> max);
 
-  Stream<T> limit(int max);
+  List<T> limit(int max);
 
-  Stream<T> all();
+  List<T> all();
 }

@@ -1,13 +1,10 @@
 package org.acme.features.market.fruit.application.usecase.update.event;
 
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-
 import org.acme.common.action.Interaction;
 import org.acme.common.security.Allow;
 import org.acme.common.security.AllowPipelineStageEvent;
 import org.acme.features.market.fruit.domain.model.FruitRef;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
@@ -40,8 +37,7 @@ public class FruitUpdateAllowPipelineStageEvent extends AllowPipelineStageEvent 
   public static FruitUpdateAllowPipelineStageEvent build(final Interaction query,
       final Optional<FruitRef> reference, final boolean allowed, final String reason) {
     return FruitUpdateAllowPipelineStageEvent.builder().query(query)
-        .reference(reference.orElse(null)).detail(CompletableFuture
-            .completedFuture(Allow.builder().allowed(allowed).description(reason).build()))
+        .reference(reference.orElse(null)).detail(Allow.builder().allowed(allowed).description(reason).build())
         .build();
   }
 
