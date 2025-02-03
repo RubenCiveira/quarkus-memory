@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
 import graphql.language.Document;
 import graphql.language.Field;
 import graphql.language.OperationDefinition;
@@ -49,7 +50,7 @@ public class GraphQLInterpreter {
   }
 
   @SuppressWarnings("unchecked")
-  public List<Map<String, Object>> execute(ExecutionPlan plan, Map<String, String> params,
+  public Object execute(ExecutionPlan plan, Map<String, String> params,
       Map<String, List<String>> headers) {
     Invocation.Builder request =
         client.target(plan.getNode().target(params)).request(MediaType.APPLICATION_JSON);
@@ -57,16 +58,23 @@ public class GraphQLInterpreter {
     Response response = request.get();
     List<Map<String, Object>> mappedEntity = new ArrayList<>();
     // FIXME: puede ser lista u object....
-    List<Map<String, Object>> readEntity = response.readEntity(List.class);
-    readEntity.forEach(map -> {
-      System.out.println("\t" + map);
-      Map<String,Object> row = new HashMap<>();
-      plan.getSelection().forEach( (key,value) -> {
+    if( plan.getNode().isList() ) {
+      List<Map<String, Object>> list = (List<Map<String, Object>>)response.readEntity(Map.class).get("items");
+      return list == null ? List.of() : list.stream().map(row -> map(plan, (Map<String,Object>)row)).toList();
+    } else {
+      return map(plan, (Map<String,Object>)response.readEntity(Map.class));
+    }
+  }
+  
+  private Map<String,Object> map(ExecutionPlan plan, Map<String, Object> map) {
+    Map<String, Object> row = new HashMap<>();
+    plan.getSelection().forEach((key, value) -> {
+      Object mapped = map.get(value);
+      if( null != mapped ) {
         row.put(key, map.get(value));
-      });
-      mappedEntity.add( row );
+      }
     });
-    return mappedEntity;
+    return row;
   }
 
   private String extractRootField(OperationDefinition operation) {

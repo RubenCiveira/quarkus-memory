@@ -1,7 +1,7 @@
 package org.acme.bootstrap.graphql;
 
-import java.util.HashMap;
 import java.util.Map;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -10,5 +10,5 @@ import lombok.Getter;
 public class ExecutionPlan {
   private final ExecutionNode node;
   private final Map<String, String> selection;
-  
+
 }

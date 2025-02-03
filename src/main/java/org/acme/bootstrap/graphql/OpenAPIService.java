@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Scanner;
+
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
@@ -25,24 +26,25 @@ public class OpenAPIService {
     }
   }
 
-  public Optional<ExecutionNode> buildExecutionTree(String rootEndpoint, Map<String, String> selector) {
+  public Optional<ExecutionNode> buildExecutionTree(String rootEndpoint,
+      Map<String, String> selector) {
     Map<String, Map<String, ExecutionNode>> nodes = new HashMap<>();
     // Recorrer los endpoints
     openAPI.getPaths().forEach((path, pathItem) -> {
       for (PathItem.HttpMethod method : pathItem.readOperationsMap().keySet()) {
         if (method == PathItem.HttpMethod.GET) {
           Operation operation = pathItem.readOperationsMap().get(method);
-          ExecutionNode node = new ExecutionNode(serverUrl, path, method.name());
+          boolean hasPath = 
+              null != operation.getParameters() ? 
+              operation.getParameters().stream().noneMatch(pr -> pr.getIn().equals("path")) : true;
+          ExecutionNode node = new ExecutionNode(serverUrl, path, method.name(), hasPath);
           // Extraer parámetros
           if (operation.getParameters() != null) {
             operation.getParameters()
-                .forEach(param -> node.setParameter(param.getName(), 
-                    ExecutionParam.builder()
-                    .name(param.getName())
-                    .required(Boolean.TRUE.equals( param.getRequired()) )
-                    .in(param.getIn())
-                    .build()
-                    ));
+                .forEach(param -> node.setParameter(param.getName(),
+                    ExecutionParam.builder().name(param.getName())
+                        .required(Boolean.TRUE.equals(param.getRequired())).in(param.getIn())
+                        .build()));
           }
           operation.getTags().forEach(tag -> {
             if (!nodes.containsKey(tag)) {
@@ -67,19 +69,16 @@ public class OpenAPIService {
   }
 
   private boolean hasPath(Map<String, String> params, ExecutionNode node) {
-    boolean hasAllPassed = node.getParameters().keySet()
-        .containsAll( params.keySet() );
-    boolean hasAllRequired = params.keySet().containsAll( node.getParameters().values().stream()
-        .filter(ExecutionParam::isRequired)
-        .map(ExecutionParam::getName)
-        .toList());
+    boolean hasAllPassed = node.getParameters().keySet().containsAll(params.keySet());
+    boolean hasAllRequired = params.keySet().containsAll(node.getParameters().values().stream()
+        .filter(ExecutionParam::isRequired).map(ExecutionParam::getName).toList());
     return hasAllPassed && hasAllRequired;
   }
-  
+
   private int comparePathParams(ExecutionNode one, ExecutionNode other) {
     return countPathParams(other) - countPathParams(one);
   }
-  
+
   private int countPathParams(ExecutionNode one) {
     return (int) one.getParameters().values().stream().filter(kind -> kind.equals("path")).count();
   }
