@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
@@ -72,27 +70,27 @@ public class FileStoreImpl implements FileStore {
   }
 
   @Override
-  public CompletionStage<RepositoryLink> commitReplace(String path, RepositoryLink link) {
+  public RepositoryLink commitReplace(String path, RepositoryLink link) {
     try (Connection connection = datasource.getConnection()) {
       RepositoryLink key = runCommit(connection, path);
       runDelete(connection, path);
-      return CompletableFuture.completedFuture(key);
+      return key;
     } catch (SQLException e) {
       throw new IllegalArgumentException(e);
     }
   }
 
   @Override
-  public CompletionStage<RepositoryLink> commitContent(final String path) {
+  public RepositoryLink commitContent(final String path) {
     try (Connection connection = datasource.getConnection()) {
-      return CompletableFuture.completedFuture(runCommit(connection, path));
+      return runCommit(connection, path);
     } catch (SQLException e) {
       throw new IllegalArgumentException(e);
     }
   }
 
   @Override
-  public CompletionStage<RepositoryLink> replaceContent(String key, BinaryContent content) {
+  public RepositoryLink replaceContent(String key, BinaryContent content) {
     try (Connection connection = datasource.getConnection()) {
       try (PreparedStatement updateStatement = connection.prepareStatement(
           "UPDATE _filestorer SET name = ?, mime = ?, upload = ?, bytes = ? WHERE code = ?")) {
@@ -104,7 +102,7 @@ public class FileStoreImpl implements FileStore {
         if (updateStatement.executeUpdate() != 1) {
           throw new IllegalArgumentException("Imposible updatear para " + key);
         }
-        return CompletableFuture.completedFuture(RepositoryLink.builder().key(key).build());
+        return RepositoryLink.builder().key(key).build();
       }
     } catch (SQLException e) {
       throw new IllegalArgumentException(e);
@@ -112,16 +110,15 @@ public class FileStoreImpl implements FileStore {
   }
 
   @Override
-  public CompletionStage<Boolean> deleteFile(final String path) {
+  public void deleteFile(final String path) {
     try (Connection connection = datasource.getConnection()) {
-      return CompletableFuture.completedFuture(runDelete(connection, path));
+      runDelete(connection, path);
     } catch (SQLException e) {
       throw new IllegalArgumentException(e);
     }
   }
 
-  private CompletionStage<Optional<BinaryContent>> retrieve(final String path,
-      final boolean temporal) {
+  private Optional<BinaryContent> retrieve(final String path, final boolean temporal) {
     try {
       cleanTemp();
     } catch (SQLException ex) {
@@ -144,8 +141,7 @@ public class FileStoreImpl implements FileStore {
           } else {
             dataSource = Optional.empty();
           }
-          System.out.println("READ " + dataSource);
-          return CompletableFuture.completedFuture(dataSource);
+          return dataSource;
         }
       }
     } catch (SQLException e) {
@@ -158,21 +154,21 @@ public class FileStoreImpl implements FileStore {
   }
 
   @Override
-  public CompletionStage<Optional<BinaryContent>> retrieveTemp(String key) {
+  public Optional<BinaryContent> retrieveTemp(String key) {
     return retrieve(key, true);
   }
 
   @Override
-  public CompletionStage<Optional<BinaryContent>> retrieveFile(String key) {
+  public Optional<BinaryContent> retrieveFile(String key) {
     return retrieve(key, false);
   }
 
   @Override
-  public CompletionStage<RepositoryLink> tempStore(BinaryContent source) {
+  public RepositoryLink tempStore(BinaryContent source) {
     return store(source, true);
   }
 
-  private CompletionStage<RepositoryLink> store(BinaryContent source, boolean temporal) {
+  private RepositoryLink store(BinaryContent source, boolean temporal) {
     try {
       cleanTemp();
     } catch (SQLException ex) {
@@ -191,7 +187,7 @@ public class FileStoreImpl implements FileStore {
         if (updateStatement.executeUpdate() != 1) {
           throw new IOException("Imposible insertar para " + path);
         }
-        return CompletableFuture.completedFuture(RepositoryLink.builder().key(path).build());
+        return RepositoryLink.builder().key(path).build();
       }
     } catch (IOException | SQLException e) {
       throw new IllegalArgumentException(e);
@@ -210,14 +206,13 @@ public class FileStoreImpl implements FileStore {
     }
   }
 
-  private boolean runDelete(Connection connection, String path) throws SQLException {
+  private void runDelete(Connection connection, String path) throws SQLException {
     try (PreparedStatement prepareStatement =
         connection.prepareStatement("DELETE from _filestorer where code = ?")) {
       prepareStatement.setString(1, code(path));
       if (prepareStatement.executeUpdate() != 1) {
         log.warn("Imposible borrar para " + path);
       }
-      return true;
     }
   }
 }

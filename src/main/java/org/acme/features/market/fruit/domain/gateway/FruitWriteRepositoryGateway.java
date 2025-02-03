@@ -2,6 +2,7 @@ package org.acme.features.market.fruit.domain.gateway;
 
 import java.util.Optional;
 import java.util.function.Function;
+
 import org.acme.common.algorithms.Slider;
 import org.acme.features.market.fruit.domain.model.Fruit;
 import org.acme.features.market.fruit.domain.model.FruitRef;
@@ -16,8 +17,7 @@ public interface FruitWriteRepositoryGateway {
    * @param verifier a filter to retrieve only matching values
    * @return Retrieve one single value
    */
-  Fruit create(Fruit entity,
-      Function<Fruit, Boolean> verifier);
+  Fruit create(Fruit entity, Function<Fruit, Boolean> verifier);
 
   /**
    * Retrieve one single value

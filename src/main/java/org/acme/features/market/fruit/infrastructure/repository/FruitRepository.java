@@ -1,10 +1,11 @@
 package org.acme.features.market.fruit.infrastructure.repository;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+
 import javax.sql.DataSource;
+
 import org.acme.common.algorithms.Slider;
 import org.acme.common.exception.ConstraintException;
 import org.acme.common.exception.NotFoundException;
@@ -22,6 +23,7 @@ import org.acme.features.market.fruit.domain.gateway.FruitFilter;
 import org.acme.features.market.fruit.domain.gateway.FruitOrder;
 import org.acme.features.market.fruit.domain.model.Fruit;
 import org.acme.features.market.fruit.domain.model.FruitRef;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -64,7 +66,7 @@ public class FruitRepository {
       sq.with("uid", SqlParameterValue.of(entity.getUidValue()));
       int num = sq.execute();
       if (0 == num) {
-        throw new NotFoundException("No delete from");
+        throw new IllegalArgumentException("No delete from");
       }
       return entity;
     }
@@ -78,7 +80,8 @@ public class FruitRepository {
   public Fruit enrich(FruitRef reference) {
     return reference instanceof Fruit ? (Fruit) reference
         : retrieve(reference.getUidValue(), Optional.empty())
-            .orElseThrow(() -> new NotFoundException("Unkonw fruit reference ["+reference.getUidValue()+"]"));
+            .orElseThrow(() -> new NotFoundException(
+                "Trying to enrich inexistent Fruit: " + reference.getUidValue()));
   }
 
   /**
@@ -88,7 +91,7 @@ public class FruitRepository {
    * @return
    */
   public boolean exists(String uid, Optional<FruitFilter> filter) {
-    return retrieve(uid, filter).isEmpty();
+    return retrieve(uid, filter).isPresent();
   }
 
   /**
@@ -98,54 +101,8 @@ public class FruitRepository {
    * @return
    */
   public Slider<Fruit> list(FruitFilter filter, FruitCursor cursor) {
-    return new FruitSlider(runlist(filter, cursor), cursor.getLimit().orElse(0), this::runlist,
+    return new FruitSlider(runList(filter, cursor), cursor.getLimit().orElse(0), this::runList,
         filter, cursor);
-  }
-
-  private Iterator<Fruit> runlist(FruitFilter filter, FruitCursor cursor) {
-    try (SqlTemplate template = new SqlTemplate(datasource)) {
-      SqlSchematicQuery<Fruit> sq = filteredQuery(template, filter);
-      PartialWhere offset = PartialWhere.empty();
-      PartialWhere prev = PartialWhere.empty();
-      if (null != cursor.getOrder()) {
-        for (FruitOrder order : cursor.getOrder()) {
-          if (order == FruitOrder.NAME_ASC) {
-            sq.orderAsc("name");
-            Optional<String> sinceName = cursor.getSinceName();
-            if (sinceName.isPresent()) {
-              String sinceNameValue = sinceName.get();
-              offset = PartialWhere.or(offset, PartialWhere.and(prev, PartialWhere.where("name",
-                  SqlOperator.GT, SqlParameterValue.of(sinceNameValue))));
-              prev = PartialWhere.and(prev,
-                  PartialWhere.where("name", SqlOperator.EQ, SqlParameterValue.of(sinceNameValue)));
-            }
-          }
-          if (order == FruitOrder.NAME_DESC) {
-            sq.orderDesc("name");
-            Optional<String> sinceName = cursor.getSinceName();
-            if (sinceName.isPresent()) {
-              String sinceNameValue = sinceName.get();
-              offset = PartialWhere.or(offset, PartialWhere.and(prev, PartialWhere.where("name",
-                  SqlOperator.GT, SqlParameterValue.of(sinceNameValue))));
-              prev = PartialWhere.and(prev,
-                  PartialWhere.where("name", SqlOperator.EQ, SqlParameterValue.of(sinceNameValue)));
-            }
-          }
-        }
-        Optional<String> sinceUid = cursor.getSinceUid();
-        if (sinceUid.isPresent()) {
-          offset = PartialWhere.or(offset, PartialWhere.and(prev,
-              PartialWhere.where("uid", SqlOperator.GT, SqlParameterValue.of(sinceUid.get()))));
-        }
-        sq.where(offset);
-      } else {
-        cursor.getSinceUid()
-            .ifPresent(since -> sq.where("uid", SqlOperator.GT, SqlParameterValue.of(since)));
-      }
-      sq.orderAsc("uid");
-      List<Fruit> limit = sq.query(converter()).limit(cursor.getLimit());
-      return limit.iterator();
-    }
   }
 
   /**
@@ -155,11 +112,11 @@ public class FruitRepository {
    * @return
    */
   public Optional<Fruit> retrieve(String uid, Optional<FruitFilter> filter) {
-    System.out.println("CREANDO EL Template para insertar");
     try (SqlTemplate template = new SqlTemplate(datasource)) {
       FruitFilter readyFilter = filter.map(val -> val.withUid(uid))
           .orElseGet(() -> FruitFilter.builder().uid(uid).build());
-      return filteredQuery(template, readyFilter).query(converter()).one();
+      SqlSchematicQuery<Fruit> sq = filteredQuery(template, readyFilter);
+      return sq.query(converter()).one();
     }
   }
 
@@ -208,7 +165,6 @@ public class FruitRepository {
    * @return
    */
   private SqlSchematicQuery<Fruit> filteredQuery(SqlTemplate template, FruitFilter filter) {
-    System.out.println("Creando el schematic de filteredQuery");
     SqlSchematicQuery<Fruit> sq = template.createSqlSchematicQuery("fruit");
     sq.select("fruit.uid", "fruit.name", "fruit.version");
     filter.getUid().ifPresent(uid -> sq.where("uid", SqlOperator.EQ, SqlParameterValue.of(uid)));
@@ -229,9 +185,7 @@ public class FruitRepository {
    * @return
    */
   private Fruit runCreate(Fruit entity, Function<Fruit, Boolean> verifier) {
-    System.out.println("CREO UN Datasource desde un template");
     try (SqlTemplate template = new SqlTemplate(datasource)) {
-      System.out.println("CREANDO LA QUERY DE INSERT");
       SqlCommand sq = template.createSqlCommand(
           "insert into \"fruit\" ( \"uid\", \"name\", \"version\") values ( :uid, :name, :version)");
       sq.with("uid", SqlParameterValue.of(entity.getUidValue()));
@@ -239,12 +193,61 @@ public class FruitRepository {
       sq.with("version", entity.getVersionValue().map(SqlParameterValue::of)
           .orElseGet(SqlParameterValue::ofNullInteger));
       int num = sq.execute();
-      System.out.println("EXECUTE OF QUERY INSERT: " + num);
       if (0 == num) {
         throw new IllegalArgumentException("No insert into");
       }
-      return verifier == null ? entity
-          : verified(verifier.apply(entity), entity, template);
+      return verifier == null ? entity : verified(verifier.apply(entity), entity, template);
+    }
+  }
+
+  /**
+   * @autogenerated RepositoryJdbcGenerator
+   * @param filter
+   * @param cursor
+   * @return
+   */
+  private Iterator<Fruit> runList(FruitFilter filter, FruitCursor cursor) {
+    try (SqlTemplate template = new SqlTemplate(datasource)) {
+      SqlSchematicQuery<Fruit> sq = filteredQuery(template, filter);
+      PartialWhere offset = PartialWhere.empty();
+      PartialWhere prev = PartialWhere.empty();
+      if (null != cursor.getOrder()) {
+        for (FruitOrder order : cursor.getOrder()) {
+          if (order == FruitOrder.NAME_ASC) {
+            sq.orderAsc("name");
+            Optional<String> sinceName = cursor.getSinceName();
+            if (sinceName.isPresent()) {
+              String sinceNameValue = sinceName.get();
+              offset = PartialWhere.or(offset, PartialWhere.and(prev, PartialWhere.where("name",
+                  SqlOperator.GT, SqlParameterValue.of(sinceNameValue))));
+              prev = PartialWhere.and(prev,
+                  PartialWhere.where("name", SqlOperator.EQ, SqlParameterValue.of(sinceNameValue)));
+            }
+          }
+          if (order == FruitOrder.NAME_DESC) {
+            sq.orderDesc("name");
+            Optional<String> sinceName = cursor.getSinceName();
+            if (sinceName.isPresent()) {
+              String sinceNameValue = sinceName.get();
+              offset = PartialWhere.or(offset, PartialWhere.and(prev, PartialWhere.where("name",
+                  SqlOperator.GT, SqlParameterValue.of(sinceNameValue))));
+              prev = PartialWhere.and(prev,
+                  PartialWhere.where("name", SqlOperator.EQ, SqlParameterValue.of(sinceNameValue)));
+            }
+          }
+        }
+        Optional<String> sinceUid = cursor.getSinceUid();
+        if (sinceUid.isPresent()) {
+          offset = PartialWhere.or(offset, PartialWhere.and(prev,
+              PartialWhere.where("uid", SqlOperator.GT, SqlParameterValue.of(sinceUid.get()))));
+        }
+        sq.where(offset);
+      } else {
+        cursor.getSinceUid()
+            .ifPresent(since -> sq.where("uid", SqlOperator.GT, SqlParameterValue.of(since)));
+      }
+      sq.orderAsc("uid");
+      return sq.query(converter()).limit(cursor.getLimit()).iterator();
     }
   }
 

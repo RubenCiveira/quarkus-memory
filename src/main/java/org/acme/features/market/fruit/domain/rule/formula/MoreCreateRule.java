@@ -2,9 +2,11 @@ package org.acme.features.market.fruit.domain.rule.formula;
 
 import java.util.Optional;
 import java.util.function.UnaryOperator;
+
 import org.acme.features.market.fruit.domain.model.Fruit;
 import org.acme.features.market.fruit.domain.rule.FruitActionType;
 import org.acme.features.market.fruit.domain.rule.FruitRule;
+
 import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped

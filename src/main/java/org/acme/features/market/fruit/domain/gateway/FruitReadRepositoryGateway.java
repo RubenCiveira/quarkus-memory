@@ -1,6 +1,7 @@
 package org.acme.features.market.fruit.domain.gateway;
 
 import java.util.Optional;
+
 import org.acme.common.algorithms.Slider;
 import org.acme.features.market.fruit.domain.model.Fruit;
 import org.acme.features.market.fruit.domain.model.FruitRef;

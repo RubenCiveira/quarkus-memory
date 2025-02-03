@@ -51,6 +51,8 @@ class FD<T> implements Iterator<T> {
   public boolean hasNext() {
     if (current.hasNext()) {
       return true;
+    } else if( items.isEmpty() ) {
+      return false;
     } else {
       current = next.apply(items);
       return null == current ? false : current.hasNext();

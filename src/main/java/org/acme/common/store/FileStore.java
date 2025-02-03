@@ -3,7 +3,6 @@ package org.acme.common.store;
 
 import java.io.IOException;
 import java.util.Optional;
-import java.util.concurrent.CompletionStage;
 
 /**
  * Una interfaz para manejar el almacenamiento de ficheros en un repositorio.
@@ -20,7 +19,7 @@ public interface FileStore {
    * @param source La fuente de datos que copiar
    * @return El código temporal para ubicar el fichero en el repositorio
    */
-  CompletionStage<RepositoryLink> tempStore(BinaryContent source);
+  RepositoryLink tempStore(BinaryContent source);
 
   /**
    * Recupera una response entity de http para descargar un fichero desde una url temporal. El
@@ -30,7 +29,7 @@ public interface FileStore {
    * @return la respuesta http
    * @throws IOException si hay problemas a la hora de acceder al fichero
    */
-  CompletionStage<Optional<BinaryContent>> retrieveTemp(String pathParam);
+  Optional<BinaryContent> retrieveTemp(String pathParam);
 
   /**
    * Recupera una fuente de datos de la que leer el contenido de un fichero.
@@ -41,7 +40,7 @@ public interface FileStore {
    * @return Una fuente de datos con un inputStream para leer el fichero DataSource retrieve(String
    *         path, boolean temporal);
    */
-  CompletionStage<Optional<BinaryContent>> retrieveFile(String key);
+  Optional<BinaryContent> retrieveFile(String key);
 
   /**
    * Coge un fichero temoral del repositorio y lo guarda de manera definitiva.
@@ -52,7 +51,7 @@ public interface FileStore {
    * @param path La ruta al fichero temporal
    * @return La ruta del fichero en el almacen definitivo
    */
-  CompletionStage<RepositoryLink> commitContent(String key);
+  RepositoryLink commitContent(String key);
 
   /**
    * Coge un fichero temoral del repositorio y lo guarda de manera definitiva.
@@ -63,7 +62,7 @@ public interface FileStore {
    * @param path La ruta al fichero temporal
    * @return La ruta del fichero en el almacen definitivo
    */
-  CompletionStage<RepositoryLink> commitReplace(String key, RepositoryLink link);
+  RepositoryLink commitReplace(String key, RepositoryLink link);
 
   /**
    * Fichero
@@ -71,12 +70,12 @@ public interface FileStore {
    * @param key
    * @param content
    */
-  CompletionStage<RepositoryLink> replaceContent(String key, BinaryContent content);
+  RepositoryLink replaceContent(String key, BinaryContent content);
 
   /**
    * Borra un fichero del repositorio
    * 
    * @param path El path del fichero a borrar
    */
-  CompletionStage<Boolean> deleteFile(String key);
+  void deleteFile(String key);
 }

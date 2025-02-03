@@ -1,7 +1,9 @@
 package org.acme.features.market.fruit.infrastructure.driven;
 
 import java.util.Optional;
+
 import javax.sql.DataSource;
+
 import org.acme.common.algorithms.Slider;
 import org.acme.features.market.fruit.domain.gateway.FruitCursor;
 import org.acme.features.market.fruit.domain.gateway.FruitFilter;
@@ -9,6 +11,7 @@ import org.acme.features.market.fruit.domain.gateway.FruitReadRepositoryGateway;
 import org.acme.features.market.fruit.domain.model.Fruit;
 import org.acme.features.market.fruit.domain.model.FruitRef;
 import org.acme.features.market.fruit.infrastructure.repository.FruitRepository;
+
 import jakarta.enterprise.context.RequestScoped;
 
 @RequestScoped

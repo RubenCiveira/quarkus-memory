@@ -2,7 +2,9 @@ package org.acme.features.market.fruit.infrastructure.driven;
 
 import java.util.Optional;
 import java.util.function.Function;
+
 import javax.sql.DataSource;
+
 import org.acme.common.algorithms.Slider;
 import org.acme.features.market.fruit.domain.gateway.FruitCursor;
 import org.acme.features.market.fruit.domain.gateway.FruitFilter;
@@ -10,6 +12,7 @@ import org.acme.features.market.fruit.domain.gateway.FruitWriteRepositoryGateway
 import org.acme.features.market.fruit.domain.model.Fruit;
 import org.acme.features.market.fruit.domain.model.FruitRef;
 import org.acme.features.market.fruit.infrastructure.repository.FruitRepository;
+
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Named;
@@ -49,8 +52,7 @@ public class FruitWriteGatewayAdapter implements FruitWriteRepositoryGateway {
    * @return
    */
   @Override
-  public Fruit create(Fruit entity,
-      Function<Fruit, Boolean> verifier) {
+  public Fruit create(Fruit entity, Function<Fruit, Boolean> verifier) {
     return repository.create(entity, verifier);
   }
 

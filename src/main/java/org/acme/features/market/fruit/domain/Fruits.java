@@ -5,6 +5,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
+
 import org.acme.common.action.ParametrizedFuturePipe;
 import org.acme.common.action.PriorityComparator;
 import org.acme.features.market.fruit.domain.model.Fruit;
@@ -12,6 +13,7 @@ import org.acme.features.market.fruit.domain.model.Fruit.FruitBuilder;
 import org.acme.features.market.fruit.domain.rule.FruitActionType;
 import org.acme.features.market.fruit.domain.rule.FruitBuilderRule;
 import org.acme.features.market.fruit.domain.rule.FruitRule;
+
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.inject.Instance;
 
@@ -98,13 +100,11 @@ public class Fruits {
    * @param ignore
    * @return The entity
    */
-  private Fruit applyModify(final FruitActionType type,
-      final Optional<Fruit> original, final FruitBuilder builder, final String ignore) {
-    FruitBuilder ruledBuilder =
-        this.builderRules.applyCurrent(type, builder, original);
-    
-    for (Entry<String, BiFunction<FruitBuilder, Optional<Fruit>, FruitBuilder>> entry : 
-      calculatedFields.entrySet()) {
+  private Fruit applyModify(final FruitActionType type, final Optional<Fruit> original,
+      final FruitBuilder builder, final String ignore) {
+    FruitBuilder ruledBuilder = this.builderRules.applyCurrent(type, builder, original);
+    for (Entry<String, BiFunction<FruitBuilder, Optional<Fruit>, FruitBuilder>> entry : calculatedFields
+        .entrySet()) {
       if (!entry.getKey().equals(ignore)) {
         ruledBuilder = entry.getValue().apply(ruledBuilder, original);
       }

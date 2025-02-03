@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+
 import org.acme.common.infrastructure.CurrentRequest;
 import org.acme.features.market.fruit.application.FruitDto;
 import org.acme.features.market.fruit.application.usecase.create.CreateFruitUsecase;
@@ -27,6 +28,7 @@ import org.acme.generated.openapi.api.FruitApi;
 import org.acme.generated.openapi.model.Fruit;
 import org.acme.generated.openapi.model.FruitList;
 import org.acme.generated.openapi.model.FruitListNextOffset;
+
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.core.Response;
@@ -113,21 +115,21 @@ public class FruitController implements FruitApi {
     List<FruitOrder> orderSteps = null == order ? List.of()
         : Arrays.asList(order.split(",")).stream().map(this::mapOrder).filter(Objects::nonNull)
             .toList();
-      FruitFilter.FruitFilterBuilder filter = FruitFilter.builder();
-      FruitCursor.FruitCursorBuilder cursor = FruitCursor.builder();
-      cursor = cursor.limit(limit);
-      cursor = cursor.sinceUid(sinceUid);
-      filter = filter.uid(uid);
-      filter = filter.uids(uids);
-      filter = filter.search(search);
-      filter = filter.name(name);
-      cursor = cursor.sinceName(sinceName);
-      cursor = cursor.order(orderSteps);
-      List<FruitDto> listed = list.list(FruitListQuery.builder().filter(filter.build()).cursor(cursor.build())
-          .build(currentRequest.interaction()));
-      // .header("Last-Modified", value.getSince().format(DateTimeFormatter.RFC_1123_DATE_TIME))
-      return Response.ok( new FruitList().content(toApiModel(listed))
-          .next(next(orderSteps, listed)) ).build();
+    FruitFilter.FruitFilterBuilder filter = FruitFilter.builder();
+    FruitCursor.FruitCursorBuilder cursor = FruitCursor.builder();
+    cursor = cursor.limit(limit);
+    cursor = cursor.sinceUid(sinceUid);
+    filter = filter.uid(uid);
+    filter = filter.uids(uids);
+    filter = filter.search(search);
+    filter = filter.name(name);
+    cursor = cursor.sinceName(sinceName);
+    cursor = cursor.order(orderSteps);
+    List<FruitDto> listed = list.list(FruitListQuery.builder().filter(filter.build())
+        .cursor(cursor.build()).build(currentRequest.interaction()));
+    /* .header("Last-Modified", value.getSince().format(DateTimeFormatter.RFC_1123_DATE_TIME)) */
+    return Response.ok(new FruitList().content(toApiModel(listed)).next(next(orderSteps, listed)))
+        .build();
   }
 
   /**
@@ -139,8 +141,8 @@ public class FruitController implements FruitApi {
   public Response fruitApiRetrieve(final String uid) {
     FruitDto retrieved = retrieve.retrieve(FruitRetrieveQuery.builder()
         .reference(FruitReference.of(uid)).build(currentRequest.interaction()));
-    // .header("Last-Modified", value.getSince().format(DateTimeFormatter.RFC_1123_DATE_TIME)))
-    return Response.ok( toApiModel(retrieved) ).build();
+    /* .header("Last-Modified", value.getSince().format(DateTimeFormatter.RFC_1123_DATE_TIME))) */
+    return Response.ok(toApiModel(retrieved)).build();
   }
 
   /**
