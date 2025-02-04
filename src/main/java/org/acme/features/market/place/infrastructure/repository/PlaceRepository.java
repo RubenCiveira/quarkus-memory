@@ -189,6 +189,9 @@ public class PlaceRepository {
         .ifPresent(name -> sq.where("name", SqlOperator.EQ, SqlParameterValue.of(name)));
     filter.getMerchant().ifPresent(merchant -> sq.where("merchant", SqlOperator.EQ,
         SqlParameterValue.of(merchant.getUidValue())));
+    if (!filter.getMerchants().isEmpty()) {
+      sq.where("merchant", SqlOperator.IN, SqlListParameterValue.strings(filter.getMerchants()));
+    }
     filter.getMerchantMerchantAccesible().ifPresent(merchantMerchantAccesible -> {
       sq.where("place.merchant", SqlOperator.EQ, SqlParameterValue.of(merchantMerchantAccesible));
     });

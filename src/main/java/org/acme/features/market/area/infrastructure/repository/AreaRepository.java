@@ -178,6 +178,9 @@ public class AreaRepository {
         .ifPresent(name -> sq.where("name", SqlOperator.EQ, SqlParameterValue.of(name)));
     filter.getPlace().ifPresent(
         place -> sq.where("place", SqlOperator.EQ, SqlParameterValue.of(place.getUidValue())));
+    if (!filter.getPlaces().isEmpty()) {
+      sq.where("place", SqlOperator.IN, SqlListParameterValue.strings(filter.getPlaces()));
+    }
     filter.getPlaceMerchantMerchantAccesible().ifPresent(placeMerchantMerchantAccesible -> {
       sq.join("place", "area_place", "area.place", "area_place.uid");
       sq.where("area_place.merchant", SqlOperator.EQ,

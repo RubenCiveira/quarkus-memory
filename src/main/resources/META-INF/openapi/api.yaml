@@ -60,12 +60,6 @@ paths:
       summary: List of area
       operationId: area-api-list
       parameters:
-        - name: uid
-          in: query
-          description: Filter by one existent id
-          required: false
-          schema:
-            type: string
         - name: uids
           in: query
           description: Filter by a list of ids
@@ -88,12 +82,16 @@ paths:
           required: false
           schema:
             type: string
-        - name: place
+        - name: places
           in: query
-          description: place
+          description: places
           required: false
           schema:
-            type: string
+            type: array
+            items: 
+              type: string
+          style: form
+          explode: false
         - name: limit
           in: query
           description: The maximun number of results
@@ -255,12 +253,6 @@ paths:
       summary: List of color
       operationId: color-api-list
       parameters:
-        - name: uid
-          in: query
-          description: Filter by one existent id
-          required: false
-          schema:
-            type: string
         - name: uids
           in: query
           description: Filter by a list of ids
@@ -283,12 +275,16 @@ paths:
           required: false
           schema:
             type: string
-        - name: merchant
+        - name: merchants
           in: query
-          description: merchant
+          description: merchants
           required: false
           schema:
-            type: string
+            type: array
+            items: 
+              type: string
+          style: form
+          explode: false
         - name: limit
           in: query
           description: The maximun number of results
@@ -450,12 +446,6 @@ paths:
       summary: List of fruit
       operationId: fruit-api-list
       parameters:
-        - name: uid
-          in: query
-          description: Filter by one existent id
-          required: false
-          schema:
-            type: string
         - name: uids
           in: query
           description: Filter by a list of ids
@@ -639,12 +629,6 @@ paths:
       summary: List of medal
       operationId: medal-api-list
       parameters:
-        - name: uid
-          in: query
-          description: Filter by one existent id
-          required: false
-          schema:
-            type: string
         - name: uids
           in: query
           description: Filter by a list of ids
@@ -828,12 +812,6 @@ paths:
       summary: List of merchant
       operationId: merchant-api-list
       parameters:
-        - name: uid
-          in: query
-          description: Filter by one existent id
-          required: false
-          schema:
-            type: string
         - name: uids
           in: query
           description: Filter by a list of ids
@@ -1067,12 +1045,6 @@ paths:
       summary: List of verify
       operationId: verify-api-list
       parameters:
-        - name: uid
-          in: query
-          description: Filter by one existent id
-          required: false
-          schema:
-            type: string
         - name: uids
           in: query
           description: Filter by a list of ids
@@ -1256,12 +1228,6 @@ paths:
       summary: List of place
       operationId: place-api-list
       parameters:
-        - name: uid
-          in: query
-          description: Filter by one existent id
-          required: false
-          schema:
-            type: string
         - name: uids
           in: query
           description: Filter by a list of ids
@@ -1284,12 +1250,16 @@ paths:
           required: false
           schema:
             type: string
-        - name: merchant
+        - name: merchants
           in: query
-          description: merchant
+          description: merchants
           required: false
           schema:
-            type: string
+            type: array
+            items: 
+              type: string
+          style: form
+          explode: false
         - name: limit
           in: query
           description: The maximun number of results
@@ -1575,6 +1545,11 @@ components:
       properties:
         $ref:
           type: string
+          x-relationship:
+            url: "/api/market/places"
+            method: "GET"
+            reference: "uid"
+            batch-query-param: "uids"
       required:
         - uid
         - name
@@ -1594,19 +1569,16 @@ components:
     AreaList:
       type: object
       properties:
-        content:
+        self:
+          type: string
+        first:
+          type: string
+        next:
+          type: string
+        items:
           type: array
           items:
             $ref: '#/components/schemas/Area'
-        next:
-          $ref: '#/components/schemas/AreaListNextOffset'
-    AreaListNextOffset:
-      type: object
-      properties:
-        since-uid:
-          type: string
-        since-name:
-            type: string
     CommonAllow:
       type: object
       properties:
@@ -1679,6 +1651,11 @@ components:
       properties:
         $ref:
           type: string
+          x-relationship:
+            url: "/api/market/merchants"
+            method: "GET"
+            reference: "uid"
+            batch-query-param: "uids"
       required:
         - uid
         - name
@@ -1697,19 +1674,16 @@ components:
     ColorList:
       type: object
       properties:
-        content:
+        self:
+          type: string
+        first:
+          type: string
+        next:
+          type: string
+        items:
           type: array
           items:
             $ref: '#/components/schemas/Color'
-        next:
-          $ref: '#/components/schemas/ColorListNextOffset'
-    ColorListNextOffset:
-      type: object
-      properties:
-        since-uid:
-          type: string
-        since-name:
-            type: string
     ColorGenericAcl:
       type: object
       properties:
@@ -1783,19 +1757,16 @@ components:
     FruitList:
       type: object
       properties:
-        content:
+        self:
+          type: string
+        first:
+          type: string
+        next:
+          type: string
+        items:
           type: array
           items:
             $ref: '#/components/schemas/Fruit'
-        next:
-          $ref: '#/components/schemas/FruitListNextOffset'
-    FruitListNextOffset:
-      type: object
-      properties:
-        since-uid:
-          type: string
-        since-name:
-            type: string
     FruitGenericAcl:
       type: object
       properties:
@@ -1869,19 +1840,16 @@ components:
     MedalList:
       type: object
       properties:
-        content:
+        self:
+          type: string
+        first:
+          type: string
+        next:
+          type: string
+        items:
           type: array
           items:
             $ref: '#/components/schemas/Medal'
-        next:
-          $ref: '#/components/schemas/MedalListNextOffset'
-    MedalListNextOffset:
-      type: object
-      properties:
-        since-uid:
-          type: string
-        since-name:
-            type: string
     MedalGenericAcl:
       type: object
       properties:
@@ -1959,19 +1927,16 @@ components:
     MerchantList:
       type: object
       properties:
-        content:
+        self:
+          type: string
+        first:
+          type: string
+        next:
+          type: string
+        items:
           type: array
           items:
             $ref: '#/components/schemas/Merchant'
-        next:
-          $ref: '#/components/schemas/MerchantListNextOffset'
-    MerchantListNextOffset:
-      type: object
-      properties:
-        since-uid:
-          type: string
-        since-name:
-            type: string
     MerchantGenericAcl:
       type: object
       properties:
@@ -2049,6 +2014,11 @@ components:
       properties:
         $ref:
           type: string
+          x-relationship:
+            url: "/api/market/medals"
+            method: "GET"
+            reference: "uid"
+            batch-query-param: "uids"
       required:
         - uid
         - medal
@@ -2079,19 +2049,16 @@ components:
     VerifyList:
       type: object
       properties:
-        content:
+        self:
+          type: string
+        first:
+          type: string
+        next:
+          type: string
+        items:
           type: array
           items:
             $ref: '#/components/schemas/Verify'
-        next:
-          $ref: '#/components/schemas/VerifyListNextOffset'
-    VerifyListNextOffset:
-      type: object
-      properties:
-        since-uid:
-          type: string
-        since-name:
-            type: string
     VerifyGenericAcl:
       type: object
       properties:
@@ -2172,19 +2139,16 @@ components:
     PlaceList:
       type: object
       properties:
-        content:
+        self:
+          type: string
+        first:
+          type: string
+        next:
+          type: string
+        items:
           type: array
           items:
             $ref: '#/components/schemas/Place'
-        next:
-          $ref: '#/components/schemas/PlaceListNextOffset'
-    PlaceListNextOffset:
-      type: object
-      properties:
-        since-uid:
-          type: string
-        since-name:
-            type: string
     PlaceGenericAcl:
       type: object
       properties:
