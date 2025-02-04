@@ -1,8 +1,6 @@
-package org.acme.bootstrap.graphql;
+package org.acme.common.projection;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -16,11 +14,12 @@ public class ExecutionNode {
   private final String endpoint;
   private final String method;
   private final boolean list;
+  
   private final Map<String, ExecutionParam> parameters = new HashMap<>();
-  private final List<ExecutionNode> children = new ArrayList<>();
+  private final Map<String, RelationshipDefinition> relations = new HashMap<>();
 
-  public void addChild(ExecutionNode node) {
-    children.add(node);
+  public void addRelation(String property, RelationshipDefinition definition) {
+    relations.put(property, definition);
   }
 
   public void setParameter(String name, ExecutionParam value) {

@@ -1,4 +1,4 @@
-package org.acme.bootstrap.graphql;
+package org.acme.common.projection;
 
 import lombok.Builder;
 import lombok.Getter;

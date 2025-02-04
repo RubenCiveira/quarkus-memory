@@ -5,7 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
+import org.acme.common.projection.ExecutionAggregation;
+import org.acme.common.projection.ExecutionPlan;
+import org.acme.common.projection.ExecutionTree;
+import org.acme.common.projection.ProjectionRunner;
 import graphql.language.Document;
 import graphql.language.Field;
 import graphql.language.OperationDefinition;
@@ -23,11 +26,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @ApplicationScoped
 public class GraphQLInterpreter {
-  private final Client client = ClientBuilder.newClient();
+  private final ProjectionRunner runner;
   // private final ObjectMapper mapper;
 
 
-  public Optional<ExecutionPlan> interpret(String query) {
+  public Optional<ExecutionPlan> interpret(String query, 
+      String transform,
+      ExecutionTree buildExecutionTree) {
     // Parsear la consulta GraphQL
     Parser parser = new Parser();
     Document document = parser.parseDocument(query);
@@ -35,46 +40,21 @@ public class GraphQLInterpreter {
     // Extraer la operación (ej: query, mutation)
     OperationDefinition operation = (OperationDefinition) document.getDefinitions().get(0);
     Map<String, String> selector = classifyQuery(operation.getSelectionSet().getSelections());
-    Map<String, String> proyection = proyection(operation.getSelectionSet().getSelections());
+    List<ExecutionAggregation> proyection =
+        rootProyection(operation.getSelectionSet().getSelections());
 
     String operationType = operation.getOperation().name();
 
     String rootField = extractRootField(operation);
 
-
-    OpenAPIService openApi = new OpenAPIService(
-        getClass().getResourceAsStream("/META-INF/openapi/api.yaml"), "http://localhost:8090/");
-    // Construir árbol de ejecución desde OpenAPI
-    return openApi.buildExecutionTree(rootField, selector)
-        .map(node -> ExecutionPlan.builder().node(node).selection(proyection).build());
-  }
-
-  @SuppressWarnings("unchecked")
-  public Object execute(ExecutionPlan plan, Map<String, String> params,
-      Map<String, List<String>> headers) {
-    Invocation.Builder request =
-        client.target(plan.getNode().target(params)).request(MediaType.APPLICATION_JSON);
-    headers.forEach(request::header);
-    Response response = request.get();
-    List<Map<String, Object>> mappedEntity = new ArrayList<>();
-    // FIXME: puede ser lista u object....
-    if( plan.getNode().isList() ) {
-      List<Map<String, Object>> list = (List<Map<String, Object>>)response.readEntity(Map.class).get("items");
-      return list == null ? List.of() : list.stream().map(row -> map(plan, (Map<String,Object>)row)).toList();
-    } else {
-      return map(plan, (Map<String,Object>)response.readEntity(Map.class));
-    }
-  }
-  
-  private Map<String,Object> map(ExecutionPlan plan, Map<String, Object> map) {
-    Map<String, Object> row = new HashMap<>();
-    plan.getSelection().forEach((key, value) -> {
-      Object mapped = map.get(value);
-      if( null != mapped ) {
-        row.put(key, map.get(value));
-      }
-    });
-    return row;
+//    OpenAPIService openApi = new OpenAPIService(
+//        getClass().getResourceAsStream("/META-INF/openapi/api.yaml"), "http://localhost:8090/");
+//    ExecutionTree buildExecutionTree = openApi.buildExecutionTree();
+    return buildExecutionTree.byRequest(rootField, selector)
+        .map(node -> ExecutionPlan.builder()
+        .tree( buildExecutionTree )
+        .transformation(transform)
+        .node(node).selection(proyection).build());
   }
 
   private String extractRootField(OperationDefinition operation) {
@@ -85,19 +65,35 @@ public class GraphQLInterpreter {
     return "No definido";
   }
 
-  private Map<String, String> proyection(@SuppressWarnings("rawtypes") List<Selection> selection) {
-    Map<String, String> params = new HashMap<>();
-    @SuppressWarnings("rawtypes")
-    Selection sel = selection.get(0);
-    if (sel instanceof Field rootField) {
-      rootField.getSelectionSet().getSelections().forEach(agg -> {
-        if (agg instanceof Field aggField) {
-          params.put(null == aggField.getAlias() ? aggField.getName() : aggField.getAlias(),
-              aggField.getName());
+  private List<ExecutionAggregation> rootProyection(
+      @SuppressWarnings("rawtypes") List<Selection> selection) {
+    List<ExecutionAggregation> params = new ArrayList<>();
+    if (null != selection) {
+      @SuppressWarnings("rawtypes")
+      Selection sel = selection.get(0);
+      if (sel instanceof Field rootField) {
+        proyection(rootField.getSelectionSet().getSelections(), params);
+      }
+    }
+    return params;
+  }
+
+  private void proyection(@SuppressWarnings("rawtypes") List<Selection> selection,
+      List<ExecutionAggregation> params) {
+    if (null != selection) {
+      selection.forEach(sel -> {
+        if (sel instanceof Field aggField) {
+          SelectionSet relSel = aggField.getSelectionSet();
+          List<ExecutionAggregation> childs = new ArrayList<>();
+          if (null != relSel) {
+            proyection(relSel.getSelections(), childs);
+          }
+          params.add(ExecutionAggregation.builder().name(aggField.getName())
+              .alias(null == aggField.getAlias() ? aggField.getName() : aggField.getAlias())
+              .selection(childs).build());
         }
       });
     }
-    return params;
   }
 
   private Map<String, String> classifyQuery(
