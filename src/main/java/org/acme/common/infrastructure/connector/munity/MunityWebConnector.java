@@ -9,6 +9,7 @@ import org.acme.common.connector.RemoteConnection;
 import org.acme.common.connector.RemoteConnector;
 import org.acme.common.connector.RemoteQuery;
 import org.acme.common.infrastructure.connector.munity.MunityWebQuery.Method;
+
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.ext.web.client.WebClient;

@@ -21,7 +21,7 @@ public class MunityWebQuery implements RemoteQuery {
   public static enum Method {
     POST, PUT, PATCH, DELETE
   }
-  
+
   public static MunityWebQuery create(WebClient client, Method method, String target, Object body) {
     HttpRequest<?> query;
     try {
@@ -34,15 +34,16 @@ public class MunityWebQuery implements RemoteQuery {
     return new MunityWebQuery(query, body);
   }
 
-  private static HttpRequest<?> createConn(WebClient client, Method method, String target, Object body) {
+  private static HttpRequest<?> createConn(WebClient client, Method method, String target,
+      Object body) {
     HttpRequest<?> query;
-    if( method == Method.POST ) {
+    if (method == Method.POST) {
       query = client.post(UriTemplate.of(target));
-    } else if( method == Method.PUT ) {
+    } else if (method == Method.PUT) {
       query = client.put(UriTemplate.of(target));
-    } else if( method == Method.PATCH ) {
+    } else if (method == Method.PATCH) {
       query = client.patch(UriTemplate.of(target));
-    } else if( method == Method.DELETE ) {
+    } else if (method == Method.DELETE) {
       query = client.delete(UriTemplate.of(target));
     } else {
       query = client.get(UriTemplate.of(target));;
@@ -53,7 +54,7 @@ public class MunityWebQuery implements RemoteQuery {
     query = query.putHeader("Accept", MediaType.APPLICATION_JSON);
     return query;
   }
-  
+
   private final HttpRequest<?> client;
   private final Object body;
 

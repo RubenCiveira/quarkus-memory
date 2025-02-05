@@ -14,13 +14,13 @@ public interface RemoteQuery {
   RemoteQuery headers(Map<String, List<String>> headers);
 
   RemoteQuery queryParam(String name, String value);
-  
+
   RemoteQuery queryParam(Map<String, String> params);
 
   RemoteQuery pathParam(String name, String value);
-  
+
   RemoteQuery pathParam(Map<String, String> params);
-  
+
   <T> RemoteConnection processor(Class<T> type, Consumer<T> consumer);
 
   RemoteConnection processor(Runnable runnable);
