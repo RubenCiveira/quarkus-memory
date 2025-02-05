@@ -17,10 +17,29 @@ public class ProjectionRunner {
   private final ObjectMapper mapper;
   private final RemoteConnector connector;
 
-  public Optional<Object> execute(ExecutionPlan plan, Map<String, String> params,
+  @SuppressWarnings("unchecked")
+  public List<Map<String, Object>> list(ExecutionPlan plan, Map<String, String> params,
       Map<String, List<String>> headers) {
-    return plan.getTree().byId( plan.getPath() ).map( node -> 
-      plan.execute(node, connector, mapper, params, headers)
-    );
+    return list(plan, Map.class, params, headers).stream().map(map -> (Map<String, Object>) map)
+        .toList();
+  }
+
+  public <T> List<T> list(ExecutionPlan plan, Class<T> type, Map<String, String> params,
+      Map<String, List<String>> headers) {
+    return plan.getTree().byId(plan.getPath())
+        .map(node -> plan.execute(node, type, connector, mapper, params, headers))
+        .orElseGet(List::of);
+  }
+
+  @SuppressWarnings("unchecked")
+  public Optional<Map<String, Object>> retrieve(ExecutionPlan plan, Map<String, String> params,
+      Map<String, List<String>> headers) {
+    return retrieve(plan, Map.class, params, headers).map(map -> (Map<String, Object>) map);
+  }
+
+  public <T> Optional<T> retrieve(ExecutionPlan plan, Class<T> type, Map<String, String> params,
+      Map<String, List<String>> headers) {
+    return plan.getTree().byId(plan.getPath()).flatMap(
+        node -> plan.execute(node, type, connector, mapper, params, headers).stream().findFirst());
   }
 }
