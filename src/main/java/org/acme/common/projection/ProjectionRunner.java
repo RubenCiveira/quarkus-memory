@@ -4,6 +4,7 @@ package org.acme.common.projection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
 import org.acme.common.connector.RemoteConnector;
 
 import com.fasterxml.jackson.databind.ObjectMapper;

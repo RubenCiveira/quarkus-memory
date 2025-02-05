@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 import org.acme.common.connector.RemoteConnection;
 import org.acme.common.connector.RemoteConnector;
 import org.acme.common.connector.RemoteQuery;
-
+import org.acme.common.infrastructure.connector.munity.MunityWebQuery.Method;
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.ext.web.client.WebClient;
@@ -23,27 +23,27 @@ public class MunityWebConnector implements RemoteConnector {
 
   @Override
   public RemoteQuery get(String target) {
-    return new MunityWebQuery(client.get(target), target, null);
+    return MunityWebQuery.create(client, null, target, null);
   }
 
   @Override
   public RemoteQuery delete(String target) {
-    return new MunityWebQuery(client.delete(target), target, null);
+    return MunityWebQuery.create(client, Method.DELETE, target, null);
   }
 
   @Override
   public RemoteQuery post(String target, Object body) {
-    return new MunityWebQuery(client.post(target), target, body);
+    return MunityWebQuery.create(client, Method.POST, target, body);
   }
 
   @Override
   public RemoteQuery put(String target, Object body) {
-    return new MunityWebQuery(client.put(target), target, body);
+    return MunityWebQuery.create(client, Method.PUT, target, body);
   }
 
   @Override
   public RemoteQuery patch(String target, Object body) {
-    return new MunityWebQuery(client.patch(target), target, body);
+    return MunityWebQuery.create(client, Method.PATCH, target, body);
   }
 
   @Override
@@ -54,10 +54,8 @@ public class MunityWebConnector implements RemoteConnector {
   @Override
   public void send(List<RemoteConnection> request) {
     if (request.size() == 1) {
-      System.out.println("SEND ONE");
       map(request.get(0)).await().indefinitely();
     } else if (!request.isEmpty()) {
-      System.out.println("SEND MULTIPLE");
       Uni.combine().all().unis(map(request)).with(result -> "").await().indefinitely();
     }
   }

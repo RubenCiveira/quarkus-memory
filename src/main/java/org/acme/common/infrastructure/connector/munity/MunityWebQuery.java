@@ -11,28 +11,79 @@ import org.acme.common.connector.RemoteConnection;
 import org.acme.common.connector.RemoteQuery;
 
 import io.vertx.mutiny.ext.web.client.HttpRequest;
+import io.vertx.mutiny.ext.web.client.WebClient;
+import io.vertx.mutiny.uritemplate.UriTemplate;
 import jakarta.ws.rs.core.MediaType;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class MunityWebQuery implements RemoteQuery {
+  public static enum Method {
+    POST, PUT, PATCH, DELETE
+  }
+  
+  public static MunityWebQuery create(WebClient client, Method method, String target, Object body) {
+    HttpRequest<?> query;
+    try {
+      URI url = new URI(target.replace("{", "").replace("}", ""));
+      query = createConn(client, method, target, body).port(url.getPort()).host(url.getHost());
+    } catch (URISyntaxException e) {
+      log.warn("Unable to parte {} as url", target);
+      query = createConn(client, method, target, body);
+    }
+    return new MunityWebQuery(query, body);
+  }
+
+  private static HttpRequest<?> createConn(WebClient client, Method method, String target, Object body) {
+    HttpRequest<?> query;
+    if( method == Method.POST ) {
+      query = client.post(UriTemplate.of(target));
+    } else if( method == Method.PUT ) {
+      query = client.put(UriTemplate.of(target));
+    } else if( method == Method.PATCH ) {
+      query = client.patch(UriTemplate.of(target));
+    } else if( method == Method.DELETE ) {
+      query = client.delete(UriTemplate.of(target));
+    } else {
+      query = client.get(UriTemplate.of(target));;
+    }
+    if (null == body) {
+      query = query.putHeader("Content-Type", MediaType.APPLICATION_JSON);
+    }
+    query = query.putHeader("Accept", MediaType.APPLICATION_JSON);
+    return query;
+  }
+  
   private final HttpRequest<?> client;
   private final Object body;
 
-  public MunityWebQuery(HttpRequest<?> client, String target, Object body) {
-    super();
-    if (null == body) {
-      client.putHeader("Content-Type", MediaType.APPLICATION_JSON);
-    }
-    client = client.putHeader("Accept", MediaType.APPLICATION_JSON);
-    try {
-      URI url = new URI(target);
-      client = client.port(url.getPort()).host(url.getHost());
-    } catch (URISyntaxException e) {
-      log.warn("Unable to parte {} as url", target);
-    }
+  private MunityWebQuery(HttpRequest<?> client, Object body) {
     this.body = body;
     this.client = client;
+  }
+
+  @Override
+  public RemoteQuery queryParam(Map<String, String> params) {
+    params.forEach(client::addQueryParam);
+    return this;
+  }
+
+  @Override
+  public RemoteQuery queryParam(String name, String value) {
+    client.addQueryParam(name, value);
+    return this;
+  }
+
+  @Override
+  public RemoteQuery pathParam(Map<String, String> params) {
+    params.forEach(client::setTemplateParam);
+    return this;
+  }
+
+  @Override
+  public RemoteQuery pathParam(String name, String value) {
+    client.setTemplateParam(name, value);
+    return this;
   }
 
   @Override
@@ -42,14 +93,14 @@ public class MunityWebQuery implements RemoteQuery {
   }
 
   @Override
-  public RemoteQuery headers(String name, List<String> values) {
+  public RemoteQuery header(String name, List<String> values) {
     client.putHeader(name, values);
     return this;
   }
 
   @Override
-  public RemoteQuery header(Map<String, List<String>> headers) {
-    headers.forEach(this::headers);
+  public RemoteQuery headers(Map<String, List<String>> headers) {
+    headers.forEach(this::header);
     return this;
   }
 

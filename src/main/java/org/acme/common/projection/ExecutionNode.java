@@ -19,6 +19,8 @@ public class ExecutionNode {
   private final String method;
   private final boolean list;
   @NonNull
+  private final Map<String, ParamKind> params;
+  @NonNull
   private final Map<String, RelationshipDefinition> relations;
 
   public void addRelation(String property, RelationshipDefinition definition) {

@@ -37,19 +37,35 @@ public class ExecutionPlan {
   private final Map<RelationshipDefinition, PendingRequest> pendings = new HashMap<>();
 
   @SuppressWarnings("unchecked")
-  /* default */ <T> List<T> execute(ExecutionNode node, Class<T> type, RemoteConnector client, ObjectMapper mapper,
-      Map<String, String> params, Map<String, List<String>> headers) {
-
-    client.send(client.get(node.target(params)).header(headers).processor(Map.class, read -> {
-      if (node.isList()) {
-        List<Map<String, Object>> list = (List<Map<String, Object>>) read.get("items");
-        if (list != null) {
-          list.forEach(row -> addData(map("", row, getSelection(), node)));
+  /* default */ <T> List<T> execute(ExecutionNode node, Class<T> type, RemoteConnector client,
+      ObjectMapper mapper, Map<String, String> params, Map<String, List<String>> headers) {
+    Map<String, String> pathParams = new HashMap<>();
+    Map<String, String> queryParams = new HashMap<>();
+    Map<String, List<String>> headerParams = new HashMap<>(headers);
+    params.forEach((key, value) -> {
+      if (ParamKind.PATH == node.getParams().get(key)) {
+        pathParams.put(key, value);
+      } else if (ParamKind.HEADER == node.getParams().get(key)) {
+        if (headerParams.containsKey(key)) {
+          headerParams.get(key).add(value);
+        } else {
+          headerParams.put(key, List.of(value));
         }
       } else {
-        addData(map("", read, getSelection(), node));
+        queryParams.put(key, value);
       }
-    }));
+    });
+    client.send(client.get(node.target(params)).pathParam(pathParams).queryParam(queryParams)
+        .headers(headerParams).processor(Map.class, read -> {
+          if (node.isList()) {
+            List<Map<String, Object>> list = (List<Map<String, Object>>) read.get("items");
+            if (list != null) {
+              list.forEach(row -> addData(map("", row, getSelection(), node)));
+            }
+          } else {
+            addData(map("", read, getSelection(), node));
+          }
+        }));
     while (!pendings.isEmpty()) {
       Map<RelationshipDefinition, PendingRequest> partPendings = new HashMap<>(pendings);
       pendings.clear();
@@ -57,10 +73,11 @@ public class ExecutionPlan {
         batchExecute(client, headers, def, vals);
       });
     }
-    
+
     List<Map<String, Object>> response = responseData.stream().map(this::flattenMap).toList();
-    return Map.class.isAssignableFrom(type) ? (List<T>)response : mapper.convertValue(response,
-        mapper.getTypeFactory().constructCollectionType(List.class, type));
+    return Map.class.isAssignableFrom(type) ? (List<T>) response
+        : mapper.convertValue(response,
+            mapper.getTypeFactory().constructCollectionType(List.class, type));
   }
 
   private Map<String, Object> flattenMap(Map<String, Object> originalMap) {
