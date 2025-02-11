@@ -113,8 +113,8 @@ public class AreaController implements AreaApi {
    */
   @Override
   public Response areaApiBatchDeleteQuery(final String batchId) {
-    BatchProgress task = delete.checkProgress(AreaCheckBatchDeleteStatusQuery.builder().taskId(batchId)
-        .build(currentRequest.interaction()));
+    BatchProgress task = delete.checkProgress(AreaCheckBatchDeleteStatusQuery.builder()
+        .taskId(batchId).build(currentRequest.interaction()));
     return Response.ok(task).build();
   }
 

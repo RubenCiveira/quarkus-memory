@@ -3,10 +3,10 @@ package org.acme.features.market.verify.application.usecase.delete;
 import java.util.Optional;
 
 import org.acme.common.action.Interaction;
-import org.acme.common.batch.BatchService;
-import org.acme.common.batch.ExecutorPlan;
 import org.acme.common.batch.BatchIdentificator;
 import org.acme.common.batch.BatchProgress;
+import org.acme.common.batch.BatchService;
+import org.acme.common.batch.ExecutorPlan;
 import org.acme.common.exception.NotAllowedException;
 import org.acme.common.exception.NotFoundException;
 import org.acme.common.security.Allow;
