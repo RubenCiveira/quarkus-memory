@@ -18,8 +18,8 @@ import lombok.With;
 
 @Getter
 @ToString
-@With
 @Builder(toBuilder = true)
+@With
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Fruit implements FruitRef {
 

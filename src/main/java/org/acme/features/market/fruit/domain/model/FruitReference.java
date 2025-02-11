@@ -12,8 +12,8 @@ import lombok.With;
 @Getter
 @ToString
 @RequiredArgsConstructor
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @With
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class FruitReference implements org.acme.features.market.fruit.domain.model.FruitRef {
 
   /**

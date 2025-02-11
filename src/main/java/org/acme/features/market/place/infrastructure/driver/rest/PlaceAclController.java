@@ -9,7 +9,7 @@ import org.acme.features.market.place.application.service.PlacesVisibilityServic
 import org.acme.features.market.place.application.usecase.create.CreatePlaceUsecase;
 import org.acme.features.market.place.application.usecase.delete.DeletePlaceUsecase;
 import org.acme.features.market.place.application.usecase.list.ListPlaceUsecase;
-import org.acme.features.market.place.application.usecase.photo.upload.PhotoTemporalUploadUsecase;
+import org.acme.features.market.place.application.usecase.photoupload.PhotoTemporalUploadUsecase;
 import org.acme.features.market.place.application.usecase.retrieve.RetrievePlaceUsecase;
 import org.acme.features.market.place.application.usecase.update.UpdatePlaceUsecase;
 import org.acme.generated.openapi.api.PlaceAclApi;

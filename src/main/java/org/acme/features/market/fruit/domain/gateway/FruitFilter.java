@@ -10,8 +10,8 @@ import lombok.With;
 
 @Data
 @Builder(toBuilder = true)
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @With
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class FruitFilter {
 
   /**
