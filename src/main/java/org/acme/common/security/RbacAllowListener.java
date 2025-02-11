@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 public class RbacAllowListener {
   private final Rbac rbac;
 
-  public void checkAllow(@Observes AllowPipelineEvent event) {
+  public void checkAllow(@Observes AllowProposal event) {
     event.map(allow -> {
       if (allow.isAllowed()) {
         return rbac.checkAllow(event.getQuery().getActor(), event.resourceName(),
@@ -21,7 +21,7 @@ public class RbacAllowListener {
     });
   }
 
-  public void checkAllow(@Observes PropertiesPipelineEvent event) {
+  public void checkAllow(@Observes PropertiesProposal event) {
     event.add(rbac.inaccesibleFileds(event.getQuery().getActor(), event.resourceName(),
         event.viewName()));
   }

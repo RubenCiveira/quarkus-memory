@@ -3,9 +3,7 @@ package org.acme.common.infrastructure.exceptionmapper.sql;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import org.acme.common.sql.OptimistLockException;
-
+import org.acme.common.infrastructure.sql.OptimistLockException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
