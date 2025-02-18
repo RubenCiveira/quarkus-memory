@@ -24,11 +24,13 @@ import org.acme.features.market.area.domain.gateway.AreaOrder;
 import org.acme.features.market.area.domain.model.Area;
 import org.acme.features.market.area.domain.model.AreaRef;
 
+import jakarta.enterprise.context.RequestScoped;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
 @Slf4j
+@RequestScoped
 public class AreaRepository {
 
   /**

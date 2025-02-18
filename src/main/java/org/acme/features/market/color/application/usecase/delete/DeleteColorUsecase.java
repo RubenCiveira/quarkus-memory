@@ -1,5 +1,6 @@
 package org.acme.features.market.color.application.usecase.delete;
 
+import java.time.Duration;
 import java.util.Optional;
 
 import org.acme.common.action.Interaction;
@@ -138,7 +139,7 @@ public class DeleteColorUsecase {
     if (!detail.isAllowed()) {
       throw new NotAllowedException(detail.getDescription());
     }
-    return batch.start(command.getActor().getName().orElse("-"), ExecutorPlan
+    return batch.start(command.getActor().getName().orElse("-"), Duration.ofHours(6), ExecutorPlan
         .<ColorDeleteAllInBatchCommand>builder().params(command).name("delete-color")
         .executor(
             ExecutorByDeferSteps.<Color, Color, ColorDeleteAllInBatchCommand, DeleteColorsInBatchExecutor.ColorPaginableBatch>builder()

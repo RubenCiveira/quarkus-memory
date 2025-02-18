@@ -24,11 +24,13 @@ import org.acme.features.market.medal.domain.gateway.MedalOrder;
 import org.acme.features.market.medal.domain.model.Medal;
 import org.acme.features.market.medal.domain.model.MedalRef;
 
+import jakarta.enterprise.context.RequestScoped;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
 @Slf4j
+@RequestScoped
 public class MedalRepository {
 
   /**

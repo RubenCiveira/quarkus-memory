@@ -28,11 +28,13 @@ import org.acme.features.market.verify.domain.model.Verify;
 import org.acme.features.market.verify.domain.model.VerifyMedal;
 import org.acme.features.market.verify.domain.model.VerifyRef;
 
+import jakarta.enterprise.context.RequestScoped;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
 @Slf4j
+@RequestScoped
 public class VerifyRepository {
 
   /**

@@ -27,11 +27,13 @@ import org.acme.features.market.place.domain.gateway.PlaceOrder;
 import org.acme.features.market.place.domain.model.Place;
 import org.acme.features.market.place.domain.model.PlaceRef;
 
+import jakarta.enterprise.context.RequestScoped;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
 @Slf4j
+@RequestScoped
 public class PlaceRepository {
 
   /**

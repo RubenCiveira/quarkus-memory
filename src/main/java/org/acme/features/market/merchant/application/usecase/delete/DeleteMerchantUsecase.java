@@ -1,5 +1,6 @@
 package org.acme.features.market.merchant.application.usecase.delete;
 
+import java.time.Duration;
 import java.util.Optional;
 
 import org.acme.common.action.Interaction;
@@ -138,7 +139,7 @@ public class DeleteMerchantUsecase {
     if (!detail.isAllowed()) {
       throw new NotAllowedException(detail.getDescription());
     }
-    return batch.start(command.getActor().getName().orElse("-"), ExecutorPlan
+    return batch.start(command.getActor().getName().orElse("-"), Duration.ofHours(6), ExecutorPlan
         .<MerchantDeleteAllInBatchCommand>builder().params(command).name("delete-color")
         .executor(
             ExecutorByDeferSteps.<Merchant, Merchant, MerchantDeleteAllInBatchCommand, DeleteMerchantsInBatchExecutor.MerchantPaginableBatch>builder()

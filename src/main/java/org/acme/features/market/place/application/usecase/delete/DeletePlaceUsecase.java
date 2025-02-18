@@ -1,5 +1,6 @@
 package org.acme.features.market.place.application.usecase.delete;
 
+import java.time.Duration;
 import java.util.Optional;
 
 import org.acme.common.action.Interaction;
@@ -138,7 +139,7 @@ public class DeletePlaceUsecase {
     if (!detail.isAllowed()) {
       throw new NotAllowedException(detail.getDescription());
     }
-    return batch.start(command.getActor().getName().orElse("-"), ExecutorPlan
+    return batch.start(command.getActor().getName().orElse("-"), Duration.ofHours(6), ExecutorPlan
         .<PlaceDeleteAllInBatchCommand>builder().params(command).name("delete-color")
         .executor(
             ExecutorByDeferSteps.<Place, Place, PlaceDeleteAllInBatchCommand, DeletePlacesInBatchExecutor.PlacePaginableBatch>builder()

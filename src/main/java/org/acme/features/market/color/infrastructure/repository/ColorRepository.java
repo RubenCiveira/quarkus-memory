@@ -24,11 +24,13 @@ import org.acme.features.market.color.domain.gateway.ColorOrder;
 import org.acme.features.market.color.domain.model.Color;
 import org.acme.features.market.color.domain.model.ColorRef;
 
+import jakarta.enterprise.context.RequestScoped;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
 @Slf4j
+@RequestScoped
 public class ColorRepository {
 
   /**
