@@ -20,8 +20,23 @@ public final class SqlSchematicQuery<T> extends AbstractSqlQuery<T, SqlSchematic
     return executeQuery(this.query.buildQuery(), converter);
   }
 
-  public SqlSchematicQuery<T> select(String... fields) {
-    this.query.select(fields);
+  public SqlSchematicQuery<T> select(String... calls) {
+    this.query.select(calls);
+    return this;
+  }
+
+  public SqlSchematicQuery<T> addSelection(String... calls) {
+    this.query.addSelection(calls);
+    return this;
+  }
+
+  public SqlSchematicQuery<T> selectFields(String... fields) {
+    this.query.selectFields(fields);
+    return this;
+  }
+
+  public SqlSchematicQuery<T> addSelectedFields(String... fields) {
+    this.query.addSelectedFields(fields);
     return this;
   }
 
@@ -31,6 +46,16 @@ public final class SqlSchematicQuery<T> extends AbstractSqlQuery<T, SqlSchematic
   }
 
   public SqlSchematicQuery<T> orderDesc(String field) {
+    this.query.orderDesc(field);
+    return this;
+  }
+
+  public SqlSchematicQuery<T> addOrderAsc(String field) {
+    this.query.orderAsc(field);
+    return this;
+  }
+
+  public SqlSchematicQuery<T> addOrderDesc(String field) {
     this.query.orderDesc(field);
     return this;
   }

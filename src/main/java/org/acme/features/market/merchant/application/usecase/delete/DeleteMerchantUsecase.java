@@ -6,6 +6,7 @@ import org.acme.common.action.Interaction;
 import org.acme.common.batch.BatchIdentificator;
 import org.acme.common.batch.BatchProgress;
 import org.acme.common.batch.BatchService;
+import org.acme.common.batch.ExecutorByDeferSteps;
 import org.acme.common.batch.ExecutorPlan;
 import org.acme.common.exception.NotAllowedException;
 import org.acme.common.exception.NotFoundException;
@@ -137,9 +138,18 @@ public class DeleteMerchantUsecase {
     if (!detail.isAllowed()) {
       throw new NotAllowedException(detail.getDescription());
     }
-    return batch.start(command.getActor().getName().orElse("-"),
-        ExecutorPlan.<MerchantDeleteAllInBatchCommand>builder().params(command)
-            .name("delete-merchant").executor(DeleteMerchantsInBatchExecutor.class).build());
+    return batch.start(command.getActor().getName().orElse("-"), ExecutorPlan
+        .<MerchantDeleteAllInBatchCommand>builder().params(command).name("delete-color")
+        .executor(
+            ExecutorByDeferSteps.<Merchant, Merchant, MerchantDeleteAllInBatchCommand, DeleteMerchantsInBatchExecutor.MerchantPaginableBatch>builder()
+                .initializer(DeleteMerchantsInBatchExecutor.class)
+                .counter(DeleteMerchantsInBatchExecutor.class)
+                .descriptor(DeleteMerchantsInBatchExecutor.class)
+                .reader(DeleteMerchantsInBatchExecutor.class)
+                .processor(DeleteMerchantsInBatchExecutor.class)
+                .writer(DeleteMerchantsInBatchExecutor.class)
+                .finalizer(DeleteMerchantsInBatchExecutor.class).build())
+        .build());
   }
 
   /**

@@ -26,11 +26,11 @@ public class ExecutorByDeferSteps<T, R, P, S> implements Executor<P> {
   @Builder.Default
   private long readSleep = 100;
   @Builder.Default
-  private long processSleep = 100;
+  private long processSleep = 3000;
   @Builder.Default
   private long writeSleep = 100;
   @Builder.Default
-  private int bufferSize = 10;
+  private int bufferSize = 1;
   // private final Class<? extends StepInitializer<P, S>> initializer;
   // private final Class<? extends ItemProcessor<T, R, P, S>> processor;
   // private final Class<? extends ItemReader<T, P, S>> reader;
@@ -51,7 +51,7 @@ public class ExecutorByDeferSteps<T, R, P, S> implements Executor<P> {
   public void run(BatchStepProgress result, Monitor store, P param) {
     sleep("Initial delay to close request context", 3000);
     StepContext<P, S> context = new StepContext<P, S>(param, store);
-    
+
     ManagedContext requestContext = Arc.container().requestContext();
     if (!requestContext.isActive()) {
       System.out.println("EL contexto no está activo, lo activamnos");
@@ -72,11 +72,11 @@ public class ExecutorByDeferSteps<T, R, P, S> implements Executor<P> {
       ItemWriter<R, P, S> forWriter = (ItemWriter<R, P, S>) Arc.container().instance(writer).get();
       ItemProcessor<T, R, P, S> forProcessor =
           (ItemProcessor<T, R, P, S>) Arc.container().instance(processor).get();
-      StepFinalizer<P, S> forFinalizer =
-          null == finalizer ? null : (StepFinalizer<P, S>) Arc.container().instance(finalizer).get();
+      StepFinalizer<P, S> forFinalizer = null == finalizer ? null
+          : (StepFinalizer<P, S>) Arc.container().instance(finalizer).get();
       StepCounter<P, S> forCounter =
           null == counter ? null : (StepCounter<P, S>) Arc.container().instance(counter).get();
-  
+
       if (null != forInit) {
         forInit.init(context);
       }
@@ -84,7 +84,7 @@ public class ExecutorByDeferSteps<T, R, P, S> implements Executor<P> {
         result.setTotalItems(forCounter.approximatedItems(context));
         store.updateState(result);
       }
-  
+
       List<T> itemsWindow;
       List<Object[]> results = new ArrayList<>();
       while (procesable(itemsWindow = forReader.read(context))) {

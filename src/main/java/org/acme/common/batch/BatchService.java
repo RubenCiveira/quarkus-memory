@@ -56,7 +56,7 @@ public class BatchService {
             massiveOperationResult.setStatus(Status.FINISHED);
             storage.save(taskUid, actor, progress);
           } catch (RuntimeException ex) {
-            massiveOperationResult.setError( ex.getMessage() );
+            massiveOperationResult.setError(ex.getMessage());
             massiveOperationResult.setStatus(Status.FAILED);
             storage.save(taskUid, actor, progress);
           }
@@ -73,7 +73,7 @@ public class BatchService {
   public Optional<BatchProgress> retrieve(String uid, Locale locale, String actor) {
     return storage.restores(uid, actor);
   }
-  
+
   private void sleep(String label, long time) {
     if (time > 0) {
       try {

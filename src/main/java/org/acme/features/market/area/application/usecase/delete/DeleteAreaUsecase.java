@@ -6,6 +6,7 @@ import org.acme.common.action.Interaction;
 import org.acme.common.batch.BatchIdentificator;
 import org.acme.common.batch.BatchProgress;
 import org.acme.common.batch.BatchService;
+import org.acme.common.batch.ExecutorByDeferSteps;
 import org.acme.common.batch.ExecutorPlan;
 import org.acme.common.exception.NotAllowedException;
 import org.acme.common.exception.NotFoundException;
@@ -137,9 +138,18 @@ public class DeleteAreaUsecase {
     if (!detail.isAllowed()) {
       throw new NotAllowedException(detail.getDescription());
     }
-    return batch.start(command.getActor().getName().orElse("-"),
-        ExecutorPlan.<AreaDeleteAllInBatchCommand>builder().params(command).name("delete-area")
-            .executor(DeleteAreasInBatchExecutor.class).build());
+    return batch.start(command.getActor().getName().orElse("-"), ExecutorPlan
+        .<AreaDeleteAllInBatchCommand>builder().params(command).name("delete-color")
+        .executor(
+            ExecutorByDeferSteps.<Area, Area, AreaDeleteAllInBatchCommand, DeleteAreasInBatchExecutor.AreaPaginableBatch>builder()
+                .initializer(DeleteAreasInBatchExecutor.class)
+                .counter(DeleteAreasInBatchExecutor.class)
+                .descriptor(DeleteAreasInBatchExecutor.class)
+                .reader(DeleteAreasInBatchExecutor.class)
+                .processor(DeleteAreasInBatchExecutor.class)
+                .writer(DeleteAreasInBatchExecutor.class)
+                .finalizer(DeleteAreasInBatchExecutor.class).build())
+        .build());
   }
 
   /**

@@ -40,10 +40,11 @@ public class LocalizedBatchStepProgress {
   private final List<LocalizedErrorInfo> errors;
 
   public static LocalizedBatchStepProgress from(BatchStepProgress step, Locale locale) {
-    return LocalizedBatchStepProgress.builder().name(step.getName()).error(step.getError()).status(step.getStatus())
-        .startTime(step.getStartTime()).endTime(step.getEndTime()).totalItems(step.getTotalItems())
-        .processedItems(step.getProcessedItems()).errors(mapMap(step.getErrors(), locale))
-        .warns(mapMap(step.getWarns(), locale)).oks(step.getOks()).build();
+    return LocalizedBatchStepProgress.builder().name(step.getName()).error(step.getError())
+        .status(step.getStatus()).startTime(step.getStartTime()).endTime(step.getEndTime())
+        .totalItems(step.getTotalItems()).processedItems(step.getProcessedItems())
+        .errors(mapMap(step.getErrors(), locale)).warns(mapMap(step.getWarns(), locale))
+        .oks(step.getOks()).build();
   }
 
   public static LocalizedErrorInfo from(ErrorInfo info, Locale locale) {

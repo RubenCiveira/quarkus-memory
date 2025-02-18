@@ -6,6 +6,7 @@ import org.acme.common.action.Interaction;
 import org.acme.common.batch.BatchIdentificator;
 import org.acme.common.batch.BatchProgress;
 import org.acme.common.batch.BatchService;
+import org.acme.common.batch.ExecutorByDeferSteps;
 import org.acme.common.batch.ExecutorPlan;
 import org.acme.common.exception.NotAllowedException;
 import org.acme.common.exception.NotFoundException;
@@ -137,9 +138,18 @@ public class DeleteVerifyUsecase {
     if (!detail.isAllowed()) {
       throw new NotAllowedException(detail.getDescription());
     }
-    return batch.start(command.getActor().getName().orElse("-"),
-        ExecutorPlan.<VerifyDeleteAllInBatchCommand>builder().params(command).name("delete-verify")
-            .executor(DeleteVerifysInBatchExecutor.class).build());
+    return batch.start(command.getActor().getName().orElse("-"), ExecutorPlan
+        .<VerifyDeleteAllInBatchCommand>builder().params(command).name("delete-color")
+        .executor(
+            ExecutorByDeferSteps.<Verify, Verify, VerifyDeleteAllInBatchCommand, DeleteVerifysInBatchExecutor.VerifyPaginableBatch>builder()
+                .initializer(DeleteVerifysInBatchExecutor.class)
+                .counter(DeleteVerifysInBatchExecutor.class)
+                .descriptor(DeleteVerifysInBatchExecutor.class)
+                .reader(DeleteVerifysInBatchExecutor.class)
+                .processor(DeleteVerifysInBatchExecutor.class)
+                .writer(DeleteVerifysInBatchExecutor.class)
+                .finalizer(DeleteVerifysInBatchExecutor.class).build())
+        .build());
   }
 
   /**

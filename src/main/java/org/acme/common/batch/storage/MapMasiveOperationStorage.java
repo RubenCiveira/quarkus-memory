@@ -64,7 +64,7 @@ public class MapMasiveOperationStorage implements MasiveOperationStorage {
             updateStatement.setString(1, task);
             updateStatement.setString(2, actor);
             updateStatement.setTimestamp(3, new Timestamp(result.getStartTime().toEpochMilli()));
-            updateStatement.setString(4, mapper.writeValueAsString(result));
+            updateStatement.setString(4, mapper.writeValueAsString(result.getSteps()));
             if (updateStatement.executeUpdate() != 1) {
               throw new IllegalArgumentException("Imposible crear para " + task);
             }

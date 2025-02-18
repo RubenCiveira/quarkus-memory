@@ -47,7 +47,23 @@ public class SchematicQuery {
     }
   }
 
-  public void select(String... fields) {
+  public void select(String... calls) {
+    this.select.setLength(0);
+    this.addSelection(calls);
+  }
+
+  public void addSelection(String... calls) {
+    for (String call : calls) {
+      this.select.append(", " + call + "");
+    }
+  }
+
+  public void selectFields(String... fields) {
+    this.select.setLength(0);
+    this.addSelectedFields(fields);
+  }
+
+  public void addSelectedFields(String... fields) {
     for (String field : fields) {
       this.select.append(", " + escape(field) + "");
     }
@@ -82,10 +98,20 @@ public class SchematicQuery {
   }
 
   public void orderAsc(String field) {
+    this.order.setLength(0);
     order(field, "asc");
   }
 
   public void orderDesc(String field) {
+    this.order.setLength(0);
+    order(field, "desc");
+  }
+
+  public void addOrderAsc(String field) {
+    order(field, "asc");
+  }
+
+  public void addOrderDesc(String field) {
     order(field, "desc");
   }
 

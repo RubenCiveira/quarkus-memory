@@ -6,6 +6,7 @@ import org.acme.common.action.Interaction;
 import org.acme.common.batch.BatchIdentificator;
 import org.acme.common.batch.BatchProgress;
 import org.acme.common.batch.BatchService;
+import org.acme.common.batch.ExecutorByDeferSteps;
 import org.acme.common.batch.ExecutorPlan;
 import org.acme.common.exception.NotAllowedException;
 import org.acme.common.exception.NotFoundException;
@@ -137,9 +138,18 @@ public class DeletePlaceUsecase {
     if (!detail.isAllowed()) {
       throw new NotAllowedException(detail.getDescription());
     }
-    return batch.start(command.getActor().getName().orElse("-"),
-        ExecutorPlan.<PlaceDeleteAllInBatchCommand>builder().params(command).name("delete-place")
-            .executor(DeletePlacesInBatchExecutor.class).build());
+    return batch.start(command.getActor().getName().orElse("-"), ExecutorPlan
+        .<PlaceDeleteAllInBatchCommand>builder().params(command).name("delete-color")
+        .executor(
+            ExecutorByDeferSteps.<Place, Place, PlaceDeleteAllInBatchCommand, DeletePlacesInBatchExecutor.PlacePaginableBatch>builder()
+                .initializer(DeletePlacesInBatchExecutor.class)
+                .counter(DeletePlacesInBatchExecutor.class)
+                .descriptor(DeletePlacesInBatchExecutor.class)
+                .reader(DeletePlacesInBatchExecutor.class)
+                .processor(DeletePlacesInBatchExecutor.class)
+                .writer(DeletePlacesInBatchExecutor.class)
+                .finalizer(DeletePlacesInBatchExecutor.class).build())
+        .build());
   }
 
   /**
