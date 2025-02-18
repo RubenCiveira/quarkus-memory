@@ -7,7 +7,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -29,17 +28,13 @@ import lombok.RequiredArgsConstructor;
 @ApplicationScoped
 @RequiredArgsConstructor
 public class MapMasiveOperationStorage implements MasiveOperationStorage {
-
-  private final DataSource datasource;
   private final ObjectMapper mapper;
-  private final Duration timeToLive = Duration.ofDays(3);
+  private final DataSource datasource;
 
   private void cleanTemp(Connection connection) throws SQLException {
-    // TODO: add expiration to batch, so every batch could determinate his expiration date.
-    try (PreparedStatement updateStatement = connection.prepareStatement(
-        "DELETE FROM _long_tasks " + " where completion is not null and completion < ?")) {
-      updateStatement.setTimestamp(1,
-          new Timestamp(System.currentTimeMillis() - timeToLive.toMillis()));
+    try (PreparedStatement updateStatement =
+        connection.prepareStatement("DELETE FROM _long_tasks where expiration < ?")) {
+      updateStatement.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
       updateStatement.executeUpdate();
     }
   }
@@ -115,14 +110,15 @@ public class MapMasiveOperationStorage implements MasiveOperationStorage {
   }
 
   @Override
-  public void finish(String taskUid, String actor) {
+  public void finish(String taskUid, Instant expiration, String actor) {
     try (Connection connection = datasource.getConnection()) {
       cleanTemp(connection);
-      try (PreparedStatement updateStatement = connection
-          .prepareStatement("UPDATE _long_tasks SET completion = ? where code = ? and actor = ?")) {
+      try (PreparedStatement updateStatement = connection.prepareStatement(
+          "UPDATE _long_tasks SET completion = ?, expiration = ? where code = ? and actor = ?")) {
         updateStatement.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
-        updateStatement.setString(2, taskUid);
-        updateStatement.setString(3, actor);
+        updateStatement.setTimestamp(2, new Timestamp(expiration.toEpochMilli()));
+        updateStatement.setString(3, taskUid);
+        updateStatement.setString(4, actor);
         if (updateStatement.executeUpdate() != 1) {
           throw new IllegalArgumentException("Imposible cerrar para " + taskUid);
         }

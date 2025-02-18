@@ -26,11 +26,11 @@ public class ExecutorByDeferSteps<T, R, P, S> implements Executor<P> {
   @Builder.Default
   private long readSleep = 100;
   @Builder.Default
-  private long processSleep = 3000;
+  private long processSleep = 100;
   @Builder.Default
   private long writeSleep = 100;
   @Builder.Default
-  private int bufferSize = 1;
+  private int bufferSize = 10;
   // private final Class<? extends StepInitializer<P, S>> initializer;
   // private final Class<? extends ItemProcessor<T, R, P, S>> processor;
   // private final Class<? extends ItemReader<T, P, S>> reader;
