@@ -18,7 +18,12 @@ public class Connection {
   private final String request;
   private final String remote;
   private final String remoteApplication;
+  private final String remoteDevice;
 
+  public Optional<String> getRemoteDevice() {
+    return Optional.ofNullable(remoteDevice);
+  }
+  
   public Optional<String> getRemoteApplication() {
     return Optional.ofNullable(remoteApplication);
   }
@@ -30,5 +35,4 @@ public class Connection {
   public Locale getLocale() {
     return locale == null ? locale : Locale.getDefault();
   }
-
 }
