@@ -26,7 +26,10 @@ public class MunityWebQuery implements RemoteQuery {
     HttpRequest<?> query;
     try {
       URI url = new URI(target.replace("{", "").replace("}", ""));
-      query = createConn(client, method, target, body).port(url.getPort()).host(url.getHost());
+      String template = url.getPath();
+      if( null != url.getRawUserInfo() )
+        template += "?" + url.getRawQuery();
+      query = createConn(client, method, template, body).port(url.getPort()).host(url.getHost());
     } catch (URISyntaxException e) {
       log.warn("Unable to parte {} as url", target);
       query = createConn(client, method, target, body);
@@ -105,11 +108,19 @@ public class MunityWebQuery implements RemoteQuery {
     return this;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> RemoteConnection processor(Class<T> type, Consumer<T> consumer) {
+    if( type.isAssignableFrom( String.class) ) {
+      client.putHeader("Accept", MediaType.TEXT_PLAIN);
+    }
     return new MunityWebConnection(
         (null == body ? client.send() : client.sendJson(body)).onItem().transform(item -> {
-          consumer.accept((T) item.bodyAsJson(type));
+          if( type.isAssignableFrom( String.class) ) {
+            consumer.accept((T) item.bodyAsString());
+          } else {
+            consumer.accept((T) item.bodyAsJson(type));
+          }
           return "";
         }));
   }

@@ -6,7 +6,8 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Locale;
+import java.util.Locale.LanguageRange;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -44,7 +45,7 @@ public class CurrentRequest {
     return security.isAnonymous();
   }
 
-  public Optional<String> getFirstHeader(String name) {
+  private Optional<String> getFirstHeader(String name) {
     return Optional.ofNullable(headers.getHeaderString(name));
   }
 
@@ -73,12 +74,7 @@ public class CurrentRequest {
     return new Interaction(Interaction.builder().actor(actor).connection(conn)) {};
   }
 
-  private Actor getActor() {
-    System.out.println("====");
-    System.out.println("Request");
-    for (Entry<String, List<String>> entry : request.getQueryParameters().entrySet()) {
-      System.out.println("\t" + entry.getKey() + ": " + String.join(",", entry.getValue()));
-    }
+  public Actor getActor() {
     Actor.ActorBuilder builder = Actor.builder();
     if (security.isAnonymous()) {
       builder = builder.autenticated(false).roles(List.of());
@@ -99,8 +95,12 @@ public class CurrentRequest {
     return builder.build();
   }
 
-  private Connection getConnection() {
-    return Connection.builder().request(request.getPath()).build();
+  public Connection getConnection() {
+    String device = headers.getHeaderString("X-Device-ID");
+    return Connection.builder()
+        .remoteDevice(device)
+        .locale( getRequestHeaderLocale() )
+        .request(request.getPath()).build();
   }
 
   private String removePrefix(String role) {
@@ -109,6 +109,19 @@ public class CurrentRequest {
     }
     return Arrays.asList(audiences.split("\\,")).stream()
         .filter(pref -> role.startsWith(pref + ".")).findFirst().map(pref -> role).orElse(null);
+  }
+  
+  private Locale getRequestHeaderLocale() {
+    Locale locale = Locale.getDefault();
+    String localeHeader = headers.getHeaderString("Accept-Language");
+    if( null != localeHeader ) {
+      List<LanguageRange> parse = Locale.LanguageRange.parse(localeHeader);
+      if( !parse.isEmpty() ) {
+        Locale lookup = Locale.lookup(parse, Arrays.asList( Locale.getAvailableLocales()) );
+        locale = null == lookup ? locale : lookup;
+      }
+    }
+    return locale;
   }
 
   // public ActorRequest getCurrentActorRequest() {

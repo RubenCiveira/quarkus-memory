@@ -3,7 +3,7 @@ package org.acme.common.infrastructure.connector;
 
 import org.acme.common.connector.RemoteConnector;
 import org.acme.common.infrastructure.connector.munity.MunityWebConnector;
-
+import io.vertx.mutiny.core.Vertx;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 
@@ -12,7 +12,7 @@ public class ConnectorProducer {
 
   @Produces
   @ApplicationScoped
-  public RemoteConnector connector() {
-    return new MunityWebConnector();
+  public RemoteConnector connector(Vertx vertx) {
+    return new MunityWebConnector(vertx);
   }
 }

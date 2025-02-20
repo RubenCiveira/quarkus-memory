@@ -17,8 +17,8 @@ import io.vertx.mutiny.ext.web.client.WebClient;
 public class MunityWebConnector implements RemoteConnector {
   private final WebClient client;
 
-  public MunityWebConnector() {
-    Vertx vertx = Vertx.vertx();
+  public MunityWebConnector(Vertx vertx) {
+//    Vertx vertx = Vertx.vertx();
     client = WebClient.create(vertx);
   }
 
