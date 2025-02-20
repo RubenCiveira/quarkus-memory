@@ -1,12 +1,23 @@
 # Observability
 quarkus:
+  datasource:
+    jdbc:
+      telemetry: true
   log:
     console:
-      format: "%d{HH:mm:ss} %-5p traceId=%X{traceId}, parentId=%X{parentId}, spanId=%X{spanId}, sampled=%X{sampled} [%c{2.}] (%t) %s%e%n"  
+      format: "%d{HH:mm:ss} %-5p traceId=%X{traceId}, parentId=%X{parentId}, spanId=%X{spanId}, sampled=%X{sampled} [%c{2.}] (%t) %s%e%n"
+    file:
+      json: true
+      enable: true
+      rotation:
+        max-file-size: 50M
+      path: logs/application.log
   otel:
     traces:
+      exporter: ${telemetry.mode:cdi}
       enabled: true
     logs:
+      exporter: ${telemetry.mode:cdi}
       enabled: true
     exporter:
       otlp:
