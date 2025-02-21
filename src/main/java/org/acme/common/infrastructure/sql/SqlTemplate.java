@@ -3,19 +3,24 @@ package org.acme.common.infrastructure.sql;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-
+import java.util.Optional;
 import javax.sql.DataSource;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanKind;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Context;
 
 public class SqlTemplate implements AutoCloseable {
   private final Connection connection;
+  private final Tracer tracer;
 
   // Constructor que recibe la conexión
   public SqlTemplate(Connection connection) {
     if (connection == null) {
       throw new IllegalArgumentException("Connection cannot be null");
     }
-    System.out.println("Abrimos una template");
     this.connection = connection;
+    this.tracer = null;
   }
 
   // Constructor que recibe la conexión
@@ -23,9 +28,31 @@ public class SqlTemplate implements AutoCloseable {
     if (source == null) {
       throw new IllegalArgumentException("Connection cannot be null");
     }
-    System.out.println("Abrimos una template");
     try {
       this.connection = source.getConnection();
+      this.tracer = null;
+    } catch (SQLException ex) {
+      throw new UncheckedSqlException(ex);
+    }
+  }
+
+  // Constructor que recibe la conexión
+  public SqlTemplate(Connection connection, Tracer tracer) {
+    if (connection == null) {
+      throw new IllegalArgumentException("Connection cannot be null");
+    }
+    this.connection = connection;
+    this.tracer = tracer;
+  }
+
+  // Constructor que recibe la conexión
+  public SqlTemplate(DataSource source, Tracer tracer) {
+    if (source == null) {
+      throw new IllegalArgumentException("Connection cannot be null");
+    }
+    try {
+      this.connection = source.getConnection();
+      this.tracer = tracer;
     } catch (SQLException ex) {
       throw new UncheckedSqlException(ex);
     }
@@ -87,6 +114,28 @@ public class SqlTemplate implements AutoCloseable {
 
   /* default */ Connection currentConnection() {
     return connection;
+  }
+  
+  /* default */ Optional<Span> createSpan(String title) {
+    if (null != tracer) {
+      Span parentSpan = Span.current();
+      if (parentSpan.getSpanContext().isValid()) {
+        return Optional.of(tracer.spanBuilder(title).setParent(Context.current().with(parentSpan))
+            .setSpanKind(SpanKind.INTERNAL).startSpan());
+      }
+    }
+    return Optional.empty();
+  }
+
+  /* default */ Optional<Span> createSpan(String title, Optional<Span> parent) {
+    if (null != tracer && parent.isPresent()) {
+      Span parentSpan = parent.get();
+      if (parentSpan.getSpanContext().isValid()) {
+        return Optional.of(tracer.spanBuilder(title).setParent(Context.current().with(parentSpan))
+            .setSpanKind(SpanKind.INTERNAL).startSpan());
+      }
+    }
+    return Optional.empty();
   }
 
   public <T> SqlSchematicQuery<T> createSqlSchematicQuery(String table) {

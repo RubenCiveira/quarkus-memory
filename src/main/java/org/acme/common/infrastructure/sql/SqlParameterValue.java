@@ -15,141 +15,145 @@ import java.time.OffsetDateTime;
 
 public interface SqlParameterValue {
   static SqlParameterValue of(String value) {
-    return (index, ps) -> ps.setString(index, value);
+    return new StaticSqlParameterValue(value, (index, ps) -> ps.setString(index, value));
   }
 
   static SqlParameterValue ofNullString() {
-    return (index, ps) -> ps.setNull(index, Types.VARCHAR);
+    return new StaticSqlParameterValue("NULL", (index, ps) -> ps.setNull(index, Types.VARCHAR));
   }
 
   static SqlParameterValue of(long value) {
-    return (index, ps) -> ps.setLong(index, value);
+    return new StaticSqlParameterValue(value, (index, ps) -> ps.setLong(index, value));
   }
 
   static SqlParameterValue ofNullLong() {
-    return (index, ps) -> ps.setNull(index, Types.NUMERIC);
+    return new StaticSqlParameterValue("NULL", (index, ps) -> ps.setNull(index, Types.NUMERIC));
   }
 
   static SqlParameterValue of(int value) {
-    return (index, ps) -> ps.setInt(index, value);
+    return new StaticSqlParameterValue(value, (index, ps) -> ps.setInt(index, value));
   }
 
   static SqlParameterValue ofNullInteger() {
-    return (index, ps) -> ps.setNull(index, Types.INTEGER);
+    return new StaticSqlParameterValue("NULL", (index, ps) -> ps.setNull(index, Types.INTEGER));
   }
 
   static SqlParameterValue of(double value) {
-    return (index, ps) -> ps.setDouble(index, value);
+    return new StaticSqlParameterValue(value, (index, ps) -> ps.setDouble(index, value));
   }
 
   static SqlParameterValue ofNullDouble() {
-    return (index, ps) -> ps.setNull(index, Types.DOUBLE);
+    return new StaticSqlParameterValue("NULL", (index, ps) -> ps.setNull(index, Types.DOUBLE));
   }
 
   static SqlParameterValue of(float value) {
-    return (index, ps) -> ps.setFloat(index, value);
+    return new StaticSqlParameterValue(value, (index, ps) -> ps.setFloat(index, value));
   }
 
   static SqlParameterValue ofNullFloat() {
-    return (index, ps) -> ps.setNull(index, Types.FLOAT);
+    return new StaticSqlParameterValue("NULL", (index, ps) -> ps.setNull(index, Types.FLOAT));
   }
 
   static SqlParameterValue of(boolean value) {
-    return (index, ps) -> ps.setBoolean(index, value);
+    return new StaticSqlParameterValue(value, (index, ps) -> ps.setBoolean(index, value));
   }
 
   static SqlParameterValue ofNullBoolean() {
-    return (index, ps) -> ps.setNull(index, Types.BOOLEAN);
+    return new StaticSqlParameterValue("NULL", (index, ps) -> ps.setNull(index, Types.BOOLEAN));
   }
 
   static SqlParameterValue of(byte value) {
-    return (index, ps) -> ps.setByte(index, value);
+    return new StaticSqlParameterValue(value, (index, ps) -> ps.setByte(index, value));
   }
 
   static SqlParameterValue ofNullByte() {
-    return (index, ps) -> ps.setNull(index, Types.SMALLINT);
+    return new StaticSqlParameterValue("NULL", (index, ps) -> ps.setNull(index, Types.SMALLINT));
   }
 
   static SqlParameterValue of(short value) {
-    return (index, ps) -> ps.setShort(index, value);
+    return new StaticSqlParameterValue(value, (index, ps) -> ps.setShort(index, value));
   }
 
   static SqlParameterValue ofNullShort() {
-    return (index, ps) -> ps.setNull(index, Types.SMALLINT);
+    return new StaticSqlParameterValue("NULL", (index, ps) -> ps.setNull(index, Types.SMALLINT));
   }
 
   static SqlParameterValue of(BigDecimal value) {
-    return (index, ps) -> ps.setBigDecimal(index, value);
+    return new StaticSqlParameterValue(value, (index, ps) -> ps.setBigDecimal(index, value));
   }
 
   static SqlParameterValue ofNullBigDecimal() {
-    return (index, ps) -> ps.setNull(index, Types.BIGINT);
+    return new StaticSqlParameterValue("NULL", (index, ps) -> ps.setNull(index, Types.BIGINT));
   }
 
   static SqlParameterValue of(Date value) {
-    return (index, ps) -> ps.setDate(index, value);
+    return new StaticSqlParameterValue(value, (index, ps) -> ps.setDate(index, value));
   }
 
   static SqlParameterValue ofNullDate() {
-    return (index, ps) -> ps.setNull(index, Types.DATE);
+    return new StaticSqlParameterValue("NULL", (index, ps) -> ps.setNull(index, Types.DATE));
   }
 
   static SqlParameterValue of(Time value) {
-    return (index, ps) -> ps.setTime(index, value);
+    return new StaticSqlParameterValue(value, (index, ps) -> ps.setTime(index, value));
   }
 
   static SqlParameterValue ofNullTime() {
-    return (index, ps) -> ps.setNull(index, Types.TIME);
+    return new StaticSqlParameterValue("NULL", (index, ps) -> ps.setNull(index, Types.TIME));
   }
 
   static SqlParameterValue of(Timestamp value) {
-    return (index, ps) -> ps.setTimestamp(index, value);
+    return new StaticSqlParameterValue(value, (index, ps) -> ps.setTimestamp(index, value));
   }
 
   static SqlParameterValue ofNullTimestamp() {
-    return (index, ps) -> ps.setNull(index, Types.TIMESTAMP);
+    return new StaticSqlParameterValue("NULL", (index, ps) -> ps.setNull(index, Types.TIMESTAMP));
   }
 
   static SqlParameterValue ofNullStream() {
-    return (index, ps) -> ps.setNull(index, Types.BINARY);
+    return new StaticSqlParameterValue("NULL", (index, ps) -> ps.setNull(index, Types.BINARY));
   }
 
   static SqlParameterValue of(byte[] value) {
-    return (index, ps) -> ps.setBytes(index, value);
+    return new StaticSqlParameterValue("byte[]", (index, ps) -> ps.setBytes(index, value));
   }
 
   static SqlParameterValue ofBinary(InputStream value) {
-    return (index, ps) -> ps.setBinaryStream(index, value);
+    return new StaticSqlParameterValue("<stream>", (index, ps) -> ps.setBinaryStream(index, value));
   }
 
   static SqlParameterValue ofText(InputStream value) {
-    return (index, ps) -> ps.setAsciiStream(index, value);
+    return new StaticSqlParameterValue("<text>", (index, ps) -> ps.setAsciiStream(index, value));
   }
 
   static SqlParameterValue of(LocalDate value) {
-    return (index, ps) -> ps.setDate(index, Date.valueOf(value));
+    return new StaticSqlParameterValue(value,
+        (index, ps) -> ps.setDate(index, Date.valueOf(value)));
   }
 
   static SqlParameterValue ofNullLocalDate() {
-    return (index, ps) -> ps.setNull(index, Types.DATE);
+    return new StaticSqlParameterValue("NULL", (index, ps) -> ps.setNull(index, Types.DATE));
   }
 
   static SqlParameterValue of(LocalDateTime value) {
-    return (index, ps) -> ps.setTimestamp(index, Timestamp.valueOf(value));
+    return new StaticSqlParameterValue(value,
+        (index, ps) -> ps.setTimestamp(index, Timestamp.valueOf(value)));
   }
 
   static SqlParameterValue ofNullLocalDateTime() {
-    return (index, ps) -> ps.setNull(index, Types.TIMESTAMP);
+    return new StaticSqlParameterValue("NULL", (index, ps) -> ps.setNull(index, Types.TIMESTAMP));
   }
 
   static SqlParameterValue of(OffsetDateTime value) {
-    return (index, ps) -> ps.setTimestamp(index, Timestamp.valueOf(value.toLocalDateTime()));
+    return new StaticSqlParameterValue(value,
+        (index, ps) -> ps.setTimestamp(index, Timestamp.valueOf(value.toLocalDateTime())));
   }
 
   static SqlParameterValue ofNullOffsetDateTime() {
-    return (index, ps) -> ps.setNull(index, Types.TIMESTAMP);
+    return new StaticSqlParameterValue("NULL", (index, ps) -> ps.setNull(index, Types.TIMESTAMP));
   }
 
+  String valueDescription();
 
   void accept(int index, PreparedStatement ps) throws SQLException;
 }

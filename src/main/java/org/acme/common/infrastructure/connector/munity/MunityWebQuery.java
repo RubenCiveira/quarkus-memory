@@ -3,6 +3,7 @@ package org.acme.common.infrastructure.connector.munity;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -34,7 +35,12 @@ public class MunityWebQuery implements RemoteQuery {
       String template = url.getPath();
       if (null != url.getRawUserInfo())
         template += "?" + url.getRawQuery();
-      query = createConn(client, method, template, body).port(url.getPort()).host(url.getHost());
+      query = createConn(client, method, template, body).host(url.getHost())
+          .ssl(url.getScheme().equals("https"));
+      int defPort = query.ssl() ? 443 : 80;
+      if (defPort != url.getPort()) {
+        query = query.port(url.getPort());
+      }
     } catch (URISyntaxException e) {
       log.warn("Unable to parte {} as url", target);
       query = createConn(client, method, target, body);
@@ -122,8 +128,7 @@ public class MunityWebQuery implements RemoteQuery {
       client.putHeader("Accept", MediaType.TEXT_PLAIN);
     }
     JsonObject bodyObject = null == body ? null : JsonObject.mapFrom(body);
-    var uni =
-        (null == body ? client.send() : client.sendJsonObject(bodyObject));
+    var uni = (null == body ? client.send() : client.sendJsonObject(bodyObject));
     if (null != tracer) {
       Span parentSpan = Span.current();
       if (parentSpan.getSpanContext().isValid()) {
@@ -131,21 +136,20 @@ public class MunityWebQuery implements RemoteQuery {
             .setSpanKind(SpanKind.CLIENT).startSpan();
 
         uni = uni.onItem().invoke(response -> {
-          Map<String, String> requestHeaders = client.headers().entries()
-              .stream()
+          Map<String, String> requestHeaders = client.headers().entries().stream()
               .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
           Map<String, String> responseHeaders = response.headers().entries().stream()
-          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+              .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
           // Agregar atributos al Span con la información de la petición
           span.setAttribute("http.method", client.method().name());
-          span.setAttribute("http.url", client.uri() );
-          span.setAttribute("http.request.headers", requestHeaders.toString() );
-          if( null != bodyObject  ) {
+          span.setAttribute("http.url", client.uri());
+          span.setAttribute("http.request.headers", requestHeaders.toString());
+          if (null != bodyObject) {
             span.setAttribute("http.request.body", bodyObject.encode());
           }
           span.setAttribute("http.status_code", response.statusCode());
           span.setAttribute("http.response.body", response.bodyAsString());
-          span.setAttribute("http.response.headers", responseHeaders.toString() );
+          span.setAttribute("http.response.headers", responseHeaders.toString());
           span.setAttribute("error", response.statusCode() >= 400);
         }).onFailure().invoke(error -> {
           // En caso de error, registrar el fallo en el Span

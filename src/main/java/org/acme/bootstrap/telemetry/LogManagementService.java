@@ -5,10 +5,12 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -22,12 +24,9 @@ import lombok.RequiredArgsConstructor;
 public class LogManagementService {
   private static final String TRACE_TAG = "io.opentelemetry.exporter.logging.LoggingSpanExporter";
   private static final Pattern TRACE_PATTERN = Pattern.compile(
-      "'(?<spanName>[^']+)'\\s*:\\s*(?<traceId>[a-f0-9]+)\\s+(?<spanId>[a-f0-9]+)\\s+(?<kind>\\w+)"
-  );
-  private static final Pattern ATTRIBUTES_PATTERN = 
+      "'(?<spanName>[^']+)'\\s*:\\s*(?<traceId>[a-f0-9]+)\\s+(?<spanId>[a-f0-9]+)\\s+(?<kind>\\w+)");
+  private static final Pattern ATTRIBUTES_PATTERN =
       Pattern.compile("AttributesMap\\{data=(?<attributes>\\{(?:[^{}]+|\\{.*?\\})*\\})");
-  private static final Pattern ATTRIBUTE_PATTERN =
-      Pattern.compile("(?<key>[^=,{}]+)=(?<value>\\{[^}]*\\}|\"[^\"]*\"|[^,{}]+)");
 
   private final @ConfigProperty(name = "quarkus.log.file.path") String logFile;
   private final ObjectMapper objectMapper;
@@ -104,7 +103,7 @@ public class LogManagementService {
       traceData.put("traceId", matcher.group("traceId"));
       traceData.put("spanId", matcher.group("spanId"));
       traceData.put("kind", matcher.group("kind"));
-      
+
       @SuppressWarnings("unchecked")
       Map<String, Object> mdc = (Map<String, Object>) traceData.get("mdc");
       if (null != mdc) {
@@ -117,25 +116,70 @@ public class LogManagementService {
     Matcher matcher = ATTRIBUTES_PATTERN.matcher(logMessage);
     if (matcher.find()) {
       String rawAttributes = matcher.group("attributes");
-      parseAttributes(rawAttributes, traceData);
+      parseAttributes(rawAttributes.substring(1, rawAttributes.lastIndexOf("}")), traceData);
     }
   }
 
+  // Publis static for testing
+  public static void parseAttributes(String rawAttributes, Map<String, Object> attributes) {
+    Deque<Character> stack = new ArrayDeque<>();
+    StringBuilder keyBuilder = new StringBuilder();
+    StringBuilder valueBuilder = new StringBuilder();
+    boolean insideQuotes = false;
+    boolean parsingValue = true;
 
+    // Recorremos la cadena de DERECHA a IZQUIERDA
+    for (int i = rawAttributes.length() - 1; i >= 0; i--) {
+      char c = rawAttributes.charAt(i);
 
-  private void parseAttributes(String rawAttributes, Map<String, Object> traceData) {
-    Matcher matcher = ATTRIBUTE_PATTERN.matcher(rawAttributes);
-
-    while (matcher.find()) {
-      String key = matcher.group("key").trim();
-      String value = matcher.group("value").trim();
-      // Eliminar llaves extra de valores tipo {valor}
-      if (value.startsWith("{") && value.endsWith("}")) {
-        value = value.substring(1, value.length() - 1);
+      // Manejo de comillas
+      if (c == '"' && (stack.isEmpty() || stack.peek() != '\'')) {
+        insideQuotes = !insideQuotes;
       }
-      // Agregar al mapa
-      traceData.put(key, value);
+
+      if (!insideQuotes) {
+        // Manejo de paréntesis y llaves anidadas
+        if (c == '}' || c == ')' || c == ']') {
+          stack.push(c);
+        } else if (c == '{' || c == '(' || c == '[') {
+          if (!stack.isEmpty())
+            stack.pop();
+        }
+
+        // Detectamos la separación entre clave y valor
+        if (c == '=' && parsingValue && stack.isEmpty()) {
+          parsingValue = false; // Pasamos a leer la clave
+          keyBuilder.setLength(0); // Limpiar buffer de clave
+          continue;
+        }
+
+        // Detectamos una coma solo si NO estamos dentro de una estructura anidada
+        if (c == ',' && !parsingValue && stack.isEmpty()) {
+          String key = keyBuilder.reverse().toString().trim();
+          String value = valueBuilder.reverse().toString().trim(); // Invertir porque se acumuló en
+                                                                   // reverso
+          value = value.replace("\\\"", "\"").replace("\\\\", "\\");
+
+          attributes.put(key, value);
+
+          valueBuilder.setLength(0); // Limpiar buffer de valor
+          parsingValue = true;
+          continue;
+        }
+      }
+
+      // Construimos clave o valor según el estado actual
+      if (parsingValue) {
+        valueBuilder.append(c);
+      } else {
+        keyBuilder.append(c);
+      }
     }
 
+    // Añadir último par key=value
+    if (keyBuilder.length() > 0 && valueBuilder.length() > 0) {
+      attributes.put(keyBuilder.reverse().toString().trim(),
+          valueBuilder.reverse().toString().replace("\\\"", "\"").replace("\\\\", "\\").trim());
+    }
   }
 }

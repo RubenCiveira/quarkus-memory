@@ -17,6 +17,15 @@ class GenericSqlListParameterValues<T> implements SqlListParameterValue {
     this.data = data;
     this.value = value;
   }
+  
+  @Override
+  public String valueDescription() {
+    StringBuilder val = new StringBuilder();
+    for(T in: data) {
+      val.append("," + in );
+    }
+    return val.isEmpty() ? "[]" : "[" + val.substring(1) + "]";
+  }
 
   public void accept(int index, PreparedStatement ps) throws SQLException {
     for (int i = 0; i < data.length; i++) {

@@ -19,7 +19,6 @@ public class MunityWebConnector implements RemoteConnector {
   private final Tracer tracer;
 
   public MunityWebConnector(Vertx vertx, Tracer tracer) {
-//    Vertx vertx = Vertx.vertx();
     this.client = WebClient.create(vertx);
     this.tracer = tracer;
   }
