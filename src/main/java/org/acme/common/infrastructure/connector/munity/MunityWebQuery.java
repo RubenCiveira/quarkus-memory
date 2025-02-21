@@ -6,10 +6,14 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-
+import java.util.stream.Collectors;
 import org.acme.common.connector.RemoteConnection;
 import org.acme.common.connector.RemoteQuery;
-
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanKind;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Context;
+import io.vertx.core.json.JsonObject;
 import io.vertx.mutiny.ext.web.client.HttpRequest;
 import io.vertx.mutiny.ext.web.client.WebClient;
 import io.vertx.mutiny.uritemplate.UriTemplate;
@@ -22,19 +26,20 @@ public class MunityWebQuery implements RemoteQuery {
     POST, PUT, PATCH, DELETE
   }
 
-  public static MunityWebQuery create(WebClient client, Method method, String target, Object body) {
+  public static MunityWebQuery create(Tracer tracer, WebClient client, Method method, String target,
+      Object body) {
     HttpRequest<?> query;
     try {
       URI url = new URI(target.replace("{", "").replace("}", ""));
       String template = url.getPath();
-      if( null != url.getRawUserInfo() )
+      if (null != url.getRawUserInfo())
         template += "?" + url.getRawQuery();
       query = createConn(client, method, template, body).port(url.getPort()).host(url.getHost());
     } catch (URISyntaxException e) {
       log.warn("Unable to parte {} as url", target);
       query = createConn(client, method, target, body);
     }
-    return new MunityWebQuery(query, body);
+    return new MunityWebQuery(query, body, tracer);
   }
 
   private static HttpRequest<?> createConn(WebClient client, Method method, String target,
@@ -60,10 +65,12 @@ public class MunityWebQuery implements RemoteQuery {
 
   private final HttpRequest<?> client;
   private final Object body;
+  private final Tracer tracer;
 
-  private MunityWebQuery(HttpRequest<?> client, Object body) {
+  private MunityWebQuery(HttpRequest<?> client, Object body, Tracer tracer) {
     this.body = body;
     this.client = client;
+    this.tracer = tracer;
   }
 
   @Override
@@ -111,18 +118,50 @@ public class MunityWebQuery implements RemoteQuery {
   @SuppressWarnings("unchecked")
   @Override
   public <T> RemoteConnection processor(Class<T> type, Consumer<T> consumer) {
-    if( type.isAssignableFrom( String.class) ) {
+    if (type.isAssignableFrom(String.class)) {
       client.putHeader("Accept", MediaType.TEXT_PLAIN);
     }
-    return new MunityWebConnection(
-        (null == body ? client.send() : client.sendJson(body)).onItem().transform(item -> {
-          if( type.isAssignableFrom( String.class) ) {
-            consumer.accept((T) item.bodyAsString());
-          } else {
-            consumer.accept((T) item.bodyAsJson(type));
+    JsonObject bodyObject = null == body ? null : JsonObject.mapFrom(body);
+    var uni =
+        (null == body ? client.send() : client.sendJsonObject(bodyObject));
+    if (null != tracer) {
+      Span parentSpan = Span.current();
+      if (parentSpan.getSpanContext().isValid()) {
+        Span span = tracer.spanBuilder("http-request").setParent(Context.current().with(parentSpan))
+            .setSpanKind(SpanKind.CLIENT).startSpan();
+
+        uni = uni.onItem().invoke(response -> {
+          Map<String, String> requestHeaders = client.headers().entries()
+              .stream()
+              .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+          Map<String, String> responseHeaders = response.headers().entries().stream()
+          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+          // Agregar atributos al Span con la información de la petición
+          span.setAttribute("http.method", client.method().name());
+          span.setAttribute("http.url", client.uri() );
+          span.setAttribute("http.request.headers", requestHeaders.toString() );
+          if( null != bodyObject  ) {
+            span.setAttribute("http.request.body", bodyObject.encode());
           }
-          return "";
-        }));
+          span.setAttribute("http.status_code", response.statusCode());
+          span.setAttribute("http.response.body", response.bodyAsString());
+          span.setAttribute("http.response.headers", responseHeaders.toString() );
+          span.setAttribute("error", response.statusCode() >= 400);
+        }).onFailure().invoke(error -> {
+          // En caso de error, registrar el fallo en el Span
+          span.setAttribute("error", true);
+          span.recordException(error);
+        }).onTermination().invoke(span::end);
+      }
+    }
+    return new MunityWebConnection(uni.onItem().transform(item -> {
+      if (type.isAssignableFrom(String.class)) {
+        consumer.accept((T) item.bodyAsString());
+      } else {
+        consumer.accept((T) item.bodyAsJson(type));
+      }
+      return "";
+    }));
   }
 
   @Override

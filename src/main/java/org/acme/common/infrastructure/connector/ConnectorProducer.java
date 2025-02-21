@@ -3,6 +3,7 @@ package org.acme.common.infrastructure.connector;
 
 import org.acme.common.connector.RemoteConnector;
 import org.acme.common.infrastructure.connector.munity.MunityWebConnector;
+import io.opentelemetry.api.trace.Tracer;
 import io.vertx.mutiny.core.Vertx;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
@@ -12,7 +13,7 @@ public class ConnectorProducer {
 
   @Produces
   @ApplicationScoped
-  public RemoteConnector connector(Vertx vertx) {
-    return new MunityWebConnector(vertx);
+  public RemoteConnector connector(Vertx vertx, Tracer tracer) {
+    return new MunityWebConnector(vertx, tracer);
   }
 }

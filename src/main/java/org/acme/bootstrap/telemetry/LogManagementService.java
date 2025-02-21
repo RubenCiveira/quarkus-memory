@@ -24,8 +24,8 @@ public class LogManagementService {
   private static final Pattern TRACE_PATTERN = Pattern.compile(
       "'(?<spanName>[^']+)'\\s*:\\s*(?<traceId>[a-f0-9]+)\\s+(?<spanId>[a-f0-9]+)\\s+(?<kind>\\w+)"
   );
-  private static final Pattern ATTRIBUTES_PATTERN =
-      Pattern.compile("AttributesMap\\{data=\\{(?<attributes>.*?)\\}");
+  private static final Pattern ATTRIBUTES_PATTERN = 
+      Pattern.compile("AttributesMap\\{data=(?<attributes>\\{(?:[^{}]+|\\{.*?\\})*\\})");
   private static final Pattern ATTRIBUTE_PATTERN =
       Pattern.compile("(?<key>[^=,{}]+)=(?<value>\\{[^}]*\\}|\"[^\"]*\"|[^,{}]+)");
 

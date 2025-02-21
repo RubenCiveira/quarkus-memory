@@ -9,42 +9,44 @@ import org.acme.common.connector.RemoteConnection;
 import org.acme.common.connector.RemoteConnector;
 import org.acme.common.connector.RemoteQuery;
 import org.acme.common.infrastructure.connector.munity.MunityWebQuery.Method;
-
+import io.opentelemetry.api.trace.Tracer;
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.ext.web.client.WebClient;
 
 public class MunityWebConnector implements RemoteConnector {
   private final WebClient client;
+  private final Tracer tracer;
 
-  public MunityWebConnector(Vertx vertx) {
+  public MunityWebConnector(Vertx vertx, Tracer tracer) {
 //    Vertx vertx = Vertx.vertx();
-    client = WebClient.create(vertx);
+    this.client = WebClient.create(vertx);
+    this.tracer = tracer;
   }
 
   @Override
   public RemoteQuery get(String target) {
-    return MunityWebQuery.create(client, null, target, null);
+    return MunityWebQuery.create(tracer, client, null, target, null);
   }
 
   @Override
   public RemoteQuery delete(String target) {
-    return MunityWebQuery.create(client, Method.DELETE, target, null);
+    return MunityWebQuery.create(tracer, client, Method.DELETE, target, null);
   }
 
   @Override
   public RemoteQuery post(String target, Object body) {
-    return MunityWebQuery.create(client, Method.POST, target, body);
+    return MunityWebQuery.create(tracer, client, Method.POST, target, body);
   }
 
   @Override
   public RemoteQuery put(String target, Object body) {
-    return MunityWebQuery.create(client, Method.PUT, target, body);
+    return MunityWebQuery.create(tracer, client, Method.PUT, target, body);
   }
 
   @Override
   public RemoteQuery patch(String target, Object body) {
-    return MunityWebQuery.create(client, Method.PATCH, target, body);
+    return MunityWebQuery.create(tracer, client, Method.PATCH, target, body);
   }
 
   @Override
