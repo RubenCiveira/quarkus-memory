@@ -3,6 +3,7 @@ package org.acme.common.infrastructure.connector;
 
 import org.acme.common.connector.RemoteConnector;
 import org.acme.common.infrastructure.connector.munity.MunityWebConnector;
+
 import io.opentelemetry.api.trace.Tracer;
 import io.vertx.mutiny.core.Vertx;
 import jakarta.enterprise.context.ApplicationScoped;

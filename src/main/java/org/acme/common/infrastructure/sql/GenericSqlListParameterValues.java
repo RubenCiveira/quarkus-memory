@@ -17,12 +17,12 @@ class GenericSqlListParameterValues<T> implements SqlListParameterValue {
     this.data = data;
     this.value = value;
   }
-  
+
   @Override
   public String valueDescription() {
     StringBuilder val = new StringBuilder();
-    for(T in: data) {
-      val.append("," + in );
+    for (T in : data) {
+      val.append("," + in);
     }
     return val.isEmpty() ? "[]" : "[" + val.substring(1) + "]";
   }

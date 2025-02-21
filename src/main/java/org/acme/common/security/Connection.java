@@ -23,7 +23,7 @@ public class Connection {
   public Optional<String> getRemoteDevice() {
     return Optional.ofNullable(remoteDevice);
   }
-  
+
   public Optional<String> getRemoteApplication() {
     return Optional.ofNullable(remoteApplication);
   }

@@ -10,6 +10,7 @@ import org.acme.common.projection.ExecutionTree;
 import org.acme.common.projection.ProjectionRunner;
 import org.acme.common.projection.SelfProjection;
 import org.acme.features.market.area.infrastructure.bootstrap.AreaProjectionDescriptor.AreaExecutionPlanner;
+
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
 import io.quarkus.runtime.annotations.RegisterForReflection;
@@ -39,10 +40,8 @@ public class GraphQLService {
 
     ExecutionTree tree = self.getExecutionTree();
 
-    Span span = tracer.spanBuilder("My custom span")
-        .setAttribute("attr", "Colorines de aqui")
-        .setParent(io.opentelemetry.context.Context.current().with(Span.current()))
-        .startSpan();
+    Span span = tracer.spanBuilder("My custom span").setAttribute("attr", "Colorines de aqui")
+        .setParent(io.opentelemetry.context.Context.current().with(Span.current())).startSpan();
     ExecutionPlan plan = ExecutionPlan.builder().path("/api/market/areas").tree(tree)
         .selection(new AreaExecutionPlanner().withUid("codigo").withName("nombre")
             .withPlace(ofPlace -> ofPlace.withName("place.name").withMerchant("jefe",

@@ -2,6 +2,7 @@
 package org.acme.bootstrap.telemetry;
 
 import java.util.Map;
+
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import lombok.Builder;
 import lombok.Data;

@@ -13,11 +13,11 @@ import java.sql.SQLException;
   private final CustomAccepter accepter;
 
   public StaticSqlParameterValue(Object value, CustomAccepter accepter) {
-    this.value = String.valueOf( value );
+    this.value = String.valueOf(value);
     this.accepter = accepter;
   }
 
-  
+
   public StaticSqlParameterValue(String value, CustomAccepter accepter) {
     this.value = value;
     this.accepter = accepter;

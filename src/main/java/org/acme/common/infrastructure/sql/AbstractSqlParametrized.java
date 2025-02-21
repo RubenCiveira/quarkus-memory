@@ -18,6 +18,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
+
 import io.opentelemetry.api.trace.Span;
 
 public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<T>> {
@@ -223,7 +224,7 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
     String theSql = formatSql(child.query, childParams, Map.of(child.ref, offset.size()));
     try (PreparedStatement childps = connection.prepareStatement(theSql)) {
       // Replace childs params
-      Map<Integer,SqlParameterValue> applyParameters = applyParameters(childParams, childps,
+      Map<Integer, SqlParameterValue> applyParameters = applyParameters(childParams, childps,
           Map.of(child.ref, SqlListParameterValue.of((String[]) offset.toArray(new String[0]))));
       childSpan.ifPresent(span -> {
         span.setAttribute("query.sql", theSql);
@@ -243,10 +244,10 @@ public abstract class AbstractSqlParametrized<T extends AbstractSqlParametrized<
       }
       childSpan.ifPresent(span -> {
         child.childData.forEach((key, value) -> {
-          List values = (List)value;
-          span.setAttribute("query.result."+key+".count", values.size());
+          List values = (List) value;
+          span.setAttribute("query.result." + key + ".count", values.size());
           for (int i = 0; i < values.size(); i++) {
-            span.setAttribute("query.result."+key+".value." + i, String.valueOf(values.get(i)));
+            span.setAttribute("query.result." + key + ".value." + i, String.valueOf(values.get(i)));
           }
         });
       });

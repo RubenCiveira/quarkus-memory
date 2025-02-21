@@ -7,6 +7,7 @@ import org.acme.common.security.Connection;
 import org.jboss.resteasy.reactive.server.ServerRequestFilter;
 import org.jboss.resteasy.reactive.server.ServerResponseFilter;
 import org.slf4j.MDC;
+
 import io.opentelemetry.api.trace.Span;
 import jakarta.enterprise.context.RequestScoped;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ public class MdcRegisterFilter {
   private static final String MDC_KEY_DEVICE = "device";
 
   private final CurrentRequest currentRequest;
-  
+
   @ServerRequestFilter
   public void getRequestFilter() {
     Actor actor = currentRequest.getActor();

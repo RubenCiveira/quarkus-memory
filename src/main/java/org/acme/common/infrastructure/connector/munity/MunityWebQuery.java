@@ -3,13 +3,14 @@ package org.acme.common.infrastructure.connector.munity;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
 import org.acme.common.connector.RemoteConnection;
 import org.acme.common.connector.RemoteQuery;
+
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.api.trace.Tracer;
@@ -35,12 +36,7 @@ public class MunityWebQuery implements RemoteQuery {
       String template = url.getPath();
       if (null != url.getRawUserInfo())
         template += "?" + url.getRawQuery();
-      query = createConn(client, method, template, body).host(url.getHost())
-          .ssl(url.getScheme().equals("https"));
-      int defPort = query.ssl() ? 443 : 80;
-      if (defPort != url.getPort()) {
-        query = query.port(url.getPort());
-      }
+      query = createConn(client, method, template, body).port(url.getPort()).host(url.getHost());
     } catch (URISyntaxException e) {
       log.warn("Unable to parte {} as url", target);
       query = createConn(client, method, target, body);

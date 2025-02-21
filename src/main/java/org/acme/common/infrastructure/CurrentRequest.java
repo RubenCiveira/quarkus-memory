@@ -97,9 +97,7 @@ public class CurrentRequest {
 
   public Connection getConnection() {
     String device = headers.getHeaderString("X-Device-ID");
-    return Connection.builder()
-        .remoteDevice(device)
-        .locale( getRequestHeaderLocale() )
+    return Connection.builder().remoteDevice(device).locale(getRequestHeaderLocale())
         .request(request.getPath()).build();
   }
 
@@ -110,14 +108,14 @@ public class CurrentRequest {
     return Arrays.asList(audiences.split("\\,")).stream()
         .filter(pref -> role.startsWith(pref + ".")).findFirst().map(pref -> role).orElse(null);
   }
-  
+
   private Locale getRequestHeaderLocale() {
     Locale locale = Locale.getDefault();
     String localeHeader = headers.getHeaderString("Accept-Language");
-    if( null != localeHeader ) {
+    if (null != localeHeader) {
       List<LanguageRange> parse = Locale.LanguageRange.parse(localeHeader);
-      if( !parse.isEmpty() ) {
-        Locale lookup = Locale.lookup(parse, Arrays.asList( Locale.getAvailableLocales()) );
+      if (!parse.isEmpty()) {
+        Locale lookup = Locale.lookup(parse, Arrays.asList(Locale.getAvailableLocales()));
         locale = null == lookup ? locale : lookup;
       }
     }

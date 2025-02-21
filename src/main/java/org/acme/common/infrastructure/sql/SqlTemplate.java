@@ -4,7 +4,9 @@ package org.acme.common.infrastructure.sql;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
+
 import javax.sql.DataSource;
+
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.api.trace.Tracer;
@@ -115,7 +117,7 @@ public class SqlTemplate implements AutoCloseable {
   /* default */ Connection currentConnection() {
     return connection;
   }
-  
+
   /* default */ Optional<Span> createSpan(String title) {
     if (null != tracer) {
       Span parentSpan = Span.current();
